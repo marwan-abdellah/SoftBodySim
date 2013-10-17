@@ -98,14 +98,14 @@ struct {
 		} triangle;
 	} data;
 	bool fixed;
-} CollisionBody;
+} CollisionBodyData;
 
 /**
   step 5. solving collision constraints.
   */
 __global__ void solveCollisions(
 		glm::uvec2 *collisions,
-		CollisionBody *collisions_bodies,
+		CollisionBody *collisions_bodies_data,
 		glm::vec3 *projections,
 		glm::vec3 *positions,
 		glm::vec3 *velocities,
@@ -129,7 +129,7 @@ __global__ void solveCollisions(
 		glm::vec3 force = forces[coll_data[0]];
 		glm::vec3 velocity = velocities[coll_data[0]];
 
-		CollisionBody body = collisions_bodies[coll_data[1]];
+		CollisionBodyData body = collisions_bodies_data[coll_data[1]];
 
 		if (body.type == CollisionBody.TRIANGLE) {
 			glm::vec3 tri0 = positions[body.data.triangle.idx[0]];
