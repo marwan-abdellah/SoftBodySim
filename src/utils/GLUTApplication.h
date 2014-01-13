@@ -14,9 +14,9 @@ public:
 	void run(void);
 
 	enum Button {
-		RIGHT,
-		MIDDLE,
-		LEFT
+		RIGHT_BUTTON,
+		MIDDLE_BUTTON,
+		LEFT_BUTTON
 	};
 
 	void attachMenu(int menuId, Button button);

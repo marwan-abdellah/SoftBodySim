@@ -27,7 +27,7 @@ Demo::Demo(int argc, char **argv) :
 	addMenuEntry(id2, "Hello3");
 	addMenuEntry(id2, "Hello4");
 
-	attachMenu(id1, RIGHT);
+	attachMenu(id1, RIGHT_BUTTON);
 }
 
 void Demo::onKeyboard(unsigned char k, int x, int y)

@@ -68,13 +68,13 @@ void GLUTApplication::attachMenu(int menuId, Button button)
 	glutSetMenu(menuId);
 	int bid;
 	switch (button) {
-		case LEFT:
+		case LEFT_BUTTON:
 			bid = GLUT_LEFT_BUTTON;
 			break;
-		case RIGHT:
+		case RIGHT_BUTTON:
 			bid = GLUT_RIGHT_BUTTON;
 			break;
-		case MIDDLE:
+		case MIDDLE_BUTTON:
 			bid = GLUT_MIDDLE_BUTTON;
 	}
 	glutAttachMenu(bid);
