@@ -27,15 +27,16 @@ class CUDASoftBodySolver {
 
 		void 	initialize(std::vector<SoftBody>&);
 		void	terminate(void);
-
 		void 	projectSystem(glm::float_t dt);
+
+	private:
 		void 	solveCollisions(glm::float_t dt);
 		void 	solveLinks(glm::float_t dt);
 		void	integrateSystem(glm::float_t dt);
 
-	private:
 		bool 	initializeDevice(void);
-		bool	serializeBodies(std::vector<SoftBody>&);
+		bool	copyBodiesToDevice(std::vector<SoftBody>&);
+		void	freeBodies(void);
 		void	shutdownDevice(void);
 
 		cudaStream_t	m_stream;
