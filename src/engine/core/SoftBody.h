@@ -2,69 +2,72 @@
 #define __SOFTBODY_H
 
 
-class CollisionBody {
-	enum {
-		PLANE,
-		SPHERE,
-	} BoundingType;
+#include <glm/glm.hpp>
+#include <vector>
 
-	CollisionBody(BoundingType &bt);
-	~CollisionBody(void);
+class SoftBody;
+class CUDASoftBodySolver;
 
-	BoundingType getBoundingType(void);
-	bool 		 checkCollision(CollisionBody &body) = 0;
-	glm::vec3	 collisionPoint(CollisionBody &body) = 0;
-
-	union {
-		struct {
-			glm::vec3 origin;
-			glm::vec3 normal;
-		} plane;
-		struct {
-			glm::vec3 origin;
-			glm::float_t radius;
-		} sphere,
-	} data;
-	glm::float_t offset;
-};
-
+///gclass CollisionBody {
+///g
+///gpublic:
+///g	enum {
+///g		PLANE,
+///g		SPHERE,
+///g	} BoundingType;
+///g
+///g	CollisionBody(BoundingType &bt);
+///g	~CollisionBody(void);
+///g
+///g	BoundingType getBoundingType(void);
+///g	bool 		 checkCollision(CollisionBody &body) = 0;
+///g	glm::vec3	 collisionPoint(CollisionBody &body) = 0;
+///g
+///g	union {
+///g		struct {
+///g			glm::vec3 origin;
+///g			glm::vec3 normal;
+///g		} plane;
+///g		struct {
+///g			glm::vec3 origin;
+///g			glm::float_t radius;
+///g		} sphere,
+///g	} data;
+///g	glm::float_t offset;
+///g};
+///g
+///g
 
 class SoftBody {
 public:
 
-	class Links {
-		std::vector<glm::uint2> 	m_indexes;
-		std::vector<glm::float_t> 	m_restLength;
+	struct Links {
+		glm::uvec2 		indexes;
+		glm::float_t	restLength;
 	};
 
-	class Volumes {
-		std::vector<glm::uint4> 	m_indexes;
-		std::vector<glm::float_t> 	m_restLength;
+	struct Volumes {
+		glm::uvec4 		indexes;
+		glm::float_t 	restLength;
 	};
 
-	SoftBody(const char *file);
+	SoftBody(glm::vec3 *particles, unsigned int particles_count,
+			 glm::uvec2 *links_indexes, unsigned int links_count,
+			 glm::uvec4 *volumes_indexes, unsigned int volumes_count);
+
 	~SoftBody(void);
 
-	void	setSolver(SoftBodySolver &solver);
-
-	const VertexBuffer &getVertexBuffer(VertexBuffer.type);
-	const IndexBuffer &getLinksConnections(IndexBuffer.type);
-
-protected:
-	VertexBuffer				m_vertexBuffer;
 	std::vector<glm::vec3>	 	m_vertexes;
-	std::vector<glm::vec3>	 	m_projections;
 	std::vector<glm::vec3>	 	m_velocities;
 	std::vector<glm::vec3>	 	m_forces;
 
+	// inverted mass of every particle
 	float_t						m_mass_inv;
 
-	// constraints in soft body model
-	Links					 	m_links;
-	Volumes						m_volumes;
+	// constraints in soft body
+	std::vector<Links>		 	m_links;
+	std::vector<Volumes>		m_volumes;
 };
-
-
 
 
 #endif

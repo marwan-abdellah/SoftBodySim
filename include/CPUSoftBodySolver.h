@@ -7,7 +7,6 @@ class CPUBodySoftSolver {
 		void 	updateVelocities(glm::float_t dt) = 0;
 		void 	solveCollisions(glm::float_t dt) = 0;
 		void 	solveLinks(glm::float_t dt) = 0;
-
 		void 	synchronizeData(SoftBody &body, VertexBuffer);
 };
 

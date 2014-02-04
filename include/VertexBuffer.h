@@ -3,14 +3,24 @@
 
 
 class VertexBuffer {
+public:
 	enum {
 		CPU_BUFFER,
 		OPENGL_BUFFER,
 	} type;
-
-	glm::vec3	*m_vertexPointer;
-
 };
 
+class CPUVertexBuffer {
+public:
+	CPUVertexBuffer() {}
+	glm::vec3	*m_vertexPointer;
+};
+
+class GLVertexBuffer {
+public:
+	GLVertexBuffer() {}
+
+	GLint getVBO(void) const;
+};
 
 #endif
