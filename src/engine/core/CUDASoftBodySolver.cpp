@@ -154,11 +154,35 @@ void CUDASoftBodySolver::terminate(void)
 }
 
 
-void CUDASoftBodySolver::copySBDataToGLVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb)
+void CUDASoftBodySolver::copySBDataToGLVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vbs)
 {
+	cudaError_t err;
+	vector<cudaGraphicsResource*> resources;
+	cudaGraphicsResource *res;
+	FOREACH(it, vbs) {
+		GLVertexBuffer *glvb = (GLVertexBuffer*)*it;
+		err = cudaGraphicsGLRegisterBuffer(&res, glvb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION),
+				cudaGraphicsRegisterFlagsNone);
+		if (err != cudaSuccess)
+			ERR("Registering GL buffer failed.");
+		resources.push_back(res);
+	}
+	err = cudaGraphicsMapResources(resources.size(), &resources[0], mStream);
+	if (err != cudaSuccess) {
+		ERR("Failed to map device resources");
+		return;
+	}
+
+	FOREACH(it, &resources) {
+		void *ptr;
+		size_t size;
+		err = cudaGraphicsResourceGetMappedPointer(&ptr, &size, *it);
+		if (err != cudaSuccess)
+			return;
+	}
 }
 
-void CUDASoftBodySolver::oopySBDataToCPUVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb)
+void CUDASoftBodySolver::copySBDataToCPUVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb)
 {
 	// FIXME
 	// implement later
@@ -166,11 +190,29 @@ void CUDASoftBodySolver::oopySBDataToCPUVertexBuffer(descriptorArray_t *desc, ve
 
 void CUDASoftBodySolver::copySBDataToVertexBuffers(softbodyArray_t *bodies, vertexBufferArray_t *vbs)
 {
+	descriptorArray_t glBuffs;
+	descriptorArray_t cpuBuffs;
+	int idx = 0;
+
 	FOREACH(body, bodies) {
 		descriptorMap_t::iterator it = mDescriptorMap.find(*body);
 		if (it == mDescriptorMap.end()) {
 			ERR("SoftBody object not managed by solver!");
+			idx++;
 			continue;
 		}
+		SoftBodyDescriptor *d = &(it->second);
+		VertexBuffer *vb = vbs->at(idx);
+		switch(vb->getType()) {
+			case VertexBuffer::OPENGL_BUFFER:
+				glBuffs.push_back(d);
+				break;
+			case VertexBuffer::CPU_BUFFER:
+				cpuBuffs.push_back(d);
+				break;
+		}
+		idx++;
 	}
+	copySBDataToGLVertexBuffer(&glBuffs, vbs);
+	copySBDataToCPUVertexBuffer(&glBuffs, vbs);
 }

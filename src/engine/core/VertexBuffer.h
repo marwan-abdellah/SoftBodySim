@@ -43,6 +43,8 @@ public:
 		VERTEX_ATTR_LAST
 	};
 
+	GLint getVBO(VertexAttribute a) { return mVBO[a]; }
+
 	bool bind(VertexAttribute attr);
 	void unbind(void);
 

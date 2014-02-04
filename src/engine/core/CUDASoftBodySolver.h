@@ -42,7 +42,7 @@ class CUDASoftBodySolver {
 
 	private:
 		void	copySBDataToGLVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb);
-		void	oopySBDataToCPUVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb);
+		void	copySBDataToCPUVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb);
 
 		void 	solveCollisions(glm::float_t dt);
 		void 	solveLinks(glm::float_t dt);

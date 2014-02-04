@@ -73,3 +73,4 @@ void GLVertexBuffer::unbind(void)
 	glDisableVertexAttribArray(VERTEX_ATTR_COLOR);
 	glDisableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
 }
+
