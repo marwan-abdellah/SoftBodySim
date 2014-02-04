@@ -5,6 +5,7 @@
 #include <cuda_gl_interop.h>
 
 #include "SoftBody.h"
+#include "VertexBuffer.h"
 
 class CUDASoftBodySolver {
 	enum ArrayType {
@@ -17,8 +18,8 @@ class CUDASoftBodySolver {
 
 	struct SoftBodyDescriptor {
 		SoftBody	*body;
-		unsigned int vertex_base_idx;
-		unsigned int links_base_idx;
+		unsigned int vertexBaseIdx;
+		unsigned int linksBaseIdx;
 	};
 
 	public:
@@ -28,6 +29,11 @@ class CUDASoftBodySolver {
 		void 	initialize(std::vector<SoftBody>&);
 		void	terminate(void);
 		void 	projectSystem(glm::float_t dt);
+
+		void 	synchronizeBody(SoftBody *sb);
+		void 	synchronizeAll(void);
+
+		VertexBuffer	*copySBToVertexBuffer(SoftBody *sb);
 
 	private:
 		void 	solveCollisions(glm::float_t dt);
@@ -39,13 +45,14 @@ class CUDASoftBodySolver {
 		void	freeBodies(void);
 		void	shutdownDevice(void);
 
-		cudaStream_t	m_stream;
-		bool			m_initialized;
-		std::vector<SoftBodyDescriptor> m_descriptors;
-		glm::vec3		*m_array[ARRAY_LAST_DEFINED];
-		glm::uvec2 		*m_links;
-		glm::float_t	*m_links_rest_length2;
-		glm::float_t	*m_mass_inv;
+		cudaStream_t	mStream;
+		int				mDevId;
+		bool			mInitialized;
+		std::vector<SoftBodyDescriptor> mDescriptors;
+		glm::vec3		*mArray[ARRAY_LAST_DEFINED];
+		glm::uvec2 		*mLinks;
+		glm::float_t	*mLinksRestLength2;
+		glm::float_t	*mMassInv;
 };
 
 #endif

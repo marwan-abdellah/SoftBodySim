@@ -42,12 +42,12 @@ class SoftBody {
 public:
 
 	struct Links {
-		glm::uvec2 		indexes;
+		glm::uvec2 		index;
 		glm::float_t	restLength;
 	};
 
 	struct Volumes {
-		glm::uvec4 		indexes;
+		glm::uvec4 		index;
 		glm::float_t 	restLength;
 	};
 
@@ -57,16 +57,16 @@ public:
 
 	~SoftBody(void);
 
-	std::vector<glm::vec3>	 	m_vertexes;
-	std::vector<glm::vec3>	 	m_velocities;
-	std::vector<glm::vec3>	 	m_forces;
+	std::vector<glm::vec3>		 	mParticles;
+	std::vector<glm::vec3>			mVelocities;
+	std::vector<glm::vec3>			mForces;
 
 	// inverted mass of every particle
-	float_t						m_mass_inv;
+	float_t						mMassInv;
 
 	// constraints in soft body
-	std::vector<Links>		 	m_links;
-	std::vector<Volumes>		m_volumes;
+	std::vector<Links>			 	mLinks;
+	std::vector<Volumes>				mVolumes;
 };
 
 
