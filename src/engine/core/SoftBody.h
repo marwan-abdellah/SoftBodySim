@@ -1,6 +1,7 @@
 #ifndef __SOFTBODY_H
 #define __SOFTBODY_H
 
+#include "common.h"
 
 #include <glm/glm.hpp>
 #include <vector>
