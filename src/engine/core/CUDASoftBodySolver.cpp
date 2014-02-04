@@ -38,14 +38,14 @@ bool CUDASoftBodySolver::initializeDevice(void)
 	return true;
 }
 
-bool CUDASoftBodySolver::copyBodiesToDevice(vector<SoftBody> &bodies)
+bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
 {
 	int cells2alloc = 0;
 	int idx = 0, idx2= 0;
 	cudaError_t error;
 
 	FOREACH(it, bodies)
-		cells2alloc += it->mParticles.size();
+		cells2alloc += (*it)->mParticles.size();
 
 	for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; ++type) {
 		error = cudaMalloc(&mArray[type], cells2alloc * sizeof(glm::vec3));
@@ -61,7 +61,7 @@ bool CUDASoftBodySolver::copyBodiesToDevice(vector<SoftBody> &bodies)
 
 	cells2alloc = 0;
 	FOREACH(it, bodies)
-		cells2alloc += it->mLinks.size();
+		cells2alloc += (*it)->mLinks.size();
 
 	error = cudaMalloc(&mLinks, cells2alloc * sizeof(glm::uvec2));
 	if (error != cudaSuccess) {
@@ -74,31 +74,32 @@ bool CUDASoftBodySolver::copyBodiesToDevice(vector<SoftBody> &bodies)
 
 	FOREACH(it, bodies) {
 		SoftBodyDescriptor descr;
-		descr.body = &(*it);
+		SoftBody *body = *it;
+		descr.body = *it;
 		descr.vertexBaseIdx = idx;
 		descr.linksBaseIdx = idx2;
 
-		idx += it->mParticles.size();
-		idx2 += it->mLinks.size();
+		idx += body->mParticles.size();
+		idx2 += body->mLinks.size();
 
-		unsigned int bytes1 = it->mParticles.size() * sizeof(glm::vec3);
-		unsigned int bytes2 = it->mLinks.size() * sizeof(glm::uvec2);
-		unsigned int bytes3 = it->mLinks.size() * sizeof(glm::float_t);
+		unsigned int bytes1 = body->mParticles.size() * sizeof(glm::vec3);
+		unsigned int bytes2 = body->mLinks.size() * sizeof(glm::uvec2);
+		unsigned int bytes3 = body->mLinks.size() * sizeof(glm::float_t);
 
 		unsigned int offset = idx * sizeof(glm::vec3);
 		unsigned int offset2 = idx2 * sizeof(glm::uvec2);
 		unsigned int offset3 = idx2 * sizeof(glm::float_t);
 
-		cudaMemcpy(mArray[ARRAY_POSITIONS] + offset, &(it->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-		cudaMemcpy(mArray[ARRAY_PROJECTIONS] + offset, &(it->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-		cudaMemcpy(mArray[ARRAY_VELOCITIES] + offset, &(it->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
-		cudaMemcpy(mArray[ARRAY_FORCES] + offset, &(it->mForces[0]), bytes1, cudaMemcpyHostToDevice);
-		cudaMemset(mMassInv + offset3, it->mMassInv, bytes1);
+		cudaMemcpy(mArray[ARRAY_POSITIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
+		cudaMemcpy(mArray[ARRAY_PROJECTIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
+		cudaMemcpy(mArray[ARRAY_VELOCITIES] + offset, &(body->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
+		cudaMemcpy(mArray[ARRAY_FORCES] + offset, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
+		cudaMemset(mMassInv + offset3, body->mMassInv, bytes1);
 
-		vector<uvec2> tmp(it->mLinks.size());
-		vector<float_t> tmp2(it->mLinks.size());
+		vector<uvec2> tmp(body->mLinks.size());
+		vector<float_t> tmp2(body->mLinks.size());
 
-		FOREACH(lnk, it->mLinks)
+		FOREACH_R(lnk, body->mLinks)
 		{
 			tmp.push_back(lnk->index);
 			tmp2.push_back(lnk->restLength);
@@ -107,7 +108,7 @@ bool CUDASoftBodySolver::copyBodiesToDevice(vector<SoftBody> &bodies)
 		cudaMemcpy(mLinks + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
 		cudaMemcpy(mLinksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
 
-		mDescriptors.push_back(descr);
+		mDescriptorMap.insert(make_pair(body, descr));
 	}
 
 	return true;
@@ -124,11 +125,13 @@ void CUDASoftBodySolver::freeBodies(void)
 	mLinks = NULL;
 	if (mLinksRestLength2) cudaFree(mLinksRestLength2);
 	mLinksRestLength2 = NULL;
-	mDescriptors.clear();
+	//mDescriptorMap.clear();
 }
 
-void CUDASoftBodySolver::initialize(vector<SoftBody> &bodies)
+void CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
 {
+	if (mInitialized) return;
+
 	if (!initializeDevice()) {
 		ERR("CUDA Device initialization failed!");
 		shutdownDevice();
@@ -144,13 +147,30 @@ void CUDASoftBodySolver::initialize(vector<SoftBody> &bodies)
 	mInitialized = true;
 }
 
-void CUDASoftBodySolver::shutdownDevice(void)
-{
-	cudaStreamDestroy(mStream);
-}
-
 void CUDASoftBodySolver::terminate(void)
 {
-	shutdownDevice();
+	cudaStreamDestroy(mStream);
+	mInitialized = false;
 }
 
+
+void CUDASoftBodySolver::copySBDataToGLVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb)
+{
+}
+
+void CUDASoftBodySolver::oopySBDataToCPUVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb)
+{
+	// FIXME
+	// implement later
+}
+
+void CUDASoftBodySolver::copySBDataToVertexBuffers(softbodyArray_t *bodies, vertexBufferArray_t *vbs)
+{
+	FOREACH(body, bodies) {
+		descriptorMap_t::iterator it = mDescriptorMap.find(*body);
+		if (it == mDescriptorMap.end()) {
+			ERR("SoftBody object not managed by solver!");
+			continue;
+		}
+	}
+}

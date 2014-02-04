@@ -38,37 +38,40 @@ class CUDASoftBodySolver;
 ///g};
 ///g
 ///g
+//
+
+struct LinkConstraint {
+	glm::uvec2 		index;
+	glm::float_t	restLength;
+};
+
+struct VolumeConstraint {
+	glm::uvec4 		index;
+	glm::float_t 	restLength;
+};
+
+typedef std::vector<glm::vec3>			vec3Array_t;
+typedef std::vector<LinkConstraint>		linksArray_t;
+typedef std::vector<VolumeConstraint>	volumeArray_t;
 
 class SoftBody {
 public:
-
-	struct Links {
-		glm::uvec2 		index;
-		glm::float_t	restLength;
-	};
-
-	struct Volumes {
-		glm::uvec4 		index;
-		glm::float_t 	restLength;
-	};
-
 	SoftBody(glm::vec3 *particles, unsigned int particles_count,
 			 glm::uvec2 *links_indexes, unsigned int links_count,
 			 glm::uvec4 *volumes_indexes, unsigned int volumes_count);
 
 	~SoftBody(void);
 
-	std::vector<glm::vec3>		 	mParticles;
-	std::vector<glm::vec3>			mVelocities;
-	std::vector<glm::vec3>			mForces;
+	vec3Array_t				 	mParticles;
+	vec3Array_t					mVelocities;
+	vec3Array_t					mForces;
 
 	// inverted mass of every particle
 	float_t						mMassInv;
 
 	// constraints in soft body
-	std::vector<Links>			 	mLinks;
-	std::vector<Volumes>				mVolumes;
+	linksArray_t			 	mLinks;
+	volumeArray_t				mVolumes;
 };
-
 
 #endif

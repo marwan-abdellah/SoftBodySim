@@ -13,18 +13,20 @@ public:
 		OPENGL_BUFFER,
 	};
 
-	VertexBuffer(unsigned int s, VertexBufferType type = CPU_BUFFER) : m_type(type), mVertexesCount(s) {}
-	VertexBufferType getType(void) { return m_type; }
+	VertexBuffer(unsigned int s, VertexBufferType type = CPU_BUFFER) : mType(type), mVertexesCount(s) {}
+	VertexBufferType getType(void) { return mType; }
+
+	virtual void setVertexes(glm::vec3 *data) = 0;
+	virtual void setNormals(glm::vec3 *data) = 0;
+	virtual void setTextCoords(glm::uvec2 *data) = 0;
+	virtual void setColors(glm::vec3 *data) = 0;
+
 protected:
-	VertexBufferType m_type;
-	glm::vec3				*mVertexes;
-	glm::vec3				*mNormals;
-	glm::vec2				*mTexCoords;
-	glm::vec3				*mColors;
+	VertexBufferType mType;
 	unsigned int mVertexesCount;
 };
 
-class GLVertexBuffer : VertexBuffer {
+class GLVertexBuffer : public VertexBuffer {
 public:
 	GLVertexBuffer(unsigned int size);
 

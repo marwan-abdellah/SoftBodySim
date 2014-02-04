@@ -195,3 +195,13 @@ __global__ void integrateMotion(
 		positions[idx] = proj
 	}
 }
+
+__global__ void copy_data(glm::vec3 *positions_from,  glm::vec3 *positions_to,
+		glm::uint max_idx)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < max_idx) {
+		positions_to[idx] = positions_from[idx];
+	}
+}
