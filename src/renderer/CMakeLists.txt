@@ -1,5 +1,6 @@
 set (SRCS
 		Shader.cpp
+        Renderer.cpp
 	)
 
 include_directories(.)
