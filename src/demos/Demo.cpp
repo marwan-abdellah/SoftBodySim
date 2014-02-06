@@ -13,12 +13,17 @@ public:
     void onMouseClick(int key, int state, int x, int y);
     void onMouseMove(int x, int y);
     void onMenuSelected(string &s);
+    void onDisplay(void);
+private:
+    SoftBodyRenderer    renderer;
 };
 
 Demo::Demo(int argc, char **argv) :
     GLUTApplication(argc, argv, "DemoApp", 400, 400)
 {
     initialize();
+
+    renderer.initialize(400, 400);
 
     int id1 = addMenu("Main");
     addMenuEntry(id1, "Hello1");
@@ -29,6 +34,12 @@ Demo::Demo(int argc, char **argv) :
     addMenuEntry(id2, "Hello4");
 
     attachMenu(id1, RIGHT_BUTTON);
+}
+
+void Demo::onDisplay(void)
+{
+    renderer.clearScreen();
+    cout << "onDisplay" << endl;
 }
 
 void Demo::onKeyboard(unsigned char k, int x, int y)
