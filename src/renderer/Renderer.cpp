@@ -1,12 +1,11 @@
 #include "Renderer.h"
+#include "common.h"
 #include <stdio.h>
 #include <GL/glu.h>
 
 #include <glm/ext.hpp>
 
 using namespace glm;
-
-#define ERR(x, ...)
 
 #define WIN_HEIGHT 1024
 #define WIN_WIDTH 768

@@ -1,9 +1,7 @@
 #include "Shader.h"
+#include "common.h"
 
 using namespace glm;
-
-#define ERR(x, ...)
-#define DBG(x, ...)
 
 Shader::~Shader(void) {
 	if (iFragmentShader) glDeleteShader(iFragmentShader);
