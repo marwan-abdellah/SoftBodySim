@@ -22,7 +22,7 @@ static const char *vertex_source =
     "{"
     "    gl_Position = projMatrix * cameraMatrix * position;"
     "     fcolor = vec4(color, 1);"
-    "};";
+    "}";
 
 static const char *fragment_source = 
     "#version 330\n"
@@ -57,7 +57,7 @@ static const char *geometry_shader2 =
     "        vec3 d1 = gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz;"
     "        vec3 d2 = gl_in[0].gl_Position.xyz - gl_in[2].gl_Position.xyz;"
     "        vec3 norm = normalize(cross(d1, d2));"
-    "         vec3 diff = normalize(lightSrc - gl_in[i].gl_Position.xyz);"
+    "        vec3 diff = normalize(lightSrc - gl_in[i].gl_Position.xyz);"
     "       float d = max(0, dot(diff, norm));"
     "        gl_Position = projMatrix * cameraMatrix * gl_in[i].gl_Position;"
     "        mcolor = vec4(fcolor[i].xyz * ( 0.2 + d), 1);"

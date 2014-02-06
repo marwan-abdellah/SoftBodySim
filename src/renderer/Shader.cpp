@@ -3,6 +3,13 @@
 
 using namespace glm;
 
+Shader::Shader(void) :
+    pVertexSrc(0),
+    pGeomSrc(0),
+    pFragSrc(0)
+{
+}
+
 Shader::~Shader(void) {
     if (iFragmentShader) glDeleteShader(iFragmentShader);
     if (iVertexShader) glDeleteShader(iVertexShader);
@@ -44,7 +51,19 @@ GLuint Shader::createShader(GLenum type, const char *src)
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
     if (status != GL_TRUE) {
-        ERR("Shader compilation failed.");
+        switch(type) {
+            case GL_VERTEX_SHADER:
+                ERR("Vertex Shader compilation failed");
+                break;
+            case GL_FRAGMENT_SHADER:
+                ERR("Fragment Shader compilation failed");
+                break;
+            case GL_GEOMETRY_SHADER:
+                ERR("Geometry Shader compilation failed");
+                break;
+            default:
+                break;
+        }
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
         log = new char[len];
         glGetShaderInfoLog(shader, len, &len, log);

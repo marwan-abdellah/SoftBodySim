@@ -38,8 +38,12 @@ Demo::Demo(int argc, char **argv) :
 
 void Demo::onDisplay(void)
 {
+    static int d;
     renderer.clearScreen();
-    cout << "onDisplay" << endl;
+    if (!d) {
+        cout << "onDisplay" << endl;
+        d = 1;
+    }
 }
 
 void Demo::onKeyboard(unsigned char k, int x, int y)

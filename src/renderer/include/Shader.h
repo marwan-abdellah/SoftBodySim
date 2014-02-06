@@ -8,7 +8,7 @@
 
 class Shader {
 public:
-	Shader(void) {}
+	Shader(void);
 	~Shader(void);
 	void setShaderSource(GLenum type, const char *src);
 	bool compileAndLink(void);
