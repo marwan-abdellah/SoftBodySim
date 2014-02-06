@@ -1,7 +1,6 @@
 #ifndef __SOFTBODY_H
 #define __SOFTBODY_H
 
-#include "common.h"
 #include "VertexBuffer.h"
 
 #include <glm/glm.hpp>

@@ -9,7 +9,8 @@ find_package(CUDA REQUIRED)
 list(APPEND CUDA_NVCC_FLAGS "-g")
 list(APPEND CUDA_NVCC_FLAGS "-G")
 
-include_directories('.')
+include_directories(.)
+include_directories(${CMAKE_SOURCE_DIR}/src/engine/include/)
 include(FindCUDA)
 
 find_library(OPENGL_LIBRARY GL)

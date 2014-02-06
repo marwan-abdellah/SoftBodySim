@@ -1,4 +1,5 @@
 #include "SoftBody.h"
+#include "common.h"
 
 using namespace glm;
 

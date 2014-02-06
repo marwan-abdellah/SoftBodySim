@@ -2,7 +2,8 @@ set (SRCS
 		Shader.cpp
 	)
 
-include_directories('.', '../core')
+include_directories(.)
+include_directories(${CMAKE_SOURCE_DIR}/src/engine/include/)
 
 find_library(OPENGL_LIBRARY GL)
 
