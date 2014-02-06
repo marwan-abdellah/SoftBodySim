@@ -108,7 +108,7 @@ void Shader::useShader(void)
     if (iProgram)
         glUseProgram(iProgram);
     else 
-        ERR("Program not compiled and linked.");
+        ERR("Program failed to compile and link.");
 }
 
 void Shader::setUniform(const char *name, const glm::vec3 *v)
