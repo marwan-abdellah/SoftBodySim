@@ -76,6 +76,8 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
 		SoftBodyDescriptor descr;
 		SoftBody *body = *it;
 		descr.body = *it;
+		descr.mapped = false;
+		descr.graphics = NULL;
 		descr.vertexBaseIdx = idx;
 		descr.linksBaseIdx = idx2;
 
@@ -108,10 +110,30 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
 		cudaMemcpy(mLinks + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
 		cudaMemcpy(mLinksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
 
+		const VertexBuffer *buf = body->getVertexBuffer();
+		switch(buf->getType()) {
+			case VertexBuffer::OPENGL_BUFFER:
+				initGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr);
+				break;
+			default:
+				break;
+		}
+
 		mDescriptorMap.insert(make_pair(body, descr));
 	}
 
 	return true;
+}
+
+void CUDASoftBodySolver::initGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
+{
+	cudaError_t err;
+	GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
+	err = cudaGraphicsGLRegisterBuffer(&descr->graphics, id, cudaGraphicsRegisterFlagsNone);
+	if (err != cudaSuccess) {
+		ERR("Unable to register GL buffer object %d", id);
+		descr->graphics = NULL;
+	}
 }
 
 void CUDASoftBodySolver::freeBodies(void)
@@ -153,66 +175,11 @@ void CUDASoftBodySolver::terminate(void)
 	mInitialized = false;
 }
 
-
-void CUDASoftBodySolver::copySBDataToGLVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vbs)
+bool CUDASoftBodySolver::updateVertexBuffers(void)
 {
-	cudaError_t err;
-	vector<cudaGraphicsResource*> resources;
-	cudaGraphicsResource *res;
-	FOREACH(it, vbs) {
-		GLVertexBuffer *glvb = (GLVertexBuffer*)*it;
-		err = cudaGraphicsGLRegisterBuffer(&res, glvb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION),
-				cudaGraphicsRegisterFlagsNone);
-		if (err != cudaSuccess)
-			ERR("Registering GL buffer failed.");
-		resources.push_back(res);
-	}
-	err = cudaGraphicsMapResources(resources.size(), &resources[0], mStream);
-	if (err != cudaSuccess) {
-		ERR("Failed to map device resources");
-		return;
-	}
-
-	FOREACH(it, &resources) {
-		void *ptr;
-		size_t size;
-		err = cudaGraphicsResourceGetMappedPointer(&ptr, &size, *it);
-		if (err != cudaSuccess)
-			return;
-	}
+	return false;
 }
 
-void CUDASoftBodySolver::copySBDataToCPUVertexBuffer(descriptorArray_t *desc, vertexBufferArray_t *vb)
+void CUDASoftBodySolver::updateAllVertexBuffersAsync(void)
 {
-	// FIXME
-	// implement later
-}
-
-void CUDASoftBodySolver::copySBDataToVertexBuffers(softbodyArray_t *bodies, vertexBufferArray_t *vbs)
-{
-	descriptorArray_t glBuffs;
-	descriptorArray_t cpuBuffs;
-	int idx = 0;
-
-	FOREACH(body, bodies) {
-		descriptorMap_t::iterator it = mDescriptorMap.find(*body);
-		if (it == mDescriptorMap.end()) {
-			ERR("SoftBody object not managed by solver!");
-			idx++;
-			continue;
-		}
-		SoftBodyDescriptor *d = &(it->second);
-		VertexBuffer *vb = vbs->at(idx);
-		switch(vb->getType()) {
-			case VertexBuffer::OPENGL_BUFFER:
-				glBuffs.push_back(d);
-				break;
-			case VertexBuffer::CPU_BUFFER:
-				cpuBuffs.push_back(d);
-				break;
-		}
-		idx++;
-	}
-	copySBDataToGLVertexBuffer(&glBuffs, vbs);
-	copySBDataToCPUVertexBuffer(&glBuffs, vbs);
 }

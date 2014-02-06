@@ -2,6 +2,7 @@
 #define __SOFTBODY_H
 
 #include "common.h"
+#include "VertexBuffer.h"
 
 #include <glm/glm.hpp>
 #include <vector>
@@ -59,8 +60,12 @@ public:
 	SoftBody(glm::vec3 *particles, unsigned int particles_count,
 			 glm::uvec2 *links_indexes, unsigned int links_count,
 			 glm::uvec4 *volumes_indexes, unsigned int volumes_count);
-
 	~SoftBody(void);
+
+	void					initVertexBuffer(VertexBuffer::VertexBufferType);
+	const VertexBuffer		*getVertexBuffer(void);
+private:
+	void createGLVertexBuffer(void);
 
 	vec3Array_t				 	mParticles;
 	vec3Array_t					mVelocities;
@@ -72,6 +77,11 @@ public:
 	// constraints in soft body
 	linksArray_t			 	mLinks;
 	volumeArray_t				mVolumes;
+
+	// buffer object
+	VertexBuffer				*mVertexBuffer;
+
+friend class CUDASoftBodySolver;
 };
 
 #endif

@@ -14,7 +14,7 @@ public:
 	};
 
 	VertexBuffer(unsigned int s, VertexBufferType type = CPU_BUFFER) : mType(type), mVertexesCount(s) {}
-	VertexBufferType getType(void) { return mType; }
+	VertexBufferType getType(void) const { return mType; }
 
 	virtual void setVertexes(glm::vec3 *data) = 0;
 	virtual void setNormals(glm::vec3 *data) = 0;
@@ -43,7 +43,7 @@ public:
 		VERTEX_ATTR_LAST
 	};
 
-	GLint getVBO(VertexAttribute a) { return mVBO[a]; }
+	GLint getVBO(VertexAttribute a) const { return mVBO[a]; }
 
 	bool bind(VertexAttribute attr);
 	void unbind(void);
