@@ -10,6 +10,11 @@ GLVertexBuffer::GLVertexBuffer(unsigned int size) :
 	memset(mVBO, 0x0, sizeof(GLint) * VERTEX_ATTR_LAST);
 }
 
+GLVertexBuffer::~GLVertexBuffer(void)
+{
+	glDeleteBuffers(VERTEX_ATTR_LAST, mVBO);
+}
+
 void GLVertexBuffer::setVertexes(glm::vec3 *data)
 {
 	if (mVBO[VERTEX_ATTR_POSITION] == 0)

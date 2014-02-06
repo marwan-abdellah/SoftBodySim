@@ -29,6 +29,7 @@ protected:
 class GLVertexBuffer : public VertexBuffer {
 public:
 	GLVertexBuffer(unsigned int size);
+	~GLVertexBuffer(void);
 
 	void setVertexes(glm::vec3 *data);
 	void setNormals(glm::vec3 *data);
