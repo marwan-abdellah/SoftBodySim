@@ -1,6 +1,7 @@
 set (SRCS
 		Shader.cpp
         Renderer.cpp
+        Camera.cpp
 	)
 
 include_directories(.)

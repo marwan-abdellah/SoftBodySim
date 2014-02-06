@@ -164,15 +164,21 @@ void SoftBodyRenderer::clearScreen(void)
 
 void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
 {
-//    vec3 color;
-//
-//    if (!obj)
-//        return;
-//
-//    mCurrent->setUniform("cameraMatrix", camMat);
-//
-//    color = obj->getColor();
-//    mCurrent->setUniform("color", &color);
+    vec3 color(255,1,1);
+    const GLVertexBuffer *buff;
+    const Mesh_t *mesh;
+
+    if (!obj || !camMat)
+        return;
+
+    mCurrent->setUniform("cameraMatrix", camMat);
+    mCurrent->setUniform("color", &color);
+
+    mesh = obj->getMesh();
+    buff = static_cast<const GLVertexBuffer*>(mesh->vertexes);
+    buff->bind(GLVertexBuffer::VERTEX_ATTR_POSITION);
+
+    glDrawArrays(GL_POINT, 0, 8);
 //
 //    SoftBody::DrawMethod m;
 //

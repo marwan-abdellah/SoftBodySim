@@ -111,14 +111,18 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
 		cudaMemcpy(mLinks + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
 		cudaMemcpy(mLinksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
 
-		const VertexBuffer *buf = body->getVertexBuffer();
-		switch(buf->getType()) {
-			case VertexBuffer::OPENGL_BUFFER:
-				initGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr);
-				break;
-			default:
-				break;
-		}
+        if (body->mMesh) {
+            const VertexBuffer *buf = body->mMesh->vertexes;
+            if (buf) {
+                switch(buf->getType()) {
+                    case VertexBuffer::OPENGL_BUFFER:
+                        initGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
 		mDescriptorMap.insert(make_pair(body, descr));
 	}
@@ -157,7 +161,6 @@ void CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
 
 	if (!initializeDevice()) {
 		ERR("CUDA Device initialization failed!");
-		shutdownDevice();
 		return;
 	}
 

@@ -1,14 +1,13 @@
 #include "SoftBody.h"
 #include "common.h"
+#include <cstring>
 
 using namespace glm;
 
 SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
-		vec3 *particles, unsigned int particles_count,
-	 	uvec2 *links_indexes, unsigned int links_count,
-	 	uvec4 *volumes_indexes, unsigned int volumes_count)
-	:
-		mVertexBuffer(0)
+		const vec3 *particles, unsigned int particles_count,
+	 	const uvec2 *links_indexes, unsigned int links_count,
+	 	const uvec4 *volumes_indexes, unsigned int volumes_count)
 {
 	mMassInv = 1.0/mass;
 	mSpringiness = springness;
@@ -19,30 +18,40 @@ SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
 	mLinks.resize(links_count);
 	mVolumes.resize(volumes_count);
 
+    memset(&mMesh, 0x0, sizeof(Mesh_t));
+
 	for(unsigned int i = 0; i < particles_count; i++)
-		mParticles.push_back(particles[i]);
+		mParticles[i] = particles[i];
 	for(unsigned int i = 0; i < links_count; i++) {
 		LinkConstraint lnk;
 		lnk.index = links_indexes[i];
 		lnk.restLength = length(mParticles[lnk.index[0]] - mParticles[lnk.index[1]]);
-		mLinks.push_back(lnk);
+		mLinks[i] = lnk;
 	}
 }
 
 SoftBody::~SoftBody(void)
 {
-	if (mVertexBuffer) delete mVertexBuffer;
+    if (!mMesh) return;
+    if (mMesh->vertexes) delete mMesh->vertexes;
+    if (mMesh->faces) delete mMesh->faces;
+    if (mMesh->edges) delete mMesh->edges;
+    delete mMesh;
 }
 
 void SoftBody::createGLVertexBuffer(void)
 {
 	GLVertexBuffer *buf = new GLVertexBuffer(mParticles.size());
-	buf->setVertexes(&mParticles[0]);
-	mVertexBuffer = buf;
+
+    if (mMesh->vertexes) delete mMesh->vertexes;
+	buf->setVertexes(&(mParticles[0]));
+	mMesh->vertexes = buf;
 }
 
-void SoftBody::initVertexBuffer(VertexBuffer::VertexBufferType type)
+void SoftBody::initVertexBuffers(VertexBuffer::VertexBufferType type)
 {
+    if (!mMesh) mMesh = new Mesh_t;
+
 	switch(type) {
 		case VertexBuffer::CPU_BUFFER:
 			break;
@@ -50,9 +59,4 @@ void SoftBody::initVertexBuffer(VertexBuffer::VertexBufferType type)
 			createGLVertexBuffer();
 			break;
 	}
-}
-
-const VertexBuffer	*SoftBody::getVertexBuffer(void)
-{
-	return mVertexBuffer;
 }

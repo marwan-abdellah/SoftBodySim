@@ -8,49 +8,80 @@
 
 class VertexBuffer {
 public:
-	enum VertexBufferType {
-		CPU_BUFFER,
-		OPENGL_BUFFER,
-	};
+    enum VertexBufferType {
+        CPU_BUFFER,
+        OPENGL_BUFFER,
+    };
 
-	VertexBuffer(unsigned int s, VertexBufferType type = CPU_BUFFER) : mType(type), mVertexesCount(s) {}
-	VertexBufferType getType(void) const { return mType; }
+    VertexBuffer(unsigned int s, VertexBufferType type = CPU_BUFFER) : mType(type), mVertexesCount(s) {}
+    VertexBufferType getType(void) const { return mType; }
 
-	virtual void setVertexes(glm::vec3 *data) = 0;
-	virtual void setNormals(glm::vec3 *data) = 0;
-	virtual void setTextCoords(glm::uvec2 *data) = 0;
-	virtual void setColors(glm::vec3 *data) = 0;
+    virtual void setVertexes(glm::vec3 *data) = 0;
+    virtual void setNormals(glm::vec3 *data) = 0;
+    virtual void setTextCoords(glm::uvec2 *data) = 0;
+    virtual void setColors(glm::vec3 *data) = 0;
 
 protected:
-	VertexBufferType mType;
-	unsigned int mVertexesCount;
+    VertexBufferType mType;
+    unsigned int mVertexesCount;
 };
 
 class GLVertexBuffer : public VertexBuffer {
 public:
-	GLVertexBuffer(unsigned int size);
-	~GLVertexBuffer(void);
+    GLVertexBuffer(unsigned int size);
+    ~GLVertexBuffer(void);
 
-	void setVertexes(glm::vec3 *data);
-	void setNormals(glm::vec3 *data);
-	void setTextCoords(glm::uvec2 *data);
-	void setColors(glm::vec3 *data);
+    void setVertexes(glm::vec3 *data);
+    void setNormals(glm::vec3 *data);
+    void setTextCoords(glm::uvec2 *data);
+    void setColors(glm::vec3 *data);
 
-	enum VertexAttribute {
-		VERTEX_ATTR_POSITION,
-		VERTEX_ATTR_NORMAL,
-		VERTEX_ATTR_TEX_COORDS,
-		VERTEX_ATTR_COLOR,
-		VERTEX_ATTR_LAST
-	};
+    enum VertexAttribute {
+        VERTEX_ATTR_POSITION,
+        VERTEX_ATTR_NORMAL,
+        VERTEX_ATTR_TEX_COORDS,
+        VERTEX_ATTR_COLOR,
+        VERTEX_ATTR_LAST
+    };
 
-	GLint getVBO(VertexAttribute a) const { return mVBO[a]; }
+    GLint getVBO(VertexAttribute a) const { return mVBO[a]; }
 
-	bool bind(VertexAttribute attr);
-	void unbind(void);
+    bool bind(VertexAttribute attr) const;
+    void unbind(void) const;
 
 private:
-	GLuint mVBO[VERTEX_ATTR_LAST];
+    GLuint mVBO[VERTEX_ATTR_LAST];
+};
+
+class ElementBuffer {
+public:
+    enum ElementBufferType {
+        CPU_BUFFER,
+        OPENGL_BUFFER,
+    };
+
+    enum ElementDataType {
+        TRIANGLES,
+        EDGES
+    };
+
+    ElementBuffer(unsigned int size, ElementBufferType t, ElementDataType d)
+        : mCount(size), mType(t), mDataType(d) {}
+
+    ElementDataType getDataType(void) { return mDataType;}
+    ElementBufferType getType(void) { return mType;}
+protected:
+    unsigned int mCount;
+    ElementBufferType mType;
+    ElementDataType mDataType;
+};
+
+class GLElementBuffer : public ElementBuffer {
+public:
+    GLElementBuffer(unsigned int size, ElementDataType d)
+        : ElementBuffer(size, OPENGL_BUFFER, d) {}
+
+    void draw(void) const;
 };
 
 #endif

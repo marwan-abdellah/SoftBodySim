@@ -6,6 +6,10 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+//define gl math default precision -  float
+#define GLM_PRECISION_MEDIUMP_FLOAT
+#define GLM_PRECISION_MEDIUMP_UINT
+
 class SoftBody;
 class CUDASoftBodySolver;
 
@@ -56,20 +60,21 @@ typedef std::vector<LinkConstraint>         linksArray_t;
 typedef std::vector<VolumeConstraint>       volumeArray_t;
 
 typedef struct Mesh {
-    VertexBuffer                *facesBuffer;
-    VertexBuffer                *texCoordBuffer;
+    VertexBuffer                 *vertexes;
+    ElementBuffer                *faces;
+    ElementBuffer                *edges;
 } Mesh_t;
 
 class SoftBody {
 public:
     SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
-             glm::vec3 *particles, unsigned int particles_count,
-             glm::uvec2 *links_indexes, unsigned int links_count,
-             glm::uvec4 *volumes_indexes, unsigned int volumes_count);
+             const glm::vec3 *particles, unsigned int particles_count,
+             const glm::uvec2 *links_indexes, unsigned int links_count,
+             const glm::uvec4 *volumes_indexes, unsigned int volumes_count);
     ~SoftBody(void);
 
-    void                        initVertexBuffer(VertexBuffer::VertexBufferType);
-    const VertexBuffer          *getVertexBuffer(void);
+    void                        initVertexBuffers(VertexBuffer::VertexBufferType);
+    const Mesh_t                *getMesh(void) { return mMesh;}
 private:
     void createGLVertexBuffer(void);
 
@@ -87,9 +92,7 @@ private:
     volumeArray_t               mVolumes;
 
     // drawing data
-    VertexBuffer                *mVertexBuffer;
-    VertexBuffer                *mEdgeBuffer;
-    Mesh_t                      mMesh;
+    Mesh_t                      *mMesh;
 
 friend class CUDASoftBodySolver;
 };

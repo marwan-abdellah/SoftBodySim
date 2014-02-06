@@ -1,5 +1,6 @@
 #include "VertexBuffer.h"
 #include <cstring>
+#include "common.h"
 
 using namespace glm;
 
@@ -20,7 +21,7 @@ void GLVertexBuffer::setVertexes(glm::vec3 *data)
 	if (mVBO[VERTEX_ATTR_POSITION] == 0)
 		glGenBuffers(1, &mVBO[VERTEX_ATTR_POSITION]);
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO[VERTEX_ATTR_POSITION]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * mVertexesCount, data, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * mVertexesCount, data, GL_STREAM_DRAW);
 }
 
 void GLVertexBuffer::setNormals(glm::vec3 *data)
@@ -47,7 +48,7 @@ void GLVertexBuffer::setColors(glm::vec3 *data)
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * mVertexesCount, data, GL_DYNAMIC_DRAW);
 }
 
-bool GLVertexBuffer::bind(VertexAttribute attr)
+bool GLVertexBuffer::bind(VertexAttribute attr) const
 {
 	if (!mVBO[attr]) return false;
 
@@ -55,13 +56,13 @@ bool GLVertexBuffer::bind(VertexAttribute attr)
 		case VERTEX_ATTR_POSITION:
 		case VERTEX_ATTR_NORMAL:
 		case VERTEX_ATTR_COLOR:
-			glEnableVertexAttribArray(attr);
 			glBindBuffer(GL_ARRAY_BUFFER, mVBO[attr]);
+			glEnableVertexAttribArray(attr);
 			glVertexAttribPointer(attr, 3, GL_FLOAT, GL_FALSE, 0, 0);
 			break;
 		case VERTEX_ATTR_TEX_COORDS:
-			glEnableVertexAttribArray(attr);
 			glBindBuffer(GL_ARRAY_BUFFER, mVBO[attr]);
+			glEnableVertexAttribArray(attr);
 			glVertexAttribPointer(attr, 2, GL_FLOAT, GL_FALSE, 0, 0);
 			break;
 		default:
@@ -70,12 +71,13 @@ bool GLVertexBuffer::bind(VertexAttribute attr)
 	return true;
 }
 
-void GLVertexBuffer::unbind(void)
+void GLVertexBuffer::unbind(void) const
 {
 	glBindVertexArray(0);
 	glDisableVertexAttribArray(VERTEX_ATTR_POSITION);
 	glDisableVertexAttribArray(VERTEX_ATTR_NORMAL);
 	glDisableVertexAttribArray(VERTEX_ATTR_COLOR);
 	glDisableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
