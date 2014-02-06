@@ -52,8 +52,14 @@ struct VolumeConstraint {
 };
 
 typedef std::vector<glm::vec3>              vec3Array_t;
+typedef std::vector<glm::vec2>              index3Array_t;
 typedef std::vector<LinkConstraint>         linksArray_t;
 typedef std::vector<VolumeConstraint>       volumeArray_t;
+
+typedef struct Mesh {
+    VertexBuffer                *facesBuffer;
+    VertexBuffer                *texCoordBuffer;
+} Mesh_t;
 
 class SoftBody {
 public:
@@ -81,8 +87,10 @@ private:
     linksArray_t                mLinks;
     volumeArray_t               mVolumes;
 
-    // buffer object
+    // drawing data
     VertexBuffer                *mVertexBuffer;
+    VertexBuffer                *mEdgeBuffer;
+    Mesh_t                      mMesh;
 
 friend class CUDASoftBodySolver;
 };
