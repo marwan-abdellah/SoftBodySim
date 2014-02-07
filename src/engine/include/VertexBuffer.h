@@ -66,12 +66,12 @@ public:
     };
 
     ElementBuffer(unsigned int size, ElementBufferType t, ElementDataType d)
-        : mCount(size), mType(t), mDataType(d) {}
+        : mElementsCount(size), mType(t), mDataType(d) {}
 
     ElementDataType getDataType(void) { return mDataType;}
     ElementBufferType getType(void) { return mType;}
 protected:
-    unsigned int mCount;
+    unsigned int mElementsCount;
     ElementBufferType mType;
     ElementDataType mDataType;
 };
@@ -81,7 +81,14 @@ public:
     GLElementBuffer(unsigned int size, ElementDataType d)
         : ElementBuffer(size, OPENGL_BUFFER, d) {}
 
+    ~GLElementBuffer(void);
     void draw(void) const;
+    void setIndexes2(glm::uvec2 *idx);
+    void setIndexes3(glm::uvec3 *idx);
+private:
+    GLuint mBuffer;
+    glm::vec2 *mIdx2;
+    glm::vec3 *mIdx3;
 };
 
 #endif
