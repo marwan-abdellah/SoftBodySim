@@ -55,7 +55,9 @@ struct VolumeConstraint {
 };
 
 typedef std::vector<glm::vec3>              vec3Array_t;
-typedef std::vector<glm::vec2>              index3Array_t;
+typedef std::vector<glm::vec2>              vec2Array_t;
+typedef std::vector<glm::uvec3>             index3Array_t;
+typedef std::vector<glm::uvec2>             index2Array_t;
 typedef std::vector<LinkConstraint>         linksArray_t;
 typedef std::vector<VolumeConstraint>       volumeArray_t;
 
@@ -70,13 +72,17 @@ public:
     SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
              const glm::vec3 *particles, unsigned int particles_count,
              const glm::uvec2 *links_indexes, unsigned int links_count,
-             const glm::uvec4 *volumes_indexes, unsigned int volumes_count);
+             const glm::uvec4 *volumes_indexes, unsigned int volumes_count,
+             const glm::uvec2 *text_coords, unsigned int text_coords_count,
+             const glm::vec3 *normals, unsigned int normals_count,
+             const glm::uvec3 *mesh_faces, const unsigned int faces_counta,
+             VertexBuffer::VertexBufferType);
     ~SoftBody(void);
 
-    void                        initVertexBuffers(VertexBuffer::VertexBufferType);
-    const Mesh_t                *getMesh(void) { return mMesh;}
+    const Mesh_t *getMesh(void) { return mMesh; }
 private:
-    void createGLVertexBuffer(void);
+    Mesh_t *createGLVertexBufferMesh(vec3Array_t *vertexes, vec2Array_t *texCoords, vec3Array_t *normals,
+                                     index2Array_t *edges, index3Array_t *faces);
 
     vec3Array_t                 mParticles;
     vec3Array_t                 mVelocities;

@@ -32,7 +32,7 @@ void GLVertexBuffer::setNormals(glm::vec3 *data)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * mVertexesCount, data, GL_DYNAMIC_DRAW);
 }
 
-void GLVertexBuffer::setTextCoords(glm::uvec2 *data)
+void GLVertexBuffer::setTextCoords(glm::vec2 *data)
 {
     if (mVBO[VERTEX_ATTR_TEX_COORDS] == 0)
         glGenBuffers(1, &mVBO[VERTEX_ATTR_TEX_COORDS]);

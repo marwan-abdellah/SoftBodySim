@@ -18,7 +18,7 @@ public:
 
     virtual void setVertexes(glm::vec3 *data) = 0;
     virtual void setNormals(glm::vec3 *data) = 0;
-    virtual void setTextCoords(glm::uvec2 *data) = 0;
+    virtual void setTextCoords(glm::vec2 *data) = 0;
     virtual void setColors(glm::vec3 *data) = 0;
 
 protected:
@@ -33,7 +33,7 @@ public:
 
     void setVertexes(glm::vec3 *data);
     void setNormals(glm::vec3 *data);
-    void setTextCoords(glm::uvec2 *data);
+    void setTextCoords(glm::vec2 *data);
     void setColors(glm::vec3 *data);
 
     enum VertexAttribute {

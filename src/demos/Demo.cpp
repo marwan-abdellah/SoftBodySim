@@ -44,13 +44,13 @@ private:
 
 Demo::Demo(int argc, char **argv) :
     GLUTApplication(argc, argv, "DemoApp", width, height),
-    b(1,1,1, particles, SIZE(particles), links, SIZE(links), NULL, 0)
+    b(1,1,1, particles, SIZE(particles), links, SIZE(links), NULL, 0,
+      NULL, 0, NULL, 0, NULL, 0, VertexBuffer::OPENGL_BUFFER)
 {
     initialize();
 
     renderer.initialize(width, height);
     renderer.setRenderMethod(SB_RENDER_PARTICLES);
-    b.initVertexBuffers(VertexBuffer::OPENGL_BUFFER);
 
     int id1 = addMenu("Main");
     addMenuEntry(id1, "Hello1");
