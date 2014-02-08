@@ -143,6 +143,7 @@ void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
 
 bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
 {
+    cudaError_t err;
     int idx = 0, idx2= 0;
 
     FOREACH(it, bodies) {
@@ -165,11 +166,24 @@ bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, Solv
         unsigned int offset2 = idx2 * sizeof(uvec2);
         unsigned int offset3 = idx2 * sizeof(float_t);
 
-        cudaMemcpy(cuda->array[ARRAY_POSITIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemcpy(cuda->array[ARRAY_PROJECTIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemcpy(cuda->array[ARRAY_VELOCITIES] + offset, &(body->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemcpy(cuda->array[ARRAY_FORCES] + offset, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemset(cuda->massInv + offset3, body->mMassInv, bytes1);
+        err = cudaMemcpy(cuda->array[ARRAY_POSITIONS] + offset, &(body->mParticles[0]),
+                         bytes1, cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
+
+        err = cudaMemcpy(cuda->array[ARRAY_PROJECTIONS] + offset, &(body->mParticles[0]),
+                         bytes1, cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
+
+        err = cudaMemcpy(cuda->array[ARRAY_VELOCITIES] + offset, &(body->mVelocities[0]),
+                         bytes1, cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
+
+        err = cudaMemcpy(cuda->array[ARRAY_FORCES] + offset, &(body->mForces[0]), bytes1,
+                         cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
+
+        err = cudaMemset(cuda->massInv + offset3, body->mMassInv, bytes1);
+        if (err != cudaSuccess) return false;
 
         vector<uvec2> tmp(body->mLinks.size());
         vector<float_t> tmp2(body->mLinks.size());
@@ -180,8 +194,11 @@ bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, Solv
             tmp2.push_back(lnk->restLength);
         }
 
-        cudaMemcpy(cuda->links + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
-        cudaMemcpy(cuda->linksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
+        err = cudaMemcpy(cuda->links + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
+
+        err = cudaMemcpy(cuda->linksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
 
         if (body->mMesh) {
             const VertexBuffer *buf = body->mMesh->vertexes;
