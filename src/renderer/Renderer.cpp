@@ -7,9 +7,6 @@
 
 using namespace glm;
 
-#define WIN_HEIGHT 1024
-#define WIN_WIDTH 768
-
 static const char *vertex_source = 
     "#version 330\n"
     "uniform mat4 projMatrix;"
@@ -102,7 +99,7 @@ void SoftBodyRenderer::logShader(GLint shader)
     delete log;
 }
 
-void SoftBodyRenderer::initialize(int width = WIN_HEIGHT, int height = WIN_WIDTH)
+void SoftBodyRenderer::initialize(int width, int height)
 {
     mWidth = width;
     mHeight = height;
@@ -120,8 +117,8 @@ void SoftBodyRenderer::initialize(int width = WIN_HEIGHT, int height = WIN_WIDTH
 
     vec3 lightSrc(-5, 1, 0);
 
-    mProjectionMat = mProjectionMat * perspectiveFov(60.0f,
-            (float)mHeight, (float)mWidth, 1.0f, 100.0f);
+    mProjectionMat = perspectiveFov(60.0f,
+            (float)mWidth, (float)mHeight, 1.0f, 100.0f);
 
     mPointLine.setShaderSource(GL_VERTEX_SHADER, vertex_source);
     mPointLine.setShaderSource(GL_FRAGMENT_SHADER, fragment_source);
