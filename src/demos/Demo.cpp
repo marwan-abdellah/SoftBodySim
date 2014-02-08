@@ -127,11 +127,34 @@ void Demo::onDisplay(void)
     renderer.renderBody(b, mCamera.getCameraMatrix());
 }
 
-void Demo::onKeyboard(unsigned char k, int x, int y)
+void Demo::onKeyboard(unsigned char key, int x, int y)
 {
-    cout << "OnKeyboard : " << k << endl;
-    if (k == 'q')
-        shutdown();
+    float angle = 2.0f;
+    float delta = 0.1f;
+
+    if (key == 'w')
+        mCamera.moveUp(angle);
+    if (key == 's')
+        mCamera.moveDown(angle);
+    if (key == 'e')
+        mCamera.moveIn(delta);
+    if (key == 'q')
+        mCamera.moveOut(delta);
+    if (key == 'm')
+    {
+        switch (renderer.getRenderMethod()) {
+            case SB_RENDER_PARTICLES:
+                renderer.setRenderMethod(SB_RENDER_FACES);
+                break;
+            case SB_RENDER_FACES:
+                renderer.setRenderMethod(SB_RENDER_PARTICLES);
+                break;
+        }
+    }
+    if (key == 'd')
+        mCamera.moveRight(angle);
+    else if (key == 'a')
+        mCamera.moveLeft(angle);
 }
 
 void Demo::onMouseClick(ButtonType type, ButtonState state, int x, int y)
