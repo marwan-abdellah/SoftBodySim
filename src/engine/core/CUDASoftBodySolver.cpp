@@ -10,7 +10,7 @@ using namespace glm;
 
 
 enum ArrayType {
-    ARRAY_POSITIONS,
+    ARRAY_POSITIONS = 0,
     ARRAY_PROJECTIONS,
     ARRAY_VELOCITIES,
     ARRAY_FORCES,
@@ -89,50 +89,58 @@ bool CUDASoftBodySolver::shutdownDevice(SolverPrivate *cuda)
     return true;
 }
 
+static void *allocateCUDABuffer(size_t bytes, bool zeroed=false)
+{
+    cudaError_t err;
+    void *ret = NULL;
+    err = cudaMalloc(&ret, bytes);
+    if (err != cudaSuccess) {
+        ERR("%s", cudaGetErrorString(err));
+        return NULL;
+    }
+    if (zeroed) {
+        err = cudaMemset(ret, 0x0, bytes);
+        if (err != cudaSuccess) {
+            ERR("%s", cudaGetErrorString(err));
+            return NULL;
+        }
+    }
+    return ret;
+}
+
 bool CUDASoftBodySolver::allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
 {
-    int bytes2alloc = 0;
+    int bytesArray = 0, bytesMass = 0, bytesMapping = 0, bytesLinks = 0, bytesRestLength = 0;
     long total_alloc = 0;
-    cudaError_t err;
 
-    FOREACH(it, bodies)
-        bytes2alloc += (*it)->mParticles.size() * sizeof(vec3);
-
-    for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; ++type) {
-        err = cudaMalloc(&cuda->array[type], bytes2alloc);
-        total_alloc += bytes2alloc;
-        if (err != cudaSuccess) goto on_fail;
+    FOREACH(it, bodies) {
+        bytesArray += (*it)->mParticles.size() * sizeof(vec3);
+        bytesMass += (*it)->mParticles.size() * sizeof(float_t);
+        bytesMapping += (*it)->mMeshVertexParticleMapping.size() * sizeof(uint_t);
+        bytesLinks += (*it)->mLinks.size() * sizeof(uvec2);
+        bytesRestLength += (*it)->mLinks.size() * sizeof(float_t);
     }
 
-    err = cudaMalloc(&cuda->massInv, bytes2alloc);
-    if (err != cudaSuccess) goto on_fail;
-    total_alloc += bytes2alloc;
+    cuda->array[ARRAY_POSITIONS]   = (vec3*)allocateCUDABuffer(bytesArray);
+    cuda->array[ARRAY_PROJECTIONS] = (vec3*)allocateCUDABuffer(bytesArray);
+    cuda->array[ARRAY_FORCES]      = (vec3*)allocateCUDABuffer(bytesArray, true);
+    cuda->array[ARRAY_VELOCITIES]  = (vec3*)allocateCUDABuffer(bytesArray);
+    for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; ++type)
+        if (!cuda->array[type]) goto on_fail;
 
-    cudaMemset(cuda->array[ARRAY_FORCES], 0x0, bytes2alloc);
+    cuda->massInv = (float_t*)allocateCUDABuffer(bytesMass);
+    if (!cuda->massInv) goto on_fail;
 
-    bytes2alloc = 0;
-    FOREACH(it, bodies)
-        bytes2alloc += (*it)->mMeshVertexParticleMapping.size() * sizeof(uint_t);
+    cuda->mapping = (uint*)allocateCUDABuffer(bytesMapping);
+    if (!cuda->mapping) goto on_fail;
 
-    err = cudaMalloc(&cuda->mapping, bytes2alloc);
-    if (err != cudaSuccess) goto on_fail;
-    total_alloc += bytes2alloc;
+    cuda->links = (uvec2*)allocateCUDABuffer(bytesLinks);
+    if (!cuda->links) goto on_fail;
 
-    bytes2alloc = 0;
-    FOREACH(it, bodies)
-        bytes2alloc += (*it)->mLinks.size() * sizeof(uvec2);
+    cuda->linksRestLength2 = (float_t*)allocateCUDABuffer(bytesRestLength);
+    if (!cuda->linksRestLength2) goto on_fail;
 
-    err = cudaMalloc(&cuda->links, bytes2alloc);
-    if (err != cudaSuccess) goto on_fail;
-    total_alloc += bytes2alloc;
-
-    FOREACH(it, bodies)
-        bytes2alloc += (*it)->mLinks.size() * sizeof(float_t);
-
-    cudaMalloc(&cuda->linksRestLength2, bytes2alloc);
-    if (err != cudaSuccess) goto on_fail;
-    total_alloc += bytes2alloc;
-
+    total_alloc = ARRAY_LAST_DEFINED * bytesArray + bytesMapping + bytesMass + bytesLinks + bytesRestLength;
     DBG("Device allocated mem: %ld bytes", total_alloc);
 
     return true;
@@ -149,6 +157,7 @@ void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
     if (cuda->massInv) cudaFree(cuda->massInv);
     if (cuda->links) cudaFree(cuda->links);
     if (cuda->linksRestLength2) cudaFree(cuda->linksRestLength2);
+    if (cuda->mapping) cudaFree(cuda->mapping);
 }
 
 bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
