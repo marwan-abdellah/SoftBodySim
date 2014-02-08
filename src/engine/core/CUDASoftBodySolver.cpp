@@ -4,37 +4,67 @@
 using namespace std;
 using namespace glm;
 
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
+
+
+struct CUDASoftBodySolver::SoftBodyDescriptor {
+    SoftBody *body;
+    cudaGraphicsResource *graphics;
+    bool mapped : 1;
+    unsigned int vertexBaseIdx;
+    unsigned int linksBaseIdx;
+};
+
+struct CUDASoftBodySolver::SolverPrivate {
+    int             deviceId;
+    cudaDeviceProp  devProp;
+    cudaStream_t    stream;
+};
+
 CUDASoftBodySolver::CUDASoftBodySolver(void)
-    :
-        mInitialized(false)
+    : mInitialized(false)
 {
 }
 
 CUDASoftBodySolver::~CUDASoftBodySolver(void)
 {
-    if (mInitialized)
-        terminate();
+    shutdown();
 }
 
-bool CUDASoftBodySolver::initializeDevice(void)
+bool CUDASoftBodySolver::initializeDevice(SolverPrivate *cuda)
 {
-    cudaError_t error;
-    int count;
+    cudaError_t err;
 
-    error = cudaGetDeviceCount(&count);
-    if (error != cudaSuccess)
-        return false;
+    // let runtime api choose device for us.
+    err = cudaChooseDevice(&cuda->deviceId, NULL);
+    if (err != cudaSuccess) return false;
 
-    // take by default last device
-    mDevId = count - 1;
+    err = cudaSetDevice(cuda->deviceId);
+    if (err != cudaSuccess) return false;
 
-    error = cudaSetDevice(mDevId);
-    if (error != cudaSuccess)
-        return false;
+    err = cudaGetDeviceProperties(&mCuda->devProp, mCuda->deviceId);
+    if (err != cudaSuccess) return false;
     
-    error = cudaStreamCreate(&mStream);
-    if (error != cudaSuccess)
-        return false;
+    err = cudaStreamCreate(&cuda->stream);
+    if (err != cudaSuccess) return false;
+
+    DBG("Choosen CUDA Device: %s", cuda->devProp.name);
+    DBG("Multiprocessor count: %d", cuda->devProp.multiProcessorCount);
+    DBG("Compute capability: %d.%d", cuda->devProp.major, cuda->devProp.minor);
+
+    return true;
+}
+
+bool CUDASoftBodySolver::shutdownDevice(SolverPrivate *cuda)
+{
+    cudaError_t err;
+
+    err = cudaDeviceSynchronize();
+    if (err != cudaSuccess) return false;
+
+    err = cudaDeviceReset();
+    if (err != cudaSuccess) return false;
 
     return true;
 }
@@ -116,7 +146,7 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
             if (buf) {
                 switch(buf->getType()) {
                     case VertexBuffer::OPENGL_BUFFER:
-                        initGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr);
+                        initGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr);
                         break;
                     default:
                         break;
@@ -124,13 +154,13 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
             }
         }
 
-        mDescriptorMap.insert(make_pair(body, descr));
+        mDescriptors.push_back(descr);
     }
 
     return true;
 }
 
-void CUDASoftBodySolver::initGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
+void CUDASoftBodySolver::initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
 {
     cudaError_t err;
     GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
@@ -159,13 +189,17 @@ void CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
 {
     if (mInitialized) return;
 
-    if (!initializeDevice()) {
+    mCuda = new SolverPrivate;
+
+    if (!initializeDevice(mCuda)) {
         ERR("CUDA Device initialization failed!");
+        delete mCuda;
         return;
     }
 
     if (!copyBodiesToDevice(bodies)) {
         ERR("Unable to copy Soft bodies to device!");
+        shutdownDevice(mCuda);
         freeBodies();
         return;
     }
@@ -173,9 +207,14 @@ void CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
     mInitialized = true;
 }
 
-void CUDASoftBodySolver::terminate(void)
+void CUDASoftBodySolver::shutdown(void)
 {
-    cudaStreamDestroy(mStream);
+    if (!mInitialized) return;
+
+    if (mCuda) {
+        shutdownDevice(mCuda);
+        delete mCuda;
+    }
     mInitialized = false;
 }
 
@@ -185,5 +224,9 @@ bool CUDASoftBodySolver::updateVertexBuffers(void)
 }
 
 void CUDASoftBodySolver::updateAllVertexBuffersAsync(void)
+{
+}
+
+void CUDASoftBodySolver::projectSystem(float_t dt)
 {
 }

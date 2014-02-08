@@ -1,6 +1,7 @@
 #include "GLUTApplication.h"
 #include "Renderer.h"
 #include "SoftBody.h"
+#include "CUDASoftBodySolver.h"
 #include <iostream>
 #include <glm/glm.hpp>
 #include "Camera.h"
