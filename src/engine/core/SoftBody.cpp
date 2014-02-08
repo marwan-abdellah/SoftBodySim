@@ -68,7 +68,7 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     // Beacause vertexes can have different texture coordinates, normals 
     // depending on which face they belong, new vertices list has to be
     // created.
-    if (!faces) {
+    if (!faces || faces->size() == 0) {
         WRN("SoftBody created with no faces data. Mesh not created.");
         return;
     }
@@ -138,7 +138,7 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     }
     if (mParticles.size() > vertexes2.size()) {
         ERR("Something goes bad. Number of generated mesh Vertexes < number of Particles.");
-        ERR("Maybe your face data is corrupted?");
+        ERR("Looks like your face data is corrupted.");
         ERR("Aborting buffer creation.");
         return;
     }
