@@ -45,7 +45,7 @@ private:
 Demo::Demo(int argc, char **argv) :
     GLUTApplication(argc, argv, "DemoApp", width, height),
     b(1,1,1, particles, SIZE(particles), links, SIZE(links), NULL, 0,
-      NULL, 0, NULL, 0, NULL, 0, VertexBuffer::OPENGL_BUFFER)
+      NULL, 0, NULL, 0, VertexBuffer::OPENGL_BUFFER)
 {
     initialize();
 
