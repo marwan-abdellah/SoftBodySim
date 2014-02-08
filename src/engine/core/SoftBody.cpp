@@ -37,7 +37,8 @@ static void cacheAddValue(cache_t *cache, unsigned int major, unsigned int minor
 SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
              vec3Array_t *particles, index2Array_t *links, index4Array_t *volumes,
              vec2Array_t *textCoords, facesArray_t *faces,
-             VertexBuffer::VertexBufferType type)
+             VertexBuffer::VertexBufferType type) :
+    mMesh(0)
 {
     vec3Array_t vertexes2;
     vec2Array_t textCoord2;

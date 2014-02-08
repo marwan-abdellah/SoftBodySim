@@ -175,7 +175,9 @@ void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
     mCurrent->setUniform("color", &color);
 
     mesh = obj->getMesh();
+    if (!mesh) return;
     buff = static_cast<const GLVertexBuffer*>(mesh->vertexes);
+    if (!buff) return;
     buff->bind(GLVertexBuffer::VERTEX_ATTR_POSITION);
 
     glDrawArrays(GL_POINT, 0, 8);
