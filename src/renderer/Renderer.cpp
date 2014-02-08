@@ -166,6 +166,7 @@ void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
 {
     vec3 color(255,1,1);
     const GLVertexBuffer *buff;
+    const GLElementBuffer *ebuff;
     const Mesh_t *mesh;
 
     if (!obj || !camMat)
@@ -177,21 +178,16 @@ void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
     mesh = obj->getMesh();
     if (!mesh) return;
     buff = static_cast<const GLVertexBuffer*>(mesh->vertexes);
-    if (!buff) return;
     buff->bind(GLVertexBuffer::VERTEX_ATTR_POSITION);
 
-    glDrawArrays(GL_POINT, 0, 8);
-//
-//    SoftBody::DrawMethod m;
-//
-//    switch (mMethod) {
-//        case SB_RENDER_PARTICLES:
-//            m = SoftBody::CONNECTIONS;
-//        break;
-//    case SB_RENDER_FACES:
-//            m = SoftBody::FACES;
-//        break;
-//    }
-//    obj->setDrawMethod(m);
-//    obj->draw();
+    switch (mMethod) {
+        case SB_RENDER_PARTICLES:
+            ebuff = static_cast<const GLElementBuffer*>(mesh->edges);
+        break;
+    case SB_RENDER_FACES:
+            ebuff = static_cast<const GLElementBuffer*>(mesh->faces);
+        break;
+    }
+    ebuff->draw();
+    buff->unbind();
 }
