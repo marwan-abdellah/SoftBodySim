@@ -69,11 +69,12 @@ public:
     void onDisplay(void);
 private:
     SoftBodyRenderer    renderer;
-    SoftBody        *b;
+    softbodyArray_t     mSoftBodies;
     int mMouseLastX;
     int mMouseLastY;
     bool mMousePressed;
     Camera mCamera;
+    CUDASoftBodySolver mSolver;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -101,10 +102,13 @@ Demo::Demo(int argc, char **argv) :
     FACE_ADD(facesA, faces, 30, 3);
     FACE_ADD(facesA, faces, 33, 3);
     
-    b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    SoftBody *b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);
     renderer.setRenderMethod(SB_RENDER_PARTICLES);
+
+    mSolver.initialize(&mSoftBodies);
 
     int id1 = addMenu("Main");
     addMenuEntry(id1, "Hello1");
@@ -119,13 +123,16 @@ Demo::Demo(int argc, char **argv) :
 
 Demo::~Demo(void)
 {
-    if (b) delete b;
+    FOREACH(b, &mSoftBodies)
+        delete *b;
 }
 
 void Demo::onDisplay(void)
 {
     renderer.clearScreen();
-    renderer.renderBody(b, mCamera.getCameraMatrix());
+
+    FOREACH(b, &mSoftBodies)
+        renderer.renderBody(*b, mCamera.getCameraMatrix());
 }
 
 void Demo::onKeyboard(unsigned char key, int x, int y)

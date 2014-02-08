@@ -1,11 +1,21 @@
 #include "CUDASoftBodySolver.h"
 #include "common.h"
+#include <cstring>
 
 using namespace std;
 using namespace glm;
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
+
+
+enum ArrayType {
+    ARRAY_POSITIONS,
+    ARRAY_PROJECTIONS,
+    ARRAY_VELOCITIES,
+    ARRAY_FORCES,
+    ARRAY_LAST_DEFINED
+};
 
 
 struct CUDASoftBodySolver::SoftBodyDescriptor {
@@ -20,6 +30,10 @@ struct CUDASoftBodySolver::SolverPrivate {
     int             deviceId;
     cudaDeviceProp  devProp;
     cudaStream_t    stream;
+    glm::vec3       *array[ARRAY_LAST_DEFINED];
+    glm::uvec2      *links;
+    glm::float_t    *linksRestLength2;
+    glm::float_t    *massInv;
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -35,15 +49,19 @@ CUDASoftBodySolver::~CUDASoftBodySolver(void)
 bool CUDASoftBodySolver::initializeDevice(SolverPrivate *cuda)
 {
     cudaError_t err;
+    cudaDeviceProp  prop;
+    memset(&prop, 0x0, sizeof(prop));
+    prop.major = 3;
+    prop.minor = 5;
 
-    // let runtime api choose device for us.
-    err = cudaChooseDevice(&cuda->deviceId, NULL);
+    // choose device for us. Prefer with compute capabilities ~ 3.5
+    err = cudaChooseDevice(&cuda->deviceId, &prop);
     if (err != cudaSuccess) return false;
 
     err = cudaSetDevice(cuda->deviceId);
     if (err != cudaSuccess) return false;
 
-    err = cudaGetDeviceProperties(&mCuda->devProp, mCuda->deviceId);
+    err = cudaGetDeviceProperties(&cuda->devProp, cuda->deviceId);
     if (err != cudaSuccess) return false;
     
     err = cudaStreamCreate(&cuda->stream);
@@ -69,39 +87,63 @@ bool CUDASoftBodySolver::shutdownDevice(SolverPrivate *cuda)
     return true;
 }
 
-bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
+bool CUDASoftBodySolver::allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
 {
-    int cells2alloc = 0;
-    int idx = 0, idx2= 0;
-    cudaError_t error;
+    int bytes2alloc = 0;
+    long total_alloc = 0;
+    cudaError_t err;
 
     FOREACH(it, bodies)
-        cells2alloc += (*it)->mParticles.size();
+        bytes2alloc += (*it)->mParticles.size() * sizeof(vec3);
 
     for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; ++type) {
-        error = cudaMalloc(&mArray[type], cells2alloc * sizeof(glm::vec3));
-        if (error != cudaSuccess)
-            return false;
+        err = cudaMalloc(&cuda->array[type], bytes2alloc);
+        total_alloc += bytes2alloc;
+        if (err != cudaSuccess) goto on_fail;
     }
 
-    error = cudaMalloc(&mMassInv, cells2alloc);
-    if (error != cudaSuccess)
-        return false;
+    err = cudaMalloc(&cuda->massInv, bytes2alloc);
+    if (err != cudaSuccess) goto on_fail;
+    total_alloc += bytes2alloc;
 
-    cudaMemset(mArray[ARRAY_FORCES], 0x0, cells2alloc);
+    cudaMemset(cuda->array[ARRAY_FORCES], 0x0, bytes2alloc);
 
-    cells2alloc = 0;
+    bytes2alloc = 0;
     FOREACH(it, bodies)
-        cells2alloc += (*it)->mLinks.size();
+        bytes2alloc += (*it)->mLinks.size() * sizeof(uvec2);
 
-    error = cudaMalloc(&mLinks, cells2alloc * sizeof(glm::uvec2));
-    if (error != cudaSuccess) {
-        return false;
-    }
-    cudaMalloc(&mLinksRestLength2, cells2alloc * sizeof(glm::float_t));
-    if (error != cudaSuccess) {
-        return false;
-    }
+    err = cudaMalloc(&cuda->links, bytes2alloc);
+    if (err != cudaSuccess) goto on_fail;
+    total_alloc += bytes2alloc;
+
+    FOREACH(it, bodies)
+        bytes2alloc += (*it)->mLinks.size() * sizeof(float_t);
+
+    cudaMalloc(&cuda->linksRestLength2, bytes2alloc);
+    if (err != cudaSuccess) goto on_fail;
+    total_alloc += bytes2alloc;
+
+    DBG("Device allocated mem: %ld bytes", total_alloc);
+
+    return true;
+
+on_fail:
+    deallocateDeviceBuffers(cuda);
+    return false;
+}
+
+void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
+{
+    for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; ++type)
+        if (cuda->array[type]) cudaFree(cuda->array[type]);
+    if (cuda->massInv) cudaFree(cuda->massInv);
+    if (cuda->links) cudaFree(cuda->links);
+    if (cuda->linksRestLength2) cudaFree(cuda->linksRestLength2);
+}
+
+bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
+{
+    int idx = 0, idx2= 0;
 
     FOREACH(it, bodies) {
         SoftBodyDescriptor descr;
@@ -115,19 +157,19 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
         idx += body->mParticles.size();
         idx2 += body->mLinks.size();
 
-        unsigned int bytes1 = body->mParticles.size() * sizeof(glm::vec3);
-        unsigned int bytes2 = body->mLinks.size() * sizeof(glm::uvec2);
-        unsigned int bytes3 = body->mLinks.size() * sizeof(glm::float_t);
+        unsigned int bytes1 = body->mParticles.size() * sizeof(vec3);
+        unsigned int bytes2 = body->mLinks.size() * sizeof(uvec2);
+        unsigned int bytes3 = body->mLinks.size() * sizeof(float_t);
 
-        unsigned int offset = idx * sizeof(glm::vec3);
-        unsigned int offset2 = idx2 * sizeof(glm::uvec2);
-        unsigned int offset3 = idx2 * sizeof(glm::float_t);
+        unsigned int offset = idx * sizeof(vec3);
+        unsigned int offset2 = idx2 * sizeof(uvec2);
+        unsigned int offset3 = idx2 * sizeof(float_t);
 
-        cudaMemcpy(mArray[ARRAY_POSITIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemcpy(mArray[ARRAY_PROJECTIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemcpy(mArray[ARRAY_VELOCITIES] + offset, &(body->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemcpy(mArray[ARRAY_FORCES] + offset, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
-        cudaMemset(mMassInv + offset3, body->mMassInv, bytes1);
+        cudaMemcpy(cuda->array[ARRAY_POSITIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
+        cudaMemcpy(cuda->array[ARRAY_PROJECTIONS] + offset, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
+        cudaMemcpy(cuda->array[ARRAY_VELOCITIES] + offset, &(body->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
+        cudaMemcpy(cuda->array[ARRAY_FORCES] + offset, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
+        cudaMemset(cuda->massInv + offset3, body->mMassInv, bytes1);
 
         vector<uvec2> tmp(body->mLinks.size());
         vector<float_t> tmp2(body->mLinks.size());
@@ -138,15 +180,16 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
             tmp2.push_back(lnk->restLength);
         }
 
-        cudaMemcpy(mLinks + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
-        cudaMemcpy(mLinksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
+        cudaMemcpy(cuda->links + offset2, &tmp[0], bytes2, cudaMemcpyHostToDevice);
+        cudaMemcpy(cuda->linksRestLength2 + offset3, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
 
         if (body->mMesh) {
             const VertexBuffer *buf = body->mMesh->vertexes;
             if (buf) {
                 switch(buf->getType()) {
                     case VertexBuffer::OPENGL_BUFFER:
-                        initGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr);
+                        if (!initGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr))
+                            return false;
                         break;
                     default:
                         break;
@@ -160,7 +203,7 @@ bool CUDASoftBodySolver::copyBodiesToDevice(softbodyArray_t *bodies)
     return true;
 }
 
-void CUDASoftBodySolver::initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
+bool CUDASoftBodySolver::initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
 {
     cudaError_t err;
     GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
@@ -168,43 +211,43 @@ void CUDASoftBodySolver::initGLGraphicsResource(const GLVertexBuffer *vb, SoftBo
     if (err != cudaSuccess) {
         ERR("Unable to register GL buffer object %d", id);
         descr->graphics = NULL;
+        return false;
     }
+    return true;
 }
 
-void CUDASoftBodySolver::freeBodies(void)
+bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
 {
-    for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; type++) {
-        if (mArray[type]) cudaFree(mArray[type]);
-        mArray[type] = NULL;
-    }
+    SolverPrivate *cuda;
+    if (mInitialized) return true;
 
-    if (mLinks) cudaFree(mLinks);
-    mLinks = NULL;
-    if (mLinksRestLength2) cudaFree(mLinksRestLength2);
-    mLinksRestLength2 = NULL;
-    //mDescriptorMap.clear();
-}
+    cuda = new SolverPrivate;
+    memset(cuda, 0x0, sizeof(SolverPrivate));
 
-void CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
-{
-    if (mInitialized) return;
-
-    mCuda = new SolverPrivate;
-
-    if (!initializeDevice(mCuda)) {
+    if (!initializeDevice(cuda)) {
         ERR("CUDA Device initialization failed!");
-        delete mCuda;
-        return;
+        delete cuda;
+        return false;
+    }
+    if (!allocateDeviceBuffers(bodies, cuda)) {
+        shutdownDevice(mCuda);
+        ERR("Unable to allocte enough memory on device!");
+        delete cuda;
+        return false;
     }
 
-    if (!copyBodiesToDevice(bodies)) {
-        ERR("Unable to copy Soft bodies to device!");
+    if (!copyBodiesToDeviceBuffers(bodies, cuda)) {
+        ERR("Error occured while copying Soft bodies data to device!");
         shutdownDevice(mCuda);
-        freeBodies();
-        return;
+        deallocateDeviceBuffers(cuda);
+        ERR("Unable to allocte enough memory on device!");
+        delete cuda;
+        return false;
     }
 
     mInitialized = true;
+    mCuda = cuda;
+    return true;
 }
 
 void CUDASoftBodySolver::shutdown(void)
@@ -213,7 +256,9 @@ void CUDASoftBodySolver::shutdown(void)
 
     if (mCuda) {
         shutdownDevice(mCuda);
+        deallocateDeviceBuffers(mCuda);
         delete mCuda;
+        mCuda = NULL;
     }
     mInitialized = false;
 }

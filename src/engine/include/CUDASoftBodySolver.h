@@ -14,7 +14,7 @@ class CUDASoftBodySolver {
 		CUDASoftBodySolver(void);
 		~CUDASoftBodySolver(void);
 
-		void 	initialize(softbodyArray_t *bodies);
+		bool    initialize(softbodyArray_t *bodies);
 		void	shutdown(void);
 
 		void 	projectSystem(glm::float_t dt);
@@ -26,32 +26,22 @@ class CUDASoftBodySolver {
 	    struct SolverPrivate;
         struct SoftBodyDescriptor;
 
-        enum ArrayType {
-            ARRAY_POSITIONS,
-            ARRAY_PROJECTIONS,
-            ARRAY_VELOCITIES,
-            ARRAY_FORCES,
-            ARRAY_LAST_DEFINED
-        };
-
 		void 	solveCollisions(glm::float_t dt);
 		void 	solveLinks(glm::float_t dt);
 		void	integrateSystem(glm::float_t dt);
+
 		bool 	initializeDevice(SolverPrivate*);
-		bool	copyBodiesToDevice(softbodyArray_t *bodies);
-		void	freeBodies(void);
 		bool    shutdownDevice(SolverPrivate*);
 
-		void initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
+		bool	allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
+        void    deallocateDeviceBuffers(SolverPrivate *cuda);
+		bool	copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
+
+		bool initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
 
         SolverPrivate   *mCuda;
 
 		bool			mInitialized;
-		glm::vec3		*mArray[ARRAY_LAST_DEFINED];
-		glm::uvec2 		*mLinks;
-		glm::float_t	*mLinksRestLength2;
-		glm::float_t	*mMassInv;
-
         std::vector<SoftBodyDescriptor>  mDescriptors;
 };
 
