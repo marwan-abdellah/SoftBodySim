@@ -81,14 +81,18 @@ void GLVertexBuffer::unbind(void) const
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+GLElementBuffer::GLElementBuffer(unsigned int size, ElementDataType d)
+    : ElementBuffer(size, OPENGL_BUFFER, d)
+{
+    glGenBuffers(1, &mBuffer);
+}
+
 void GLElementBuffer::setIndexes2(uvec2 *idxes)
 {
     if (mDataType != EDGES) {
         ERR("Invalid data type. Expected uvec3");
         return;
     }
-    if (mBuffer == 0)
-        glGenBuffers(1, &mBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mElementsCount * sizeof(uvec2),
                  idxes, GL_STATIC_DRAW);
@@ -101,8 +105,6 @@ void GLElementBuffer::setIndexes3(uvec3 *idxes)
         ERR("Invalid data type. Expected uvec2");
         return;
     }
-    if (mBuffer == 0)
-        glGenBuffers(1, &mBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mElementsCount * sizeof(uvec3),
                  idxes, GL_STATIC_DRAW);
@@ -124,6 +126,5 @@ void GLElementBuffer::draw(void) const
 
 GLElementBuffer::~GLElementBuffer(void)
 {
-    if (mBuffer)
-        glDeleteBuffers(1, &mBuffer);
+    glDeleteBuffers(1, &mBuffer);
 }

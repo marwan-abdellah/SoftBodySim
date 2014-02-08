@@ -78,17 +78,13 @@ protected:
 
 class GLElementBuffer : public ElementBuffer {
 public:
-    GLElementBuffer(unsigned int size, ElementDataType d)
-        : ElementBuffer(size, OPENGL_BUFFER, d) {}
-
+    GLElementBuffer(unsigned int size, ElementDataType d);
     ~GLElementBuffer(void);
     void draw(void) const;
     void setIndexes2(glm::uvec2 *idx);
     void setIndexes3(glm::uvec3 *idx);
 private:
     GLuint mBuffer;
-    glm::vec2 *mIdx2;
-    glm::vec3 *mIdx3;
 };
 
 #endif
