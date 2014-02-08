@@ -123,7 +123,6 @@ Demo::~Demo(void)
 
 void Demo::onDisplay(void)
 {
-    static int d;
     renderer.clearScreen();
     renderer.renderBody(b, mCamera.getCameraMatrix());
 }
