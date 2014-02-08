@@ -63,7 +63,7 @@ typedef std::vector<glm::uvec3>             index4Array_t;
 typedef std::vector<LinkConstraint>         linksArray_t;
 typedef std::vector<VolumeConstraint>       volumeArray_t;
 
-typedef std::vector< std::vector<glm::uvec3>  > facesArray_t;
+typedef std::vector< std::vector<glm::uvec2>  > facesArray_t;
 
 typedef struct Mesh {
     VertexBuffer                 *vertexes;

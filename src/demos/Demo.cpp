@@ -17,14 +17,44 @@ const int width = 800;
 const int height = 600;
 
 const vec3 particles[] = {
-    vec3(0,0,0), vec3(1,0,0), vec3(1,0,1), vec3(0,0,1),
-    vec3(0,1,0), vec3(1,1,0), vec3(1,1,1), vec3(0,1,1),
+    vec3(1.000000, -1.000000, -1.000000),
+    vec3(1.000000, -1.000000, 1.000000),
+    vec3(-1.000000, -1.000000, 1.000000),
+    vec3(-1.000000, -1.000000, -1.000000),
+    vec3(1.000000, 1.000000, -0.999999),
+    vec3(0.999999, 1.000000, 1.000001),
+    vec3(-1.000000, 1.000000, 1.000000),
+    vec3(-1.000000, 1.000000, -1.000000)
 };
 
 const uvec2 links[] = {
-    uvec2(0,1), uvec2(1,2), uvec2(2,3), uvec2(3,0),
-    uvec2(0,4), uvec2(1,5), uvec2(2,6), uvec2(3,7),
-    uvec2(4,5), uvec2(5,6), uvec2(6,7), uvec2(7,4),
+    uvec2(0,5),
+    uvec2(5,1),
+    uvec2(1,0),
+    uvec2(0,3),
+    uvec2(3,7),
+    uvec2(7,0),
+    uvec2(2,6),
+    uvec2(3,7),
+    uvec2(4,5),
+    uvec2(5,6),
+    uvec2(6,7),
+    uvec2(7,4),
+};
+
+const uvec2 faces[] = {
+    uvec2(1, 0), uvec2(6, 0), uvec2(2, 0),
+    uvec2(1, 0), uvec2(4, 0), uvec2(8, 0),
+    uvec2(1, 0), uvec2(8, 0), uvec2(5, 0),
+    uvec2(1, 0), uvec2(5, 0), uvec2(6, 0),
+    uvec2(2, 0), uvec2(6, 0), uvec2(3, 0),
+    uvec2(3, 0), uvec2(8, 0), uvec2(4, 0),
+    uvec2(3, 0), uvec2(6, 0), uvec2(7, 0),
+    uvec2(3, 0), uvec2(7, 0), uvec2(8, 0),
+    uvec2(6, 0), uvec2(8, 0), uvec2(7, 0),
+    uvec2(5, 0), uvec2(8, 0), uvec2(6, 0),
+    uvec2(1, 0), uvec2(2, 0), uvec2(3, 0),
+    uvec2(1, 0), uvec2(3, 0), uvec2(4, 0),
 };
 
 class Demo : public GLUTApplication
@@ -49,6 +79,14 @@ Demo::Demo(int argc, char **argv) :
 
     vec3Array_t particlesA(particles, particles + SIZE(particles));
     index2Array_t linksA(links, links + SIZE(links));
+
+    facesArray_t facesA;
+#define FACE_ADD(x, arr, s, e) x.push_back(vector<uvec2>(&arr[s], &arr[s] + e * sizeof(uvec2)));
+
+    FACE_ADD(facesA, faces, 0, 3)
+    FACE_ADD(facesA, faces, 3, 3)
+    FACE_ADD(facesA, faces, 6, 3)
+    FACE_ADD(facesA, faces, 9, 3)
     
     b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, NULL, VertexBuffer::OPENGL_BUFFER);
 

@@ -39,6 +39,11 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
              vec2Array_t *textCoords, facesArray_t *faces,
              VertexBuffer::VertexBufferType type)
 {
+    vec3Array_t vertexes2;
+    vec2Array_t textCoord2;
+    index2Array_t edges2;
+    index3Array_t faces2;
+
     mMassInv = 1.0/mass;
     mSpringiness = springness;
     mDamping = damping;
@@ -46,7 +51,6 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     mVelocities.resize(mParticles.size());
     mForces.resize(mParticles.size());
     mLinks.resize(links->size());
-    mVolumes.resize(volumes->size());
 
     for(unsigned int i = 0; i < links->size(); i++) {
         LinkConstraint lnk;
@@ -60,10 +64,10 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     // Beacause vertexes can have different texture coordinates, normals 
     // depending on which face they belong, new vertices list has to be
     // created.
-    vec3Array_t vertexes2;
-    vec2Array_t textCoord2;
-    index2Array_t edges2;
-    index3Array_t faces2;
+    if (!faces) {
+        WRN("SoftBody created with no faces data.");
+        return;
+    }
 
     // mesh face can contain 2 or 3 groups of series index/textCoord/normal
     // f: 1/1 2/2 3/3
