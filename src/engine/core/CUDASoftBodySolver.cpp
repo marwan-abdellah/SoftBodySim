@@ -24,16 +24,18 @@ struct CUDASoftBodySolver::SoftBodyDescriptor {
     bool mapped : 1;
     unsigned int vertexBaseIdx;
     unsigned int linksBaseIdx;
+    unsigned int mappingBaseIdx;
 };
 
 struct CUDASoftBodySolver::SolverPrivate {
     int             deviceId;
     cudaDeviceProp  devProp;
     cudaStream_t    stream;
-    glm::vec3       *array[ARRAY_LAST_DEFINED];
-    glm::uvec2      *links;
-    glm::float_t    *linksRestLength2;
-    glm::float_t    *massInv;
+    vec3            *array[ARRAY_LAST_DEFINED];
+    uvec2           *links;
+    float_t         *linksRestLength2;
+    float_t         *massInv;
+    uint_t          *mapping;  /* For updates only. keeps ids of particle per vertexes in VertexBuffer */
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -107,6 +109,14 @@ bool CUDASoftBodySolver::allocateDeviceBuffers(softbodyArray_t *bodies, SolverPr
     total_alloc += bytes2alloc;
 
     cudaMemset(cuda->array[ARRAY_FORCES], 0x0, bytes2alloc);
+
+    bytes2alloc = 0;
+    FOREACH(it, bodies)
+        bytes2alloc += (*it)->mMeshVertexParticleMapping.size() * sizeof(uint_t);
+
+    err = cudaMalloc(&cuda->mapping, bytes2alloc);
+    if (err != cudaSuccess) goto on_fail;
+    total_alloc += bytes2alloc;
 
     bytes2alloc = 0;
     FOREACH(it, bodies)
@@ -257,7 +267,6 @@ bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
         ERR("Error occured while copying Soft bodies data to device!");
         shutdownDevice(mCuda);
         deallocateDeviceBuffers(cuda);
-        ERR("Unable to allocte enough memory on device!");
         delete cuda;
         return false;
     }
