@@ -13,20 +13,25 @@ public:
 	void shutdown(void);
 	void run(void);
 
-	enum Button {
+	enum ButtonType {
 		RIGHT_BUTTON,
 		MIDDLE_BUTTON,
 		LEFT_BUTTON
 	};
 
-	void attachMenu(int menuId, Button button);
+	enum ButtonState {
+		PRESSED,
+		RELEASED
+	};
+
+	void attachMenu(int menuId, ButtonType button);
 	void addMenuEntry(int menuId, std::string entry);
 	int addMenu(std::string entry, int parentMenuId=-1);
 
 	virtual void onDisplay(void) {}
 	virtual void onKeyboardUp(unsigned char k, int x, int y) {}
 	virtual void onKeyboard(unsigned char k, int x, int y) {}
-	virtual void onMouseClick(int key, int state, int x, int y) {}
+	virtual void onMouseClick(ButtonType btn, ButtonState state, int x, int y) {}
 	virtual void onMouseMove(int x, int y) {}
 	virtual void onMenuSelected(std::string &) {}
 protected:

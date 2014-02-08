@@ -33,8 +33,31 @@ void GLUTApplication::onKeyboardUpHelper(unsigned char k, int x, int y)
 
 void GLUTApplication::onMouseClickHelper(int key, int state, int x, int y)
 {
+	ButtonType type;
+	ButtonState st;
+	switch (key) {
+		case GLUT_LEFT_BUTTON:
+			type = LEFT_BUTTON;
+			break;
+		case GLUT_MIDDLE_BUTTON:
+			type = MIDDLE_BUTTON;
+			break;
+		case GLUT_RIGHT_BUTTON:
+			type = RIGHT_BUTTON;
+			break;
+	}
+
+	switch (state) {
+		case GLUT_DOWN:
+			st = PRESSED;
+			break;
+		case GLUT_UP:
+			st = RELEASED;
+			break;
+	}
+
 	if (active_instance)
-		active_instance->onMouseClick(key, state, x, y);
+		active_instance->onMouseClick(type, st, x, y);
 }
 
 void GLUTApplication::onMouseMoveHelper(int x, int y)
@@ -63,7 +86,7 @@ GLUTApplication::~GLUTApplication()
 	shutdown();
 }
 
-void GLUTApplication::attachMenu(int menuId, Button button)
+void GLUTApplication::attachMenu(int menuId, ButtonType button)
 {
 	glutSetMenu(menuId);
 	int bid;

@@ -12,7 +12,6 @@ using namespace glm;
 #define SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 
-static Camera camera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0));
 const int width = 800;
 const int height = 600;
 
@@ -70,10 +69,15 @@ public:
 private:
     SoftBodyRenderer    renderer;
     SoftBody        *b;
+    int mMouseLastX;
+    int mMouseLastY;
+    bool mMousePressed;
+    Camera mCamera;
 };
 
 Demo::Demo(int argc, char **argv) :
-    GLUTApplication(argc, argv, "DemoApp", width, height)
+    GLUTApplication(argc, argv, "DemoApp", width, height),
+    mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0))
 {
     initialize();
 
@@ -121,7 +125,7 @@ void Demo::onDisplay(void)
 {
     static int d;
     renderer.clearScreen();
-    renderer.renderBody(b, camera.getCameraMatrix());
+    renderer.renderBody(b, mCamera.getCameraMatrix());
 
     if (!d) {
         cout << "onDisplay" << endl;
@@ -138,12 +142,39 @@ void Demo::onKeyboard(unsigned char k, int x, int y)
 
 void Demo::onMouseClick(int key, int state, int x, int y)
 {
-    cout << "OnClick" << endl;
+    if (key != LEFT_BUTTON)
+        return;
+
+    if (state == PRESSED) {
+        mMouseLastX = x;
+        mMouseLastY = y;
+        mMousePressed = true;
+    }
+    else
+        mMousePressed = false;
 }
 
 void Demo::onMouseMove(int x, int y)
 {
-    cout << "OnMouseMove" << endl;
+    if (!mMousePressed)
+        return;
+
+    static float angle = 0.2f;
+    int dx = x - mMouseLastX;
+    int dy = y - mMouseLastY;
+
+    vec3 np;
+    if (dx > 0)
+        mCamera.moveRight(angle * dx);
+    else
+        mCamera.moveLeft(-angle * dx);
+    if (dy > 0)
+        mCamera.moveUp(angle * dy);
+    else
+        mCamera.moveDown(-angle * dy);
+
+    mMouseLastX = x;
+    mMouseLastY = y;
 }
 
 void Demo::onMenuSelected(string &s)
