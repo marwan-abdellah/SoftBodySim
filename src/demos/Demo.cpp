@@ -31,7 +31,7 @@ class Demo : public GLUTApplication
 {
 public:
     Demo(int argc, char **argv);
-    ~Demo(void) {}
+    ~Demo(void);
     void onKeyboard(unsigned char k, int x, int y);
     void onMouseClick(int key, int state, int x, int y);
     void onMouseMove(int x, int y);
@@ -39,15 +39,18 @@ public:
     void onDisplay(void);
 private:
     SoftBodyRenderer    renderer;
-    SoftBody        b;
+    SoftBody        *b;
 };
 
 Demo::Demo(int argc, char **argv) :
-    GLUTApplication(argc, argv, "DemoApp", width, height),
-    b(1,1,1, particles, SIZE(particles), links, SIZE(links), NULL, 0,
-      NULL, 0, NULL, 0, VertexBuffer::OPENGL_BUFFER)
+    GLUTApplication(argc, argv, "DemoApp", width, height)
 {
     initialize();
+
+    vec3Array_t particlesA(particles, particles + SIZE(particles));
+    index2Array_t linksA(links, links + SIZE(links));
+    
+    b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, NULL, VertexBuffer::OPENGL_BUFFER);
 
     renderer.initialize(width, height);
     renderer.setRenderMethod(SB_RENDER_PARTICLES);
@@ -63,11 +66,16 @@ Demo::Demo(int argc, char **argv) :
     attachMenu(id1, RIGHT_BUTTON);
 }
 
+Demo::~Demo(void)
+{
+    if (b) delete b;
+}
+
 void Demo::onDisplay(void)
 {
     static int d;
     renderer.clearScreen();
-    renderer.renderBody(&b, camera.getCameraMatrix());
+    renderer.renderBody(b, camera.getCameraMatrix());
 
     if (!d) {
         cout << "onDisplay" << endl;

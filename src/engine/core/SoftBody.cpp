@@ -34,28 +34,23 @@ static void cacheAddValue(cache_t *cache, unsigned int major, unsigned int minor
     cache->at(major).push_back(item);
 }
 
-SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
-         const vec3 *particles, unsigned int particles_count,
-         const uvec2 *links_indexes, unsigned int links_count,
-         const uvec4 *volumes_indexes, unsigned int volumes_count,
-         const glm::vec2 *tex_coords, unsigned int text_coords_count,
-         const glm::uvec2 *mesh_faces, unsigned int faces_count,
-         VertexBuffer::VertexBufferType type)
+SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
+             vec3Array_t *particles, index2Array_t *links, index4Array_t *volumes,
+             vec2Array_t *textCoords, facesArray_t *faces,
+             VertexBuffer::VertexBufferType type)
 {
     mMassInv = 1.0/mass;
     mSpringiness = springness;
     mDamping = damping;
-    mParticles.resize(particles_count);
-    mVelocities.resize(particles_count);
-    mForces.resize(particles_count);
-    mLinks.resize(links_count);
-    mVolumes.resize(volumes_count);
+    mParticles = *particles;
+    mVelocities.resize(mParticles.size());
+    mForces.resize(mParticles.size());
+    mLinks.resize(links->size());
+    mVolumes.resize(volumes->size());
 
-    for(unsigned int i = 0; i < particles_count; i++)
-        mParticles[i] = particles[i];
-    for(unsigned int i = 0; i < links_count; i++) {
+    for(unsigned int i = 0; i < links->size(); i++) {
         LinkConstraint lnk;
-        lnk.index = links_indexes[i];
+        lnk.index = links->at(i);
         lnk.restLength = length(mParticles[lnk.index[0]] - mParticles[lnk.index[1]]);
         mLinks[i] = lnk;
     }
@@ -73,59 +68,45 @@ SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
     // mesh face can contain 2 or 3 groups of series index/textCoord/normal
     // f: 1/1 2/2 3/3
     // f: 1/1 2/2
-    // f: 1/1 2/2  # if there is no 3rd verticle assume it is 0/0
+    // f: 1/1 2  # if there is no texture id assume it is 0
     cache_t *cache = cacheInit(mParticles.size());
-    for (unsigned int i = 0; i < faces_count; i+=3) {
-        uvec2 v1 = mesh_faces[i];
-        uvec2 v2 = mesh_faces[i + 1];
-        uvec2 v3 = mesh_faces[i + 2];
 
-        unsigned int vid1 = v1[0];
-        unsigned int tid1 = v1[1];
-        int idx1 = cacheGetValue(cache, vid1, tid1);
-        if (idx1 == -1) {
-            vertexes2.push_back(mParticles[vid1 - 1]);
-            mMeshVertexParticleMapping.push_back(vid1 - 1);
-            if (tid1) textCoord2.push_back(tex_coords[tid1 - 1]);
-            idx1 = vertexes2.size() - 1;
-            cacheAddValue(cache, vid1, tid1, idx1);
+    for (unsigned int i = 0; i < faces->size(); i++) {
+        unsigned int faceSize = faces->at(i).size();
+        if (faceSize != 3 && faceSize != 2) {
+            ERR("Invalid face size. Expected 2 or 3 vertices faces only! Ignoring face: %d", i + 1);
+            continue;
         }
-
-        unsigned int vid2 = v2[0];
-        unsigned int tid2 = v2[1];
-        int idx2 = cacheGetValue(cache, vid2, tid2);
-        if (idx2 == -1) {
-            vertexes2.push_back(mParticles[vid2 - 1]);
-            mMeshVertexParticleMapping.push_back(vid2 - 1);
-            if (tid2) textCoord2.push_back(tex_coords[tid2 - 1]);
-            idx2 = vertexes2.size() - 1;
-            cacheAddValue(cache, vid2, tid2, idx2);
+        uvec3 vids(0, 0, 0);
+        for (unsigned int j = 0; j < faceSize; j++) {
+            unsigned int vid = faces->at(i)[j][0];
+            unsigned int tid = faces->at(i)[j][1];
+            int idx = cacheGetValue(cache, vid, tid);
+            if (idx == -1) {
+                // add pair (vertex id/texture id) to cache
+                vertexes2.push_back(mParticles[vid - 1]);
+                mMeshVertexParticleMapping.push_back(vid - 1);
+                // add texture only if texture id != 0
+                if (tid) textCoord2.push_back(textCoords->at(tid - 1));
+                idx = vertexes2.size() - 1;
+                cacheAddValue(cache, vid, tid, idx);
+            }
+            vids[j] = idx;
         }
-
-        unsigned int vid3 = v3[0];
-        unsigned int tid3 = v3[1];
-        int idx3 = cacheGetValue(cache, vid3, tid3);
-        if (idx3 == -1) {
-            vertexes2.push_back(mParticles[vid3 - 1]);
-            mMeshVertexParticleMapping.push_back(vid3 - 1);
-            if (tid3) textCoord2.push_back(tex_coords[tid3 - 1]);
-            idx3 = vertexes2.size() - 1;
-            cacheAddValue(cache, vid3, tid3, idx3);
+        edges2.push_back(uvec2(vids[0], vids[1]));
+        if (faceSize == 3) {
+            edges2.push_back(uvec2(vids[1], vids[2]));
+            edges2.push_back(uvec2(vids[2], vids[0]));
+            faces2.push_back(uvec3(vids[0], vids[1], vids[2]));
         }
-
-        uvec2 edidx1(idx1, idx2);
-        uvec2 edidx2(idx2, idx3);
-        uvec2 edidx3(idx3, idx1);
-
-        uvec3 tridx(idx1, idx2, idx3);
-
-        edges2.push_back(edidx1);
-        edges2.push_back(edidx2);
-        edges2.push_back(edidx3);
-
-        faces2.push_back(tridx);
     }
     delete cache;
+
+    // some extra checks
+    if (vertexes2.size() != textCoord2.size()) {
+        ERR("Something goes bad. |Vertex| != |TextCoords|. Aborting buffer creation.");
+        return;
+    }
 
     switch (type) {
         case VertexBuffer::CPU_BUFFER:
