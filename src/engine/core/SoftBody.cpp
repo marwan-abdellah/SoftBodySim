@@ -19,6 +19,8 @@ static cache_t *cacheInit(unsigned int size)
 
 static int cacheGetValue(cache_t *cache, unsigned int major, unsigned int minor)
 {
+    if (cache->size() < major) return -1;
+
     FOREACH(it, &(cache->at(major))) {
         if (it->minor == minor)
             return it->value;
@@ -44,6 +46,7 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     vec2Array_t textCoord2;
     index2Array_t edges2;
     index3Array_t faces2;
+    unsigned int skipped = 0;
 
     mMassInv = 1.0/mass;
     mSpringiness = springness;
@@ -66,35 +69,48 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     // depending on which face they belong, new vertices list has to be
     // created.
     if (!faces) {
-        WRN("SoftBody created with no faces data.");
+        WRN("SoftBody created with no faces data. Mesh not created.");
         return;
     }
 
-    // mesh face can contain 2 or 3 groups of series index/textCoord/normal
-    // f: 1/1 2/2 3/3
-    // f: 1/1 2/2
-    // f: 1/1 2  # if there is no texture id assume it is 0
+    // following code is attempting tom make indexed mesh.
+    // (safes memory needed to be transfered to GPU in order to draw mesh)
+    // eg.
+    // assume we render small cube with 8 vertexes
+    // assume each vertex belongs to 3 faces (triangles)
+    // assume there is no texture coords, normals assigned to each face vertice.
+    //
+    // by simply creating meshes w/o indexing, a final number of vertexes will be:
+    // 12 * 3 = 36, (12 - number of triangles in 8 vertices cube)
+    //
+    // by making indexed mesh there will be only 8 vertexes.
+    //
+    // cache structure is needed to store a pairs of Vertex id and Texture Id.
+    // each time a new faces is parsed, a proper lookup in cache is
+    // performed to find out if vertex is alread in vertex array.
+    // maybe not so efficient & pretty but it does the job.
     cache_t *cache = cacheInit(mParticles.size());
 
     for (unsigned int i = 0; i < faces->size(); i++) {
         unsigned int faceSize = faces->at(i).size();
         if (faceSize != 3 && faceSize != 2) {
-            ERR("Invalid face size. Expected 2 or 3 vertices faces only! Ignoring face: %d", i + 1);
+            ERR("Invalid face size: %d. Expected 2 or 3 vertices faces only! Ignoring face: %d", faceSize, i + 1);
+            skipped++;
             continue;
         }
         uvec3 vids(0, 0, 0);
         for (unsigned int j = 0; j < faceSize; j++) {
             unsigned int vid = faces->at(i)[j][0];
             unsigned int tid = faces->at(i)[j][1];
-            int idx = cacheGetValue(cache, vid, tid);
+            int idx = cacheGetValue(cache, vid - 1, tid);
             if (idx == -1) {
-                // add pair (vertex id/texture id) to cache
                 vertexes2.push_back(mParticles[vid - 1]);
                 mMeshVertexParticleMapping.push_back(vid - 1);
                 // add texture only if texture id != 0
                 if (tid) textCoord2.push_back(textCoords->at(tid - 1));
                 idx = vertexes2.size() - 1;
-                cacheAddValue(cache, vid, tid, idx);
+                // add pair (vertex id/texture id) to cache
+                cacheAddValue(cache, vid - 1, tid, idx);
             }
             vids[j] = idx;
         }
@@ -105,11 +121,25 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
             faces2.push_back(uvec3(vids[0], vids[1], vids[2]));
         }
     }
+    DBG("Particles: %lu", mParticles.size());
+    DBG("Links: %lu", mLinks.size());
+    DBG("Vertexes: %lu", vertexes2.size());
+    DBG("Edges: %lu", edges2.size());
+    DBG("Triangles: %lu", faces2.size());
+    DBG("Number of skipped faces: %u", skipped);
+
     delete cache;
 
     // some extra checks
-    if (vertexes2.size() != textCoord2.size()) {
-        ERR("Something goes bad. |Vertex| != |TextCoords|. Aborting buffer creation.");
+    if ((textCoord2.size() > 0) && (vertexes2.size() != textCoord2.size())) {
+        ERR("Something goes bad. |Vertex| != |TextCoords|.");
+        ERR("Aborting buffer creation.");
+        return;
+    }
+    if (mParticles.size() > vertexes2.size()) {
+        ERR("Something goes bad. Number of generated mesh Vertexes < number of Particles.");
+        ERR("Maybe your face data is corrupted?");
+        ERR("Aborting buffer creation.");
         return;
     }
 
@@ -118,6 +148,7 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
             break;
         case VertexBuffer::OPENGL_BUFFER:
             mMesh = createGLVertexBufferMesh(&vertexes2, &textCoord2, &edges2, &faces2);
+            if (mMesh) DBG("OpenGL buffers successfully created.");
             break;
     }
 }

@@ -81,14 +81,22 @@ Demo::Demo(int argc, char **argv) :
     index2Array_t linksA(links, links + SIZE(links));
 
     facesArray_t facesA;
-#define FACE_ADD(x, arr, s, e) x.push_back(vector<uvec2>(&arr[s], &arr[s] + e * sizeof(uvec2)));
+#define FACE_ADD(x, arr, s, e) x.push_back(vector<uvec2>(&arr[s], &arr[s] + e ))
 
-    FACE_ADD(facesA, faces, 0, 3)
-    FACE_ADD(facesA, faces, 3, 3)
-    FACE_ADD(facesA, faces, 6, 3)
-    FACE_ADD(facesA, faces, 9, 3)
+    FACE_ADD(facesA, faces, 0, 3);
+    FACE_ADD(facesA, faces, 3, 3);
+    FACE_ADD(facesA, faces, 6, 3);
+    FACE_ADD(facesA, faces, 9, 3);
+    FACE_ADD(facesA, faces, 12, 3);
+    FACE_ADD(facesA, faces, 15, 3);
+    FACE_ADD(facesA, faces, 18, 3);
+    FACE_ADD(facesA, faces, 21, 3);
+    FACE_ADD(facesA, faces, 24, 3);
+    FACE_ADD(facesA, faces, 27, 3);
+    FACE_ADD(facesA, faces, 30, 3);
+    FACE_ADD(facesA, faces, 33, 3);
     
-    b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, NULL, VertexBuffer::OPENGL_BUFFER);
+    b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
 
     renderer.initialize(width, height);
     renderer.setRenderMethod(SB_RENDER_PARTICLES);
