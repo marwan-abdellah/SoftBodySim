@@ -62,7 +62,7 @@ public:
     Demo(int argc, char **argv);
     ~Demo(void);
     void onKeyboard(unsigned char k, int x, int y);
-    void onMouseClick(int key, int state, int x, int y);
+    void onMouseClick(ButtonType type, ButtonState state, int x, int y);
     void onMouseMove(int x, int y);
     void onMenuSelected(string &s);
     void onDisplay(void);
@@ -126,11 +126,6 @@ void Demo::onDisplay(void)
     static int d;
     renderer.clearScreen();
     renderer.renderBody(b, mCamera.getCameraMatrix());
-
-    if (!d) {
-        cout << "onDisplay" << endl;
-        d = 1;
-    }
 }
 
 void Demo::onKeyboard(unsigned char k, int x, int y)
@@ -140,9 +135,9 @@ void Demo::onKeyboard(unsigned char k, int x, int y)
         shutdown();
 }
 
-void Demo::onMouseClick(int key, int state, int x, int y)
+void Demo::onMouseClick(ButtonType type, ButtonState state, int x, int y)
 {
-    if (key != LEFT_BUTTON)
+    if (type != LEFT_BUTTON)
         return;
 
     if (state == PRESSED) {
@@ -150,7 +145,7 @@ void Demo::onMouseClick(int key, int state, int x, int y)
         mMouseLastY = y;
         mMousePressed = true;
     }
-    else
+    else if (state == RELEASED)
         mMousePressed = false;
 }
 
