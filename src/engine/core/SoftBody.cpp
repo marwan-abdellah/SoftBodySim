@@ -148,10 +148,15 @@ SoftBody::~SoftBody(void)
 Mesh_t *SoftBody::createGLVertexBufferMesh(vec3Array_t *vertexes, vec2Array_t *texCoords,
         index2Array_t *edges, index3Array_t *faces)
 {
-    Mesh_t *mesh = new Mesh_t;
+    Mesh_t *mesh;
     GLVertexBuffer *buf;
     GLElementBuffer *ebuf;
+
+    if (!vertexes || vertexes->size() == 0) return NULL;
+
+    mesh = new Mesh_t;
     if (!mesh) return NULL;
+    memset(mesh, 0x0, sizeof(Mesh_t));
 
     buf = new GLVertexBuffer(vertexes->size());
     if (!buf) {
@@ -164,26 +169,30 @@ Mesh_t *SoftBody::createGLVertexBufferMesh(vec3Array_t *vertexes, vec2Array_t *t
         buf->setTextCoords(&texCoords->at(0));
     mesh->vertexes = buf;
 
-    ebuf = new GLElementBuffer(edges->size(), ElementBuffer::EDGES);
-    if (!ebuf) {
-        ERR("ElementBuffer memory allocation failed");
-        delete mesh->vertexes;
-        delete mesh;
-        return NULL;
+    if (edges && edges->size() > 0) {
+        ebuf = new GLElementBuffer(edges->size(), ElementBuffer::EDGES);
+        if (!ebuf) {
+            ERR("ElementBuffer memory allocation failed");
+            delete mesh->vertexes;
+            delete mesh;
+            return NULL;
+        }
+        ebuf->setIndexes2(&edges->at(0));
+        mesh->edges = ebuf;
     }
-    ebuf->setIndexes2(&edges->at(0));
-    mesh->edges = ebuf;
 
-    ebuf = new GLElementBuffer(faces->size(), ElementBuffer::TRIANGLES);
-    if (!ebuf) {
-        ERR("ElementBuffer memory allocation failed");
-        delete mesh->edges;
-        delete mesh->vertexes;
-        delete mesh;
-        return NULL;
+    if (faces && faces->size() > 0) {
+        ebuf = new GLElementBuffer(faces->size(), ElementBuffer::TRIANGLES);
+        if (!ebuf) {
+            ERR("ElementBuffer memory allocation failed");
+            delete mesh->edges;
+            delete mesh->vertexes;
+            delete mesh;
+            return NULL;
+        }
+        ebuf->setIndexes3(&faces->at(0));
+        mesh->faces = ebuf;
     }
-    ebuf->setIndexes3(&faces->at(0));
-    mesh->faces = ebuf;
 
     return mesh;
 }
