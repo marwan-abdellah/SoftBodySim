@@ -163,7 +163,7 @@ void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
 bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
 {
     cudaError_t err;
-    int idx = 0, idx2= 0;
+    int idx = 0, idx2= 0, idx3 = 0;
 
     FOREACH(it, bodies) {
         SoftBodyDescriptor descr;
@@ -178,11 +178,13 @@ bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, Solv
         unsigned int bytes2 = body->mLinks.size() * sizeof(uvec2);
         unsigned int bytes3 = body->mLinks.size() * sizeof(float_t);
         unsigned int bytes4 = body->mParticles.size() * sizeof(float_t);
+        unsigned int bytes5 = body->mMeshVertexParticleMapping.size() * sizeof(uint_t);
 
         unsigned int offset = idx * sizeof(vec3);
         unsigned int offset2 = idx2 * sizeof(uvec2);
         unsigned int offset3 = idx2 * sizeof(float_t);
         unsigned int offset4 = idx * sizeof(float_t);
+        unsigned int offset5 = idx3 * sizeof(uint_t);
 
         unsigned char *ptr;
 
@@ -204,6 +206,11 @@ bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, Solv
         ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_FORCES]);
         ptr += offset;
         err = cudaMemcpy(ptr, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
+        if (err != cudaSuccess) return false;
+
+        ptr = reinterpret_cast<unsigned char*>(cuda->mapping);
+        ptr += offset5;
+        err = cudaMemcpy(ptr, &(body->mMeshVertexParticleMapping[0]), bytes5, cudaMemcpyHostToDevice);
         if (err != cudaSuccess) return false;
 
         ptr = reinterpret_cast<unsigned char*>(cuda->massInv);
@@ -248,6 +255,7 @@ bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, Solv
 
         idx += body->mParticles.size();
         idx2 += body->mLinks.size();
+        idx3 += body->mMeshVertexParticleMapping.size();
     }
 
     DBG("Data sucessfully copied to device");
