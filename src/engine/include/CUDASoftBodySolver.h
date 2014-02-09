@@ -50,9 +50,12 @@ class CUDASoftBodySolver {
         bool    cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
 
 		void    updateVertexBuffers(SolverPrivate *cuda, bool async);
+		void    cudaProjectSystem(float_t dt, glm::vec3 *gravity, glm::vec3 *positions, glm::vec3 *velocities,
+				glm::vec3 *forces, glm::vec3 *projections, glm::float_t *massInv, glm::uint_t maxId);
 
         SolverPrivate   *mCuda;
         bool             mInitialized;
+		glm::vec3		 mGravity;
 };
 
 

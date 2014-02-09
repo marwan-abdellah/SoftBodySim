@@ -2,59 +2,43 @@
 #include "CUDASoftBodySolver.h"
 #include "common.h"
 
-///**
-//  step 1. Updating velocities.
-//  */
-//__global__ void updateVelocities(
-//		glm::vec3 gravity,
-//		glm::vec3 *ext_forces,
-//		glm::vec3 *velocities,
-//		glm::float_t *masses,
-//		glm::float_t dt,
-//		glm::uint_t max_idx)
-//{
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//	if ( idx < max_idx) {
-//		float3 ext_force = ext_forces[idx];
-//		float mass_inv = masses[idx];
-//		float3 vel = velocities[idx];
-//		vel += dt * ext_force * gravity * mass_inv;
-//		velocities[idx] = vel;
-//	}
-//}
-//
-///**
-//  step 2. Damp velocities.
-//  */
-//__global__ void dampVelocities(glm::vec3 *velocities, int max_idx)
-//{
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//	if ( idx < max_idx) {
-//		float3 vel = velocities[idx];
-//		vecl *= 0.99f; // Naive damping
-//		velocities[idx] = vel;
-//	}
-//}
+using namespace glm;
 
-/*
-//  step 3. projecting positions
-//  */
-//__global__ void projectPositions(
-//		glm::vec3 *positions,
-//		glm::vec3 *projections,
-//		glm::vec3 *velocities,
-//		glm::float_t dt,
-//		glm::uint_t max_idx)
-//{
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//	if ( idx < max_idx) {
-//		float3 position = positions[idx];
-//		float3 velocity = velocities[idx];
-//
-//		float3 projection = position + velocity * dt;
-//		projections[idx] = projection;
-//	}
-//}
+__global__ void cudaUpdateVelocitiesKernel(
+		vec3 gravity,
+		vec3 *positions,
+		vec3 *projections,
+		vec3 *velocities,
+		vec3 *ext_forces,
+		float_t *masses,
+		float_t dt,
+		uint_t max_idx)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	if ( idx < max_idx) {
+
+		// 0. Load from global mem.
+		vec3 position = positions[idx];
+		vec3 force = ext_forces[idx];
+		float_t imass = masses[idx];
+		vec3 velocity = velocities[idx];
+		
+		// 1. Updating velocities.
+		velocity += dt * (force + gravity);
+
+		// 2. Damp velocities.
+		velocity *= 0.99f; // Naive damping
+
+		// 3. projecting positions
+		vec3 projection = position + velocity * dt;
+
+		// update global tables
+		projections[idx] = projection;
+		positions[idx] = projection;
+		velocities[idx] = velocity;
+	}
+}
+
 //
 ///**
 //  step 4. solving links constraints.
@@ -205,14 +189,13 @@ struct BufferMapping {
 	unsigned int baseIdx;
 };
 
-__global__ void cudaUpdateVertexBuffers(BufferMapping mapp, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
+__global__ void cudaUpdateVertexBufferKernel(BufferMapping mapp, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
 		glm::uint index = mapping[idx];
 		glm::vec3 vertex = positions[index];
-		vertex -= glm::vec3(0, 0.1, 0);
 		mapp.vboPtr[idx - mapp.baseIdx] = vertex;
 	}
 }
@@ -226,6 +209,15 @@ void CUDASoftBodySolver::cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
 	b.baseIdx = baseIdx;
 	int threadCount = 128;
 	int blockCount = len / threadCount + 1;
-	cudaUpdateVertexBuffers<<<threadCount, blockCount>>>(b, positions, mapping, len);
-	ERR("Kernel run");
+	cudaUpdateVertexBufferKernel<<<blockCount, threadCount >>>(b, positions, mapping, len);
+}
+
+void CUDASoftBodySolver::cudaProjectSystem(float_t dt, vec3 *gravity, vec3
+		*positions, vec3 *velocities, vec3 *forces, vec3 *projections, float_t *massInv, uint_t
+		maxId)
+{
+	int threadCount = 128;
+	int blockCount = maxId / threadCount + 1;
+	cudaUpdateVelocitiesKernel<<<blockCount, threadCount>>>(*gravity, positions,
+			projections, velocities, forces, massInv, dt, maxId);
 }

@@ -51,7 +51,10 @@ struct CUDASoftBodySolver::SolverPrivate {
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
-    : mInitialized(false)
+    :
+		mCuda(0),
+		mInitialized(false),
+		mGravity(0, -10.0f, 0)
 {
 }
 
@@ -254,7 +257,7 @@ bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr, 
 
     ptr = reinterpret_cast<unsigned char*>(cuda->massInv);
     ptr += offset4;
-    err = cudaMemset(ptr, 0x0, bytes4);
+    err = cudaMemset(ptr, 1, bytes4);
     if (err != cudaSuccess) return false;
 
     FOREACH_R(lnk, body->mLinks)
@@ -461,4 +464,7 @@ void CUDASoftBodySolver::updateVertexBuffers(void)
 
 void CUDASoftBodySolver::projectSystem(float_t dt)
 {
+	if (mInitialized)
+		cudaProjectSystem(dt, &mGravity, mCuda->array[ARRAY_POSITIONS], mCuda->array[ARRAY_VELOCITIES],
+				mCuda->array[ARRAY_FORCES], mCuda->array[ARRAY_PROJECTIONS], mCuda->massInv, mCuda->nTotalVertex);
 }
