@@ -1,4 +1,5 @@
 #include "CUDASoftBodySolver.h"
+
 #include "common.h"
 #include <cstring>
 
@@ -8,7 +9,6 @@ using namespace glm;
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
-
 enum ArrayType {
     ARRAY_POSITIONS = 0,
     ARRAY_PROJECTIONS,
@@ -17,11 +17,9 @@ enum ArrayType {
     ARRAY_LAST_DEFINED
 };
 
-
 struct CUDASoftBodySolver::SoftBodyDescriptor {
     SoftBody *body;
     cudaGraphicsResource *graphics;
-    bool mapped : 1;
 
     unsigned int vertexBaseIdx;
     unsigned int nVertex;
@@ -37,11 +35,17 @@ struct CUDASoftBodySolver::SolverPrivate {
     int             deviceId;
     cudaDeviceProp  devProp;
     cudaStream_t    stream;
+
     vec3            *array[ARRAY_LAST_DEFINED];
+    float_t         *massInv;
+	unsigned int	nTotalVertex; /* number of elements in each array and massInv */
+
     uvec2           *links;
     float_t         *linksRestLength2;
-    float_t         *massInv;
+	unsigned int	nTotalLinks;
+
     uint_t          *mapping;  /* For updates only. keeps ids of particle per vertexes in VertexBuffer */
+	unsigned int	nTotalMapping;
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -119,13 +123,19 @@ bool CUDASoftBodySolver::allocateDeviceBuffers(descriptorArray_t *bodies, Solver
     int bytesArray = 0, bytesMass = 0, bytesMapping = 0, bytesLinks = 0, bytesRestLength = 0;
     long total_alloc = 0;
 
+	cuda->nTotalVertex = cuda->nTotalLinks = cuda->nTotalMapping = 0;
+
     FOREACH(it, bodies) {
-        bytesArray += it->nVertex * sizeof(vec3);
-        bytesMass += it->nVertex * sizeof(float_t);
-        bytesMapping += it->nMapping * sizeof(uint_t);
-        bytesLinks += it->nLinks * sizeof(uvec2);
-        bytesRestLength += it->nLinks * sizeof(float_t);
+        cuda->nTotalVertex += it->nVertex;
+        cuda->nTotalMapping += it->nMapping;
+        cuda->nTotalLinks += it->nLinks;
     }
+
+	bytesArray += cuda->nTotalVertex * sizeof(vec3);
+	bytesMass += cuda->nTotalVertex * sizeof(float_t);
+	bytesMapping += cuda->nTotalMapping * sizeof(uint_t);
+	bytesLinks += cuda->nTotalLinks * sizeof(uvec2);
+	bytesRestLength += cuda->nTotalLinks * sizeof(float_t);
 
     cuda->array[ARRAY_POSITIONS]   = (vec3*)allocateCUDABuffer(bytesArray);
     cuda->array[ARRAY_PROJECTIONS] = (vec3*)allocateCUDABuffer(bytesArray);
@@ -174,7 +184,6 @@ void CUDASoftBodySolver::createDescriptors(softbodyArray_t *bodies, descriptorAr
         SoftBodyDescriptor descr;
         SoftBody *body = *it;
         descr.body = *it;
-        descr.mapped = false;
         descr.graphics = NULL;
         descr.vertexBaseIdx = idx1;
         descr.linksBaseIdx = idx2;
@@ -197,6 +206,9 @@ bool CUDASoftBodySolver::copyBodyToDeviceBuffers(SoftBodyDescriptor *descr, Solv
     cudaError_t err;
 
     SoftBody *body = descr->body;
+
+    vector<uvec2> tmp(body->mLinks.size());
+    vector<float_t> tmp2(body->mLinks.size());
 
     unsigned int bytes1 = descr->nVertex * sizeof(vec3);
     unsigned int bytes2 = descr->nLinks * sizeof(uvec2);
@@ -241,9 +253,6 @@ bool CUDASoftBodySolver::copyBodyToDeviceBuffers(SoftBodyDescriptor *descr, Solv
     ptr += offset4;
     err = cudaMemset(ptr, 0x0, bytes4);
     if (err != cudaSuccess) return false;
-
-    vector<uvec2> tmp(body->mLinks.size());
-    vector<float_t> tmp2(body->mLinks.size());
 
     FOREACH_R(lnk, body->mLinks)
     {
@@ -371,12 +380,7 @@ void CUDASoftBodySolver::shutdown(void)
     mInitialized = false;
 }
 
-bool CUDASoftBodySolver::updateVertexBuffers(void)
-{
-    return false;
-}
-
-void CUDASoftBodySolver::updateAllVertexBuffersAsync(void)
+void CUDASoftBodySolver::updateVertexBuffersAsync(void)
 {
 }
 

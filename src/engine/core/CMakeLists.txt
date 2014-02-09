@@ -1,5 +1,6 @@
 set (SRCS
 		SoftBody.cpp
+		CUDASoftBodySolver.cu
 		CUDASoftBodySolver.cpp
 		VertexBuffer.cpp
 	)

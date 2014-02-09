@@ -6,8 +6,7 @@
 
 #include <map>
 
-typedef std::vector<SoftBody*>     softbodyArray_t;
-
+typedef std::vector<SoftBody*>     softbodyArray_t; 
 class CUDASoftBodySolver {
     public:
 
@@ -20,12 +19,13 @@ class CUDASoftBodySolver {
         void     projectSystem(glm::float_t dt);
 
         bool    updateVertexBuffers(void);
-        void    updateAllVertexBuffersAsync(void);
+        void    updateVertexBuffersAsync(void);
 
     private:
         struct SolverPrivate;
         struct SoftBodyDescriptor;
 
+		void   updateVertexBuffers(glm::vec3*, unsigned int, unsigned int);
         typedef std::vector<SoftBodyDescriptor> descriptorArray_t;
 
         void    solveCollisions(glm::float_t dt);
