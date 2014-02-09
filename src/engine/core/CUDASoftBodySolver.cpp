@@ -286,29 +286,31 @@ bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
 
     if (!initializeDevice(cuda)) {
         ERR("CUDA Device initialization failed!");
-        delete cuda;
-        return false;
+        goto dev_fail;
     }
     if (!allocateDeviceBuffers(bodies, cuda)) {
-        shutdownDevice(mCuda);
         ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
         ERR("Unable to allocte enough memory on device!");
-        delete cuda;
-        return false;
+        goto alloc_fail;
     }
 
     if (!copyBodiesToDeviceBuffers(bodies, cuda)) {
         ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
         ERR("Error occured while copying Soft bodies data to device!");
-        shutdownDevice(mCuda);
-        deallocateDeviceBuffers(cuda);
-        delete cuda;
-        return false;
+        goto copy_fail;
     }
 
     mInitialized = true;
     mCuda = cuda;
     return true;
+
+copy_fail:
+    deallocateDeviceBuffers(cuda);
+alloc_fail:
+    shutdownDevice(cuda);
+dev_fail:
+    delete cuda;
+    return false;
 }
 
 void CUDASoftBodySolver::shutdown(void)
