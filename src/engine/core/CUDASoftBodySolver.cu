@@ -224,6 +224,8 @@ void CUDASoftBodySolver::cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
 	BufferMapping b;
 	b.vboPtr = vboPtr;
 	b.baseIdx = baseIdx;
-	cudaUpdateVertexBuffers<<<10, 512>>>(b, positions, mapping, len);
+	int threadCount = 128;
+	int blockCount = len / threadCount + 1;
+	cudaUpdateVertexBuffers<<<threadCount, blockCount>>>(b, positions, mapping, len);
 	ERR("Kernel run");
 }
