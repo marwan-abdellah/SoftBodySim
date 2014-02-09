@@ -140,6 +140,8 @@ void Demo::onKeyboard(unsigned char key, int x, int y)
     float angle = 2.0f;
     float delta = 0.1f;
 
+	if (key == 'u')
+		mSolver.updateVertexBuffers();
     if (key == 'w')
         mCamera.moveUp(angle);
     if (key == 's')

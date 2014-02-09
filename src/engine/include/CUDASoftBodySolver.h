@@ -18,35 +18,41 @@ class CUDASoftBodySolver {
 
         void     projectSystem(glm::float_t dt);
 
-        bool    updateVertexBuffers(void);
+        void	updateVertexBuffers(void);
         void    updateVertexBuffersAsync(void);
 
-    private:
         struct SolverPrivate;
         struct SoftBodyDescriptor;
+    private:
 
 		void   updateVertexBuffers(glm::vec3*, unsigned int, unsigned int);
-        typedef std::vector<SoftBodyDescriptor> descriptorArray_t;
 
         void    solveCollisions(glm::float_t dt);
         void    solveLinks(glm::float_t dt);
         void    integrateSystem(glm::float_t dt);
 
-        bool    initializeDevice(SolverPrivate*);
-        bool    shutdownDevice(SolverPrivate*);
+		SolverPrivate *cudaContextCreate(void);
+        bool    cudaInitialize(SolverPrivate*, softbodyArray_t*);
+        void 	cudaShutdown(SolverPrivate*);
 
-        void    createDescriptors(softbodyArray_t *bodies, descriptorArray_t *descriptors);
-        bool    allocateDeviceBuffers(descriptorArray_t *, SolverPrivate*);
-        void    deallocateDeviceBuffers(SolverPrivate*);
-        bool    copyBodyToDeviceBuffers(SoftBodyDescriptor*, SolverPrivate*);
+        bool    cudaInitializeDevice(SolverPrivate*);
+        bool    cudaShutdownDevice(SolverPrivate*);
 
-        bool registerVertexBuffers(SoftBodyDescriptor *descr);
-        bool registerGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
+        void    cudaCreateDescriptors(SolverPrivate*, softbodyArray_t *bodies);
+        bool    cudaAllocateDeviceBuffers(SolverPrivate*);
+		bool    cudaInitializeBodies(SolverPrivate *cuda);
+        void    cudaDeallocateDeviceBuffers(SolverPrivate*);
+        bool    cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor*, SolverPrivate*);
+		void    cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
+				*mapping, glm::vec3 *vboPtr, unsigned int baseIdx, unsigned int len);
+
+        bool    cudaRegisterVertexBuffers(SoftBodyDescriptor *descr, SolverPrivate*);
+        bool    cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
+
+		void    updateVertexBuffers(SolverPrivate *cuda, bool async);
 
         SolverPrivate   *mCuda;
-
-        bool              mInitialized;
-        descriptorArray_t mDescriptors;
+        bool             mInitialized;
 };
 
 

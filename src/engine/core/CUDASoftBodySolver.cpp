@@ -46,6 +46,8 @@ struct CUDASoftBodySolver::SolverPrivate {
 
     uint_t          *mapping;  /* For updates only. keeps ids of particle per vertexes in VertexBuffer */
 	unsigned int	nTotalMapping;
+
+	vector<SoftBodyDescriptor> descriptors;
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -58,7 +60,7 @@ CUDASoftBodySolver::~CUDASoftBodySolver(void)
     shutdown();
 }
 
-bool CUDASoftBodySolver::initializeDevice(SolverPrivate *cuda)
+bool CUDASoftBodySolver::cudaInitializeDevice(SolverPrivate *cuda)
 {
     cudaError_t err;
     cudaDeviceProp  prop;
@@ -86,7 +88,7 @@ bool CUDASoftBodySolver::initializeDevice(SolverPrivate *cuda)
     return true;
 }
 
-bool CUDASoftBodySolver::shutdownDevice(SolverPrivate *cuda)
+bool CUDASoftBodySolver::cudaShutdownDevice(SolverPrivate *cuda)
 {
     cudaError_t err;
 
@@ -118,14 +120,14 @@ static void *allocateCUDABuffer(size_t bytes, bool zeroed=false)
     return ret;
 }
 
-bool CUDASoftBodySolver::allocateDeviceBuffers(descriptorArray_t *bodies, SolverPrivate *cuda)
+bool CUDASoftBodySolver::cudaAllocateDeviceBuffers(SolverPrivate *cuda)
 {
     int bytesArray = 0, bytesMass = 0, bytesMapping = 0, bytesLinks = 0, bytesRestLength = 0;
     long total_alloc = 0;
 
 	cuda->nTotalVertex = cuda->nTotalLinks = cuda->nTotalMapping = 0;
 
-    FOREACH(it, bodies) {
+    FOREACH(it, &cuda->descriptors) {
         cuda->nTotalVertex += it->nVertex;
         cuda->nTotalMapping += it->nMapping;
         cuda->nTotalLinks += it->nLinks;
@@ -162,11 +164,11 @@ bool CUDASoftBodySolver::allocateDeviceBuffers(descriptorArray_t *bodies, Solver
     return true;
 
 on_fail:
-    deallocateDeviceBuffers(cuda);
+    cudaDeallocateDeviceBuffers(cuda);
     return false;
 }
 
-void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
+void CUDASoftBodySolver::cudaDeallocateDeviceBuffers(SolverPrivate *cuda)
 {
     for (int type = ARRAY_POSITIONS; type < ARRAY_LAST_DEFINED; ++type)
         if (cuda->array[type]) cudaFree(cuda->array[type]);
@@ -176,15 +178,16 @@ void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
     if (cuda->mapping) cudaFree(cuda->mapping);
 }
 
-void CUDASoftBodySolver::createDescriptors(softbodyArray_t *bodies, descriptorArray_t *descriptors)
+void CUDASoftBodySolver::cudaCreateDescriptors(SolverPrivate *cuda, softbodyArray_t *bodies)
 {
     int idx1 = 0, idx2= 0, idx3 = 0;
+
+	cuda->descriptors.clear();
 
     FOREACH(it, bodies) {
         SoftBodyDescriptor descr;
         SoftBody *body = *it;
         descr.body = *it;
-        descr.graphics = NULL;
         descr.vertexBaseIdx = idx1;
         descr.linksBaseIdx = idx2;
         descr.mappingBaseIdx = idx3;
@@ -193,7 +196,7 @@ void CUDASoftBodySolver::createDescriptors(softbodyArray_t *bodies, descriptorAr
         descr.nLinks = body->mLinks.size();
         descr.nMapping = body->mMeshVertexParticleMapping.size();
 
-        descriptors->push_back(descr);
+        cuda->descriptors.push_back(descr);
 
         idx1 += descr.nVertex;
         idx2 += descr.nMapping;
@@ -201,7 +204,7 @@ void CUDASoftBodySolver::createDescriptors(softbodyArray_t *bodies, descriptorAr
     }
 }
 
-bool CUDASoftBodySolver::copyBodyToDeviceBuffers(SoftBodyDescriptor *descr, SolverPrivate *cuda)
+bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr, SolverPrivate *cuda)
 {
     cudaError_t err;
 
@@ -273,7 +276,7 @@ bool CUDASoftBodySolver::copyBodyToDeviceBuffers(SoftBodyDescriptor *descr, Solv
     return true;
 }
 
-bool CUDASoftBodySolver::registerGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
+bool CUDASoftBodySolver::cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
 {
     cudaError_t err;
     GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
@@ -286,7 +289,7 @@ bool CUDASoftBodySolver::registerGLGraphicsResource(const GLVertexBuffer *vb, So
     return true;
 }
 
-bool CUDASoftBodySolver::registerVertexBuffers(SoftBodyDescriptor *descr)
+bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr, SolverPrivate *cuda)
 {
     const Mesh_t *mesh;
 
@@ -305,8 +308,7 @@ bool CUDASoftBodySolver::registerVertexBuffers(SoftBodyDescriptor *descr)
     if (buf) {
         switch (buf->getType()) {
             case VertexBuffer::OPENGL_BUFFER:
-                if (!registerGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), descr))
-                    return false;
+                if (!cudaRegisterGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), descr))
                 break;
             default:
                 break;
@@ -316,54 +318,85 @@ bool CUDASoftBodySolver::registerVertexBuffers(SoftBodyDescriptor *descr)
     return true;
 }
 
-bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
+bool CUDASoftBodySolver::cudaInitializeBodies(SolverPrivate *cuda)
+{
+	bool res;
+    FOREACH(it, &cuda->descriptors) {
+        res = cudaCopyBodyToDeviceBuffers(&(*it), cuda);
+        if (!res) {
+            ERR("Error occured while copying Soft bodies data to device!");
+            ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+            return false;
+        }
+        res = cudaRegisterVertexBuffers(&(*it), cuda);
+        if (!res) {
+            ERR("Error occured registering SoftBody vertex buffers.");
+            ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+            return false;
+        }
+	}
+	return true;
+}
+
+CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(void)
 {
     SolverPrivate *cuda;
-    if (mInitialized) return true;
 
     cuda = new SolverPrivate;
     memset(cuda, 0x0, sizeof(SolverPrivate));
 
-    if (!initializeDevice(cuda)) {
+    if (!cudaInitializeDevice(cuda)) {
         ERR("CUDA Device initialization failed!");
-        goto dev_fail;
+		delete cuda;
+        return NULL;
     }
 
-    createDescriptors(bodies, &mDescriptors);
+	return cuda;
+}
 
-    if (!allocateDeviceBuffers(&mDescriptors, cuda)) {
-        ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+void CUDASoftBodySolver::cudaShutdown(SolverPrivate *cuda)
+{
+    cudaDeallocateDeviceBuffers(cuda);
+    cudaShutdownDevice(cuda);
+}
+
+bool CUDASoftBodySolver::cudaInitialize(SolverPrivate *cuda, softbodyArray_t *bodies)
+{
+    cudaCreateDescriptors(cuda, bodies);
+
+    if (!cudaAllocateDeviceBuffers(cuda)) {
         ERR("Unable to allocte enough memory on device!");
-        goto alloc_fail;
+        return false;
     }
 
-    bool res;
-    FOREACH(it, &mDescriptors) {
-        res = copyBodyToDeviceBuffers(&(*it), cuda);
-        if (!res) {
-            ERR("Error occured while copying Soft bodies data to device!");
-            ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-            goto copy_fail;
-        }
-        res = registerVertexBuffers(&(*it));
-        if (!res) {
-            ERR("Error occured registering SoftBody vertex buffers.");
-            ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-            goto copy_fail;
-        }
+	if (!cudaInitializeBodies(cuda)) {
+        ERR("Unable to allocte enough memory on device!");
+		cudaDeallocateDeviceBuffers(cuda);
+        return false;
     }
+	return true;
+}
+
+bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
+{
+    SolverPrivate *cuda;
+
+    if (mInitialized) return true;
+
+	cuda = cudaContextCreate();
+	if (!cuda) {
+		ERR("Unable to create CUDA context.");
+		return false;
+	}
+
+	if (!cudaInitialize(cuda, bodies)) {
+		ERR("Unable to initailize cuda resources");
+		return false;
+	}
 
     mInitialized = true;
     mCuda = cuda;
     return true;
-
-copy_fail:
-    deallocateDeviceBuffers(cuda);
-alloc_fail:
-    shutdownDevice(cuda);
-dev_fail:
-    delete cuda;
-    return false;
 }
 
 void CUDASoftBodySolver::shutdown(void)
@@ -371,17 +404,59 @@ void CUDASoftBodySolver::shutdown(void)
     if (!mInitialized) return;
 
     if (mCuda) {
-        shutdownDevice(mCuda);
-        deallocateDeviceBuffers(mCuda);
-        delete mCuda;
+		cudaShutdown(mCuda);
         mCuda = NULL;
     }
-    mDescriptors.clear();
     mInitialized = false;
+}
+
+void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async = false)
+{
+	cudaError_t err;
+	size_t nRes;
+	vec3 *ptr;
+
+	nRes = cuda->descriptors.size();
+	cudaGraphicsResource **res = new cudaGraphicsResource*[nRes];
+	for (unsigned int i = 0; i < nRes; i++)
+		res[i] = cuda->descriptors[i].graphics;
+
+	err = cudaGraphicsMapResources(nRes, res);
+	if (err != cudaSuccess) {
+		delete res;
+		return;
+	}
+
+	FOREACH(it, &cuda->descriptors) {
+		size_t size;
+		err = cudaGraphicsResourceGetMappedPointer((void**)&ptr, &size, it->graphics);
+		if (err != cudaSuccess) {
+			ERR("Unable to map VBO pointer");
+			delete res;
+			return;
+		}
+		if (size != it->nVertex * sizeof(vec3)) {
+			ERR("Invalid size!");
+			delete res;
+			return;
+		}
+		cudaUpdateVertexBuffer(cuda->array[ARRAY_POSITIONS], cuda->mapping, ptr, it->vertexBaseIdx, it->nVertex);
+	}
+
+	cudaGraphicsUnmapResources(nRes, res);
+	delete res;
 }
 
 void CUDASoftBodySolver::updateVertexBuffersAsync(void)
 {
+	if (mInitialized)
+		updateVertexBuffers(mCuda, true);
+}
+
+void CUDASoftBodySolver::updateVertexBuffers(void)
+{
+	if (mInitialized)
+		updateVertexBuffers(mCuda, false);
 }
 
 void CUDASoftBodySolver::projectSystem(float_t dt)

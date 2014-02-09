@@ -1,5 +1,6 @@
 #include "glm/glm.hpp"
 #include "CUDASoftBodySolver.h"
+#include "common.h"
 
 ///**
 //  step 1. Updating velocities.
@@ -211,15 +212,18 @@ __global__ void cudaUpdateVertexBuffers(BufferMapping mapp, glm::vec3 *positions
 	if (idx < max_idx) {
 		glm::uint index = mapping[idx];
 		glm::vec3 vertex = positions[index];
+		vertex -= glm::vec3(0, 0.1, 0);
 		mapp.vboPtr[idx - mapp.baseIdx] = vertex;
 	}
 }
 
-void CUDASoftBodySolver::updateVertexBuffers(glm::vec3 *vboPtr, unsigned int baseIdx,
+void CUDASoftBodySolver::cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
+		*mapping, glm::vec3 *vboPtr, unsigned int baseIdx,
 		unsigned int len)
 {
 	BufferMapping b;
 	b.vboPtr = vboPtr;
 	b.baseIdx = baseIdx;
-	cudaUpdateVertexBuffers<<<100, 512>>>(b, NULL, NULL, len);
+	cudaUpdateVertexBuffers<<<10, 512>>>(b, positions, mapping, len);
+	ERR("Kernel run");
 }
