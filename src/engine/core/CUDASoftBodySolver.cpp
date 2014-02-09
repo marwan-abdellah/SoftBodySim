@@ -22,9 +22,15 @@ struct CUDASoftBodySolver::SoftBodyDescriptor {
     SoftBody *body;
     cudaGraphicsResource *graphics;
     bool mapped : 1;
+
     unsigned int vertexBaseIdx;
+    unsigned int nVertex;
+
     unsigned int linksBaseIdx;
+    unsigned int nLinks;
+
     unsigned int mappingBaseIdx;
+    unsigned int nMapping;
 };
 
 struct CUDASoftBodySolver::SolverPrivate {
@@ -108,17 +114,17 @@ static void *allocateCUDABuffer(size_t bytes, bool zeroed=false)
     return ret;
 }
 
-bool CUDASoftBodySolver::allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
+bool CUDASoftBodySolver::allocateDeviceBuffers(descriptorArray_t *bodies, SolverPrivate *cuda)
 {
     int bytesArray = 0, bytesMass = 0, bytesMapping = 0, bytesLinks = 0, bytesRestLength = 0;
     long total_alloc = 0;
 
     FOREACH(it, bodies) {
-        bytesArray += (*it)->mParticles.size() * sizeof(vec3);
-        bytesMass += (*it)->mParticles.size() * sizeof(float_t);
-        bytesMapping += (*it)->mMeshVertexParticleMapping.size() * sizeof(uint_t);
-        bytesLinks += (*it)->mLinks.size() * sizeof(uvec2);
-        bytesRestLength += (*it)->mLinks.size() * sizeof(float_t);
+        bytesArray += it->nVertex * sizeof(vec3);
+        bytesMass += it->nVertex * sizeof(float_t);
+        bytesMapping += it->nMapping * sizeof(uint_t);
+        bytesLinks += it->nLinks * sizeof(uvec2);
+        bytesRestLength += it->nLinks * sizeof(float_t);
     }
 
     cuda->array[ARRAY_POSITIONS]   = (vec3*)allocateCUDABuffer(bytesArray);
@@ -160,10 +166,9 @@ void CUDASoftBodySolver::deallocateDeviceBuffers(SolverPrivate *cuda)
     if (cuda->mapping) cudaFree(cuda->mapping);
 }
 
-bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate *cuda)
+void CUDASoftBodySolver::createDescriptors(softbodyArray_t *bodies, descriptorArray_t *descriptors)
 {
-    cudaError_t err;
-    int idx = 0, idx2= 0, idx3 = 0;
+    int idx1 = 0, idx2= 0, idx3 = 0;
 
     FOREACH(it, bodies) {
         SoftBodyDescriptor descr;
@@ -171,99 +176,95 @@ bool CUDASoftBodySolver::copyBodiesToDeviceBuffers(softbodyArray_t *bodies, Solv
         descr.body = *it;
         descr.mapped = false;
         descr.graphics = NULL;
-        descr.vertexBaseIdx = idx;
+        descr.vertexBaseIdx = idx1;
         descr.linksBaseIdx = idx2;
+        descr.mappingBaseIdx = idx3;
 
-        unsigned int bytes1 = body->mParticles.size() * sizeof(vec3);
-        unsigned int bytes2 = body->mLinks.size() * sizeof(uvec2);
-        unsigned int bytes3 = body->mLinks.size() * sizeof(float_t);
-        unsigned int bytes4 = body->mParticles.size() * sizeof(float_t);
-        unsigned int bytes5 = body->mMeshVertexParticleMapping.size() * sizeof(uint_t);
+        descr.nVertex = body->mParticles.size();
+        descr.nLinks = body->mLinks.size();
+        descr.nMapping = body->mMeshVertexParticleMapping.size();
 
-        unsigned int offset = idx * sizeof(vec3);
-        unsigned int offset2 = idx2 * sizeof(uvec2);
-        unsigned int offset3 = idx2 * sizeof(float_t);
-        unsigned int offset4 = idx * sizeof(float_t);
-        unsigned int offset5 = idx3 * sizeof(uint_t);
+        descriptors->push_back(descr);
 
-        unsigned char *ptr;
+        idx1 += descr.nVertex;
+        idx2 += descr.nMapping;
+        idx3 += descr.nLinks;
+    }
+}
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_POSITIONS]);
-        ptr += offset;
-        err = cudaMemcpy(ptr, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+bool CUDASoftBodySolver::copyBodyToDeviceBuffers(SoftBodyDescriptor *descr, SolverPrivate *cuda)
+{
+    cudaError_t err;
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_PROJECTIONS]);
-        ptr += offset;
-        err = cudaMemcpy(ptr, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+    SoftBody *body = descr->body;
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_VELOCITIES]);
-        ptr += offset;
-        err = cudaMemcpy(ptr, &(body->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+    unsigned int bytes1 = descr->nVertex * sizeof(vec3);
+    unsigned int bytes2 = descr->nLinks * sizeof(uvec2);
+    unsigned int bytes3 = descr->nLinks * sizeof(float_t);
+    unsigned int bytes4 = descr->nVertex * sizeof(float_t);
+    unsigned int bytes5 = descr->nMapping * sizeof(uint_t);
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_FORCES]);
-        ptr += offset;
-        err = cudaMemcpy(ptr, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+    unsigned int offset1 = descr->vertexBaseIdx * sizeof(vec3);
+    unsigned int offset2 = descr->linksBaseIdx * sizeof(uvec2);
+    unsigned int offset3 = descr->linksBaseIdx * sizeof(float_t);
+    unsigned int offset4 = descr->vertexBaseIdx * sizeof(float_t);
+    unsigned int offset5 = descr->mappingBaseIdx * sizeof(uint_t);
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->mapping);
-        ptr += offset5;
-        err = cudaMemcpy(ptr, &(body->mMeshVertexParticleMapping[0]), bytes5, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+    unsigned char *ptr;
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->massInv);
-        ptr += offset4;
-        err = cudaMemset(ptr, 0x0, bytes4);
-        if (err != cudaSuccess) return false;
+    ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_POSITIONS]);
+    ptr += offset1;
+    err = cudaMemcpy(ptr, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
 
-        vector<uvec2> tmp(body->mLinks.size());
-        vector<float_t> tmp2(body->mLinks.size());
+    ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_PROJECTIONS]);
+    ptr += offset1;
+    err = cudaMemcpy(ptr, &(body->mParticles[0]), bytes1, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
 
-        FOREACH_R(lnk, body->mLinks)
-        {
-            tmp.push_back(lnk->index);
-            tmp2.push_back(lnk->restLength);
-        }
+    ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_VELOCITIES]);
+    ptr += offset1;
+    err = cudaMemcpy(ptr, &(body->mVelocities[0]), bytes1, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->links);
-        ptr += offset2;
-        err = cudaMemcpy(ptr, &tmp[0], bytes2, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+    ptr = reinterpret_cast<unsigned char*>(cuda->array[ARRAY_FORCES]);
+    ptr += offset1;
+    err = cudaMemcpy(ptr, &(body->mForces[0]), bytes1, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
 
-        ptr = reinterpret_cast<unsigned char*>(cuda->linksRestLength2);
-        ptr += offset3;
-        err = cudaMemcpy(ptr, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
-        if (err != cudaSuccess) return false;
+    ptr = reinterpret_cast<unsigned char*>(cuda->mapping);
+    ptr += offset5;
+    err = cudaMemcpy(ptr, &(body->mMeshVertexParticleMapping[0]), bytes5, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
 
-        if (body->mMesh) {
-            const VertexBuffer *buf = body->mMesh->vertexes;
-            if (buf) {
-                switch(buf->getType()) {
-                    case VertexBuffer::OPENGL_BUFFER:
-                        if (!initGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), &descr))
-                            return false;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+    ptr = reinterpret_cast<unsigned char*>(cuda->massInv);
+    ptr += offset4;
+    err = cudaMemset(ptr, 0x0, bytes4);
+    if (err != cudaSuccess) return false;
 
-        mDescriptors.push_back(descr);
+    vector<uvec2> tmp(body->mLinks.size());
+    vector<float_t> tmp2(body->mLinks.size());
 
-        idx += body->mParticles.size();
-        idx2 += body->mLinks.size();
-        idx3 += body->mMeshVertexParticleMapping.size();
+    FOREACH_R(lnk, body->mLinks)
+    {
+        tmp.push_back(lnk->index);
+        tmp2.push_back(lnk->restLength);
     }
 
-    DBG("Data sucessfully copied to device");
+    ptr = reinterpret_cast<unsigned char*>(cuda->links);
+    ptr += offset2;
+    err = cudaMemcpy(ptr, &tmp[0], bytes2, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
+
+    ptr = reinterpret_cast<unsigned char*>(cuda->linksRestLength2);
+    ptr += offset3;
+    err = cudaMemcpy(ptr, &tmp2[0], bytes3, cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) return false;
 
     return true;
 }
 
-bool CUDASoftBodySolver::initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
+bool CUDASoftBodySolver::registerGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr)
 {
     cudaError_t err;
     GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
@@ -273,6 +274,36 @@ bool CUDASoftBodySolver::initGLGraphicsResource(const GLVertexBuffer *vb, SoftBo
         descr->graphics = NULL;
         return false;
     }
+    return true;
+}
+
+bool CUDASoftBodySolver::registerVertexBuffers(SoftBodyDescriptor *descr)
+{
+    const Mesh_t *mesh;
+
+    if (!descr->body) {
+        ERR("No SoftBody reference in descriptor!");
+        return false;
+    }
+
+    mesh = descr->body->getMesh();
+    if (!mesh) {
+        ERR("No mesh data");
+        return false;
+    }
+
+    const VertexBuffer *buf = mesh->vertexes;
+    if (buf) {
+        switch (buf->getType()) {
+            case VertexBuffer::OPENGL_BUFFER:
+                if (!registerGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf), descr))
+                    return false;
+                break;
+            default:
+                break;
+        }
+    }
+
     return true;
 }
 
@@ -288,16 +319,29 @@ bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
         ERR("CUDA Device initialization failed!");
         goto dev_fail;
     }
-    if (!allocateDeviceBuffers(bodies, cuda)) {
+
+    createDescriptors(bodies, &mDescriptors);
+
+    if (!allocateDeviceBuffers(&mDescriptors, cuda)) {
         ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
         ERR("Unable to allocte enough memory on device!");
         goto alloc_fail;
     }
 
-    if (!copyBodiesToDeviceBuffers(bodies, cuda)) {
-        ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-        ERR("Error occured while copying Soft bodies data to device!");
-        goto copy_fail;
+    bool res;
+    FOREACH(it, &mDescriptors) {
+        res = copyBodyToDeviceBuffers(&(*it), cuda);
+        if (!res) {
+            ERR("Error occured while copying Soft bodies data to device!");
+            ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+            goto copy_fail;
+        }
+        res = registerVertexBuffers(&(*it));
+        if (!res) {
+            ERR("Error occured registering SoftBody vertex buffers.");
+            ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+            goto copy_fail;
+        }
     }
 
     mInitialized = true;
@@ -323,6 +367,7 @@ void CUDASoftBodySolver::shutdown(void)
         delete mCuda;
         mCuda = NULL;
     }
+    mDescriptors.clear();
     mInitialized = false;
 }
 

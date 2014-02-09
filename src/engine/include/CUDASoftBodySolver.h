@@ -26,6 +26,8 @@ class CUDASoftBodySolver {
         struct SolverPrivate;
         struct SoftBodyDescriptor;
 
+        typedef std::vector<SoftBodyDescriptor> descriptorArray_t;
+
         void    solveCollisions(glm::float_t dt);
         void    solveLinks(glm::float_t dt);
         void    integrateSystem(glm::float_t dt);
@@ -33,17 +35,20 @@ class CUDASoftBodySolver {
         bool    initializeDevice(SolverPrivate*);
         bool    shutdownDevice(SolverPrivate*);
 
-        bool    allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
-        void    deallocateDeviceBuffers(SolverPrivate *cuda);
-        bool    copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
+        void    createDescriptors(softbodyArray_t *bodies, descriptorArray_t *descriptors);
+        bool    allocateDeviceBuffers(descriptorArray_t *, SolverPrivate*);
+        void    deallocateDeviceBuffers(SolverPrivate*);
+        bool    copyBodyToDeviceBuffers(SoftBodyDescriptor*, SolverPrivate*);
 
-        bool initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
+        bool registerVertexBuffers(SoftBodyDescriptor *descr);
+        bool registerGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
 
         SolverPrivate   *mCuda;
 
-        bool            mInitialized;
-        std::vector<SoftBodyDescriptor>  mDescriptors;
+        bool              mInitialized;
+        descriptorArray_t mDescriptors;
 };
+
 
 #endif
 
