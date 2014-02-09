@@ -6,42 +6,42 @@
 
 #include <map>
 
-typedef std::vector<SoftBody*>	 softbodyArray_t;
+typedef std::vector<SoftBody*>     softbodyArray_t;
 
 class CUDASoftBodySolver {
-	public:
+    public:
 
-		CUDASoftBodySolver(void);
-		~CUDASoftBodySolver(void);
+        CUDASoftBodySolver(void);
+        ~CUDASoftBodySolver(void);
 
-		bool    initialize(softbodyArray_t *bodies);
-		void	shutdown(void);
+        bool    initialize(softbodyArray_t *bodies);
+        void    shutdown(void);
 
-		void 	projectSystem(glm::float_t dt);
+        void     projectSystem(glm::float_t dt);
 
-		bool	updateVertexBuffers(void);
-		void	updateAllVertexBuffersAsync(void);
+        bool    updateVertexBuffers(void);
+        void    updateAllVertexBuffersAsync(void);
 
-	private:
-	    struct SolverPrivate;
+    private:
+        struct SolverPrivate;
         struct SoftBodyDescriptor;
 
-		void 	solveCollisions(glm::float_t dt);
-		void 	solveLinks(glm::float_t dt);
-		void	integrateSystem(glm::float_t dt);
+        void    solveCollisions(glm::float_t dt);
+        void    solveLinks(glm::float_t dt);
+        void    integrateSystem(glm::float_t dt);
 
-		bool 	initializeDevice(SolverPrivate*);
-		bool    shutdownDevice(SolverPrivate*);
+        bool    initializeDevice(SolverPrivate*);
+        bool    shutdownDevice(SolverPrivate*);
 
-		bool	allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
+        bool    allocateDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
         void    deallocateDeviceBuffers(SolverPrivate *cuda);
-		bool	copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
+        bool    copyBodiesToDeviceBuffers(softbodyArray_t *bodies, SolverPrivate*);
 
-		bool initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
+        bool initGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
 
         SolverPrivate   *mCuda;
 
-		bool			mInitialized;
+        bool            mInitialized;
         std::vector<SoftBodyDescriptor>  mDescriptors;
 };
 
