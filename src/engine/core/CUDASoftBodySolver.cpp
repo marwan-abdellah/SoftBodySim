@@ -367,13 +367,9 @@ void CUDASoftBodySolver::updateVertexBuffers(void)
 
 void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 {
-	vec3 *tmp;
 	FOREACH(it, &cuda->descriptors) {
 		cudaProjectSystem(dt, &mGravity, it->positions, it->velocities, it->forces,
 				it->projections, it->massesInv, it->nParticles);
-		tmp = it->positions;
-		it->positions = it->projections;
-		it->projections = tmp;
 	}
 }
 

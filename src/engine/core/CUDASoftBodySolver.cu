@@ -24,7 +24,7 @@ __global__ void cudaUpdateVelocitiesKernel(
 		vec3 velocity = velocities[idx];
 		
 		// 1. Updating velocities.
-		velocity += dt * (force + gravity);
+		velocity += dt * imass * (force + gravity);
 
 		// 2. Damp velocities.
 		velocity *= 0.99f; // Naive damping
@@ -161,27 +161,27 @@ __global__ void cudaUpdateVelocitiesKernel(
 ///**
 //  */
 //
-///**
-//  step 6. Integrate motion.
-//  */
-//__global__ void integrateMotion(
-//		glm::float_t dt,
-//		glm::vec3 *positions,
-//		glm::vec3 *projections,
-//		glm::vec3 *velocities,
-//		glm::uint max_idx
-//		)
-//{
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	if (idx < max_idx) {
-//		glm::vec3 pos = positions[idx];
-//		glm::vec3 proj = projections[idx];
-//
-//		velocities[idx] = (proj - pos) * dt;
-//		positions[idx] = proj
-//	}
-//}
+/**
+  step 6. Integrate motion.
+  */
+__global__ void integrateMotionKernel(
+		glm::float_t dt,
+		glm::vec3 *positions,
+		glm::vec3 *projections,
+		glm::vec3 *velocities,
+		glm::uint max_idx
+		)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < max_idx) {
+		glm::vec3 pos = positions[idx];
+		glm::vec3 proj = projections[idx];
+
+		velocities[idx] = (proj - pos) * dt;
+		positions[idx] = proj;
+	}
+}
 
 
 __global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
@@ -211,4 +211,6 @@ void CUDASoftBodySolver::cudaProjectSystem(float_t dt, vec3 *gravity, vec3
 	int blockCount = maxId / threadCount + 1;
 	cudaUpdateVelocitiesKernel<<<blockCount, threadCount>>>(*gravity, positions,
 			projections, velocities, forces, massInv, dt, maxId);
+	integrateMotionKernel<<<blockCount, threadCount>>>(dt, positions, projections,
+			velocities, maxId);
 }

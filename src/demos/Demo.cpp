@@ -129,6 +129,8 @@ Demo::~Demo(void)
 
 void Demo::onDisplay(void)
 {
+	mSolver.projectSystem(0.03f);
+	mSolver.updateVertexBuffers();
     renderer.clearScreen();
 
     FOREACH(b, &mSoftBodies)
