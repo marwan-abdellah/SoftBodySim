@@ -35,6 +35,7 @@ struct CUDASoftBodySolver::SolverPrivate {
 	cudaStream_t	stream;
 
 	descriptorArray_t descriptors;
+	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -284,6 +285,7 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 			return false;
 		}
 		total_alloc += mem;
+		cuda->resArray.push_back(it->graphics);
 	}
 	DBG("Allocated %ld bytes on device", total_alloc);
 
@@ -328,39 +330,27 @@ void CUDASoftBodySolver::shutdown(void)
 void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async = false)
 {
 	cudaError_t err;
-	size_t nRes;
 	vec3 *ptr;
 
-	nRes = cuda->descriptors.size();
-	cudaGraphicsResource **res = new cudaGraphicsResource*[nRes];
-	for (unsigned int i = 0; i < nRes; i++)
-		res[i] = cuda->descriptors[i].graphics;
-
 	// map all in one call
-	err = cudaGraphicsMapResources(nRes, res);
-	if (err != cudaSuccess) {
-		delete res;
-		return;
-	}
+	err = cudaGraphicsMapResources(cuda->resArray.size(), &cuda->resArray[0]);
+	if (err != cudaSuccess) return;
 
 	FOREACH(it, &cuda->descriptors) {
 		size_t size;
 		err = cudaGraphicsResourceGetMappedPointer((void**)&ptr, &size, it->graphics);
 		if (err != cudaSuccess) {
 			ERR("Unable to map VBO pointer");
-			delete res;
 			return;
 		}
 		if (size != it->nParticles * sizeof(vec3)) {
 			ERR("Invalid size!");
-			delete res;
 			return;
 		}
 		cudaUpdateVertexBuffer(it->positions, it->mapping, ptr, it->nParticles);
 	}
 
-	cudaGraphicsUnmapResources(nRes, res);
-	delete res;
+	cudaGraphicsUnmapResources(cuda->resArray.size(), &cuda->resArray[0]);
 }
 
 void CUDASoftBodySolver::updateVertexBuffersAsync(void)
