@@ -34,7 +34,6 @@ __global__ void cudaUpdateVelocitiesKernel(
 
 		// update global tables
 		projections[idx] = projection;
-		positions[idx] = projection;
 		velocities[idx] = velocity;
 	}
 }
@@ -184,32 +183,24 @@ __global__ void cudaUpdateVelocitiesKernel(
 //	}
 //}
 
-struct BufferMapping {
-	glm::vec3 *vboPtr;
-	unsigned int baseIdx;
-};
 
-__global__ void cudaUpdateVertexBufferKernel(BufferMapping mapp, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
+__global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
 		glm::uint index = mapping[idx];
 		glm::vec3 vertex = positions[index];
-		mapp.vboPtr[idx - mapp.baseIdx] = vertex;
+		vboPtr[idx] = vertex;
 	}
 }
 
 void CUDASoftBodySolver::cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
-		*mapping, glm::vec3 *vboPtr, unsigned int baseIdx,
-		unsigned int len)
+		*mapping, glm::vec3 *vboPtr, unsigned int len)
 {
-	BufferMapping b;
-	b.vboPtr = vboPtr;
-	b.baseIdx = baseIdx;
 	int threadCount = 128;
 	int blockCount = len / threadCount + 1;
-	cudaUpdateVertexBufferKernel<<<blockCount, threadCount >>>(b, positions, mapping, len);
+	cudaUpdateVertexBufferKernel<<<blockCount, threadCount >>>(vboPtr, positions, mapping, len);
 }
 
 void CUDASoftBodySolver::cudaProjectSystem(float_t dt, vec3 *gravity, vec3

@@ -6,55 +6,55 @@
 
 #include <map>
 
-typedef std::vector<SoftBody*>     softbodyArray_t; 
+typedef std::vector<SoftBody*>	 softbodyArray_t; 
 class CUDASoftBodySolver {
-    public:
+	public:
 
-        CUDASoftBodySolver(void);
-        ~CUDASoftBodySolver(void);
+		CUDASoftBodySolver(void);
+		~CUDASoftBodySolver(void);
 
-        bool    initialize(softbodyArray_t *bodies);
-        void    shutdown(void);
+		bool initialize(softbodyArray_t *bodies);
+		void shutdown(void);
 
-        void     projectSystem(glm::float_t dt);
+		void projectSystem(glm::float_t dt);
 
-        void	updateVertexBuffers(void);
-        void    updateVertexBuffersAsync(void);
+		void updateVertexBuffers(void);
+		void updateVertexBuffersAsync(void);
 
-        struct SolverPrivate;
-        struct SoftBodyDescriptor;
-    private:
+	private:
+		struct SolverPrivate;
+		struct SoftBodyDescriptor;
+		typedef std::vector<SoftBodyDescriptor> descriptorArray_t;
 
-		void   updateVertexBuffers(glm::vec3*, unsigned int, unsigned int);
+		void updateVertexBuffers(glm::vec3*, unsigned int, unsigned int);
 
-        void    solveCollisions(glm::float_t dt);
-        void    solveLinks(glm::float_t dt);
-        void    integrateSystem(glm::float_t dt);
+		void solveCollisions(glm::float_t dt);
+		void solveLinks(glm::float_t dt);
+		void integrateSystem(glm::float_t dt);
 
-		SolverPrivate *cudaContextCreate(void);
-        bool    cudaInitialize(SolverPrivate*, softbodyArray_t*);
-        void 	cudaShutdown(SolverPrivate*);
+		SolverPrivate *cudaContextCreate(softbodyArray_t*);
+		void cudaContextShutdown(SolverPrivate*);
 
-        bool    cudaInitializeDevice(SolverPrivate*);
-        bool    cudaShutdownDevice(SolverPrivate*);
+		bool cudaInitializeDevice(SolverPrivate*);
+		bool cudaShutdownDevice(SolverPrivate*);
 
-        void    cudaCreateDescriptors(SolverPrivate*, softbodyArray_t *bodies);
-        bool    cudaAllocateDeviceBuffers(SolverPrivate*);
-		bool    cudaInitializeBodies(SolverPrivate *cuda);
-        void    cudaDeallocateDeviceBuffers(SolverPrivate*);
-        bool    cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor*, SolverPrivate*);
-		void    cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
-				*mapping, glm::vec3 *vboPtr, unsigned int baseIdx, unsigned int len);
+		void cudaAppendDescriptors(descriptorArray_t*, softbodyArray_t *bodies);
+		long cudaAllocateDeviceBuffers(SoftBodyDescriptor*);
+		void cudaDeallocateDeviceBuffers(SoftBodyDescriptor*);
+		bool cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor*);
+		bool cudaRegisterVertexBuffers(SoftBodyDescriptor *descr);
 
-        bool    cudaRegisterVertexBuffers(SoftBodyDescriptor *descr, SolverPrivate*);
-        bool    cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb, SoftBodyDescriptor *descr);
+		void cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
+				*mapping, glm::vec3 *vboPtr, unsigned int len);
 
-		void    updateVertexBuffers(SolverPrivate *cuda, bool async);
-		void    cudaProjectSystem(float_t dt, glm::vec3 *gravity, glm::vec3 *positions, glm::vec3 *velocities,
+		void updateVertexBuffers(SolverPrivate *cuda, bool async);
+		void projectSystem(SolverPrivate *cuda, float_t dt);
+
+		void	cudaProjectSystem(float_t dt, glm::vec3 *gravity, glm::vec3 *positions, glm::vec3 *velocities,
 				glm::vec3 *forces, glm::vec3 *projections, glm::float_t *massInv, glm::uint_t maxId);
 
-        SolverPrivate   *mCuda;
-        bool             mInitialized;
+		SolverPrivate   *mCuda;
+		bool			 mInitialized;
 		glm::vec3		 mGravity;
 };
 

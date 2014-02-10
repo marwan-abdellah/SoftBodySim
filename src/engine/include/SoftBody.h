@@ -56,6 +56,7 @@ struct VolumeConstraint {
 
 typedef std::vector<glm::vec3>              vec3Array_t;
 typedef std::vector<glm::vec2>              vec2Array_t;
+typedef std::vector<glm::float_t>           floatArray_t;
 typedef std::vector<glm::uint>              indexArray_t;
 typedef std::vector<glm::uvec3>             index3Array_t;
 typedef std::vector<glm::uvec2>             index2Array_t;
@@ -89,7 +90,7 @@ private:
     vec3Array_t                 mForces;
 
     // inverted mass of every particle
-    glm::float_t                mMassInv;
+    floatArray_t				mMassInv;
     glm::float_t                mDamping;
     glm::float_t                mSpringiness;
 

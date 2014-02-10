@@ -102,7 +102,7 @@ Demo::Demo(int argc, char **argv) :
     FACE_ADD(facesA, faces, 30, 3);
     FACE_ADD(facesA, faces, 33, 3);
     
-    SoftBody *b = new SoftBody(1,1,1, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    SoftBody *b = new SoftBody(1.0f, 1.0f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);

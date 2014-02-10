@@ -48,10 +48,13 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
     index3Array_t faces2;
     unsigned int skipped = 0;
 
-    mMassInv = 1.0/mass;
     mSpringiness = springness;
     mDamping = damping;
     mParticles = *particles;
+    mMassInv.resize(mParticles.size());
+	mass /= 1.0;
+	FOREACH(it, &mMassInv)
+		*it = mass;
     mVelocities.resize(mParticles.size());
     mForces.resize(mParticles.size());
     mLinks.resize(links->size());
