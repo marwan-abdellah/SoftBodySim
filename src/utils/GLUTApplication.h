@@ -27,8 +27,11 @@ public:
     void attachMenu(int menuId, ButtonType button);
     void addMenuEntry(int menuId, std::string entry);
     int addMenu(std::string entry, int parentMenuId=-1);
+	void syncScreen(void);
+	int getElapsedTime(void);
 
     virtual void onDisplay(void) {}
+    virtual void onIdle(void) {}
     virtual void onKeyboardUp(unsigned char k, int x, int y) {}
     virtual void onKeyboard(unsigned char k, int x, int y) {}
     virtual void onMouseClick(ButtonType btn, ButtonState state, int x, int y) {}

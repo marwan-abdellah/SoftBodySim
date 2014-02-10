@@ -102,7 +102,7 @@ Demo::Demo(int argc, char **argv) :
     FACE_ADD(facesA, faces, 30, 3);
     FACE_ADD(facesA, faces, 33, 3);
     
-    SoftBody *b = new SoftBody(1.0f, 1.0f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    SoftBody *b = new SoftBody(10.0f, 1.0f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);
@@ -129,12 +129,29 @@ Demo::~Demo(void)
 
 void Demo::onDisplay(void)
 {
-	mSolver.projectSystem(0.03f);
-	mSolver.updateVertexBuffers();
-    renderer.clearScreen();
+	static int time;
+	static int frames;
+	static int engine_iter;
 
-    FOREACH(b, &mSoftBodies)
-        renderer.renderBody(*b, mCamera.getCameraMatrix());
+	frames++;
+
+	int tm = getElapsedTime();
+	if (tm - time > 50) {
+		mSolver.projectSystem(0.02f);
+		mSolver.updateVertexBuffers();
+		engine_iter++;
+	}
+	if (tm - time > 1000) {
+		ERR("Display: %lf fps, engine: %f", (double)frames * 1000 / (tm - time),
+				(double)engine_iter * 1000 / (tm - time));
+		time = tm;
+		frames = 0;
+		engine_iter = 0;
+	}
+	renderer.clearScreen();
+	FOREACH(b, &mSoftBodies)
+		renderer.renderBody(*b, mCamera.getCameraMatrix());
+	syncScreen();
 }
 
 void Demo::onKeyboard(unsigned char key, int x, int y)
@@ -142,10 +159,6 @@ void Demo::onKeyboard(unsigned char key, int x, int y)
     float angle = 2.0f;
     float delta = 0.1f;
 
-	if (key == 'u') {
-		mSolver.projectSystem(0.01f);
-		mSolver.updateVertexBuffers();
-	}
     if (key == 'w')
         mCamera.moveUp(angle);
     if (key == 's')

@@ -6,17 +6,27 @@ GLUTApplication *GLUTApplication::active_instance = NULL;
 
 using namespace std;
 
-void GLUTApplication::onDisplayHelper(void)
+int GLUTApplication::getElapsedTime(void)
 {
-    if (active_instance)
-        active_instance->onDisplay();
+    return glutGet(GLUT_ELAPSED_TIME);
+}
+
+void GLUTApplication::syncScreen(void)
+{
     glutSwapBuffers();
     glutPostRedisplay();
 }
 
+void GLUTApplication::onDisplayHelper(void)
+{
+    if (active_instance)
+        active_instance->onDisplay();
+}
+
 void GLUTApplication::onIdleHelper()
 {
-    glutPostRedisplay();
+    if (active_instance)
+        active_instance->onIdle();
 }
 
 void GLUTApplication::onKeyboardHelper(unsigned char k, int x, int y)
@@ -127,7 +137,7 @@ void GLUTApplication::initialize(void)
 {
     if (!active_instance) {
         glutInit(&m_argc, m_argv);
-        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL);
         glutInitWindowSize(m_width, m_height);
         glutCreateWindow(m_title.c_str());
 
