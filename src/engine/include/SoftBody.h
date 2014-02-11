@@ -13,36 +13,21 @@
 class SoftBody;
 class CUDASoftBodySolver;
 
-///gclass CollisionBody {
-///g
-///gpublic:
-///g    enum {
-///g        PLANE,
-///g        SPHERE,
-///g    } BoundingType;
-///g
-///g    CollisionBody(BoundingType &bt);
-///g    ~CollisionBody(void);
-///g
-///g    BoundingType getBoundingType(void);
-///g    bool          checkCollision(CollisionBody &body) = 0;
-///g    glm::vec3     collisionPoint(CollisionBody &body) = 0;
-///g
-///g    union {
-///g        struct {
-///g            glm::vec3 origin;
-///g            glm::vec3 normal;
-///g        } plane;
-///g        struct {
-///g            glm::vec3 origin;
-///g            glm::float_t radius;
-///g        } sphere,
-///g    } data;
-///g    glm::float_t offset;
-///g};
-///g
-///g
-//
+struct CollisionBodyInfo {
+    enum BOUNDING_TYPE {
+        TRIANGLE,
+        SPHERE,
+    } type;
+    union {
+		glm::float_t ids[3];
+		struct {
+			glm::uint_t id;
+			glm::float_t radius;
+		} sphere;
+    } data;
+};
+
+typedef std::vector<CollisionBodyInfo> collisionBodyInfoArray_t;
 
 struct LinkConstraint {
     glm::uvec2          index;
@@ -52,6 +37,12 @@ struct LinkConstraint {
 struct VolumeConstraint {
     glm::uvec4          index;
     glm::float_t        restLength;
+};
+
+struct CollisionConstraint {
+    glm::uint_t			vertId;
+	glm::vec3			collNormal;
+	glm::vec3			entryPoint;
 };
 
 typedef std::vector<glm::vec3>              vec3Array_t;
@@ -97,6 +88,9 @@ private:
     // constraints in soft body
     linksArray_t                mLinks;
     volumeArray_t               mVolumes;
+
+	// collision detection
+	collisionBodyInfoArray_t	mCollisionBodies;
 
     // drawing data
     Mesh_t                      *mMesh;

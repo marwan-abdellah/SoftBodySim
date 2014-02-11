@@ -9,6 +9,10 @@ using namespace glm;
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
 
+struct CUDASoftBodySolver::CollisionBodyInfoDescriptor {
+	vec3 *positions;
+	CollisionBodyInfo collInfo;
+};
 
 struct CUDASoftBodySolver::SoftBodyDescriptor {
 	SoftBody *body;
@@ -36,6 +40,7 @@ struct CUDASoftBodySolver::SolverPrivate {
 
 	descriptorArray_t descriptors;
 	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
+	collisionBodyDescriptorArray_t collisionDescriptors;
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -248,6 +253,16 @@ bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr)
 	return true;
 }
 
+void CUDASoftBodySolver::cudaAppendCollsionDescriptor(collisionBodyDescriptorArray_t *collArray, SoftBodyDescriptor *descr)
+{
+	FOREACH(it, &descr->body->mCollisionBodies) {
+		CollisionBodyInfoDescriptor cb;
+		cb.positions = descr->positions;
+		cb.collInfo = *it;
+
+		collArray->push_back(cb);
+	}
+}
 
 CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbodyArray_t *bodies)
 {
@@ -284,6 +299,7 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
 			return false;
 		}
+		cudaAppendCollsionDescriptor(&cuda->collisionDescriptors, &(*it));
 		total_alloc += mem;
 		cuda->resArray.push_back(it->graphics);
 	}

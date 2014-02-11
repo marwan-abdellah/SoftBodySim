@@ -7,6 +7,7 @@
 #include <map>
 
 typedef std::vector<SoftBody*>	 softbodyArray_t; 
+
 class CUDASoftBodySolver {
 	public:
 
@@ -24,7 +25,10 @@ class CUDASoftBodySolver {
 	private:
 		struct SolverPrivate;
 		struct SoftBodyDescriptor;
+		struct CollisionBodyInfoDescriptor;
+
 		typedef std::vector<SoftBodyDescriptor> descriptorArray_t;
+		typedef std::vector<CollisionBodyInfoDescriptor> collisionBodyDescriptorArray_t;
 
 		void updateVertexBuffers(glm::vec3*, unsigned int, unsigned int);
 
@@ -39,6 +43,7 @@ class CUDASoftBodySolver {
 		bool cudaShutdownDevice(SolverPrivate*);
 
 		void cudaAppendDescriptors(descriptorArray_t*, softbodyArray_t *bodies);
+		void cudaAppendCollsionDescriptor(collisionBodyDescriptorArray_t *, SoftBodyDescriptor *);
 		long cudaAllocateDeviceBuffers(SoftBodyDescriptor*);
 		void cudaDeallocateDeviceBuffers(SoftBodyDescriptor*);
 		bool cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor*);
