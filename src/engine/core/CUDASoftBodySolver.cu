@@ -367,7 +367,7 @@ void CUDASoftBodySolver::shutdown(void)
 	mInitialized = false;
 }
 
-void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async = false)
+void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 {
 	cudaError_t err;
 	vec3 *ptr;
@@ -396,7 +396,7 @@ void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async = f
 void CUDASoftBodySolver::updateVertexBuffersAsync(void)
 {
 	if (mInitialized)
-		updateVertexBuffers(mCuda, true);
+		updateVertexBuffers(mCuda, false); // currently only synch updates
 }
 
 void CUDASoftBodySolver::updateVertexBuffers(void)
