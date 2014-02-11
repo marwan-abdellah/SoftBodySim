@@ -1,198 +1,422 @@
-#include "glm/glm.hpp"
 #include "CUDASoftBodySolver.h"
-#include "common.h"
 
+#include "common.h"
+#include <cstring>
+
+using namespace std;
 using namespace glm;
 
-__global__ void cudaUpdateVelocitiesKernel(
-		vec3 gravity,
-		vec3 *positions,
-		vec3 *projections,
-		vec3 *velocities,
-		vec3 *ext_forces,
-		float_t *masses,
-		float_t dt,
-		uint_t max_idx)
+#include <cuda_runtime.h>
+#include <cuda_gl_interop.h>
+
+#include "CUDASoftBodySolverKernel.h"
+
+struct CUDASoftBodySolver::CollisionBodyInfoDescriptor {
+	vec3 *positions;
+	CollisionBodyInfo collInfo;
+};
+
+struct CUDASoftBodySolver::SoftBodyDescriptor {
+	SoftBody *body;
+	cudaGraphicsResource *graphics;
+
+	vec3 *positions;
+	vec3 *projections;
+	vec3 *velocities;
+	vec3 *forces;
+	float_t *massesInv;
+	unsigned int nParticles;
+
+	LinkConstraint *links;
+	unsigned int nLinks;
+
+	uint_t *mapping;  /* Mapping between particles positions and vertexes is VertexBuffer.
+						 Used for updating Vertex poistions */
+	unsigned int nMapping;
+};
+
+struct CUDASoftBodySolver::SolverPrivate {
+	int			 deviceId;
+	cudaDeviceProp  devProp;
+	cudaStream_t	stream;
+
+	descriptorArray_t descriptors;
+	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
+
+	collisionBodyDescriptorArray_t collBodyDescrHost;
+	CollisionBodyInfoDescriptor *collBodyDescrDevice;
+};
+
+CUDASoftBodySolver::CUDASoftBodySolver(void)
+	:
+		mCuda(0),
+		mInitialized(false),
+		mGravity(0, -10.0f, 0)
 {
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	if ( idx < max_idx) {
+}
 
-		// 0. Load from global mem.
-		vec3 position = positions[idx];
-		vec3 force = ext_forces[idx];
-		float_t imass = masses[idx];
-		vec3 velocity = velocities[idx];
-		
-		// 1. Updating velocities.
-		velocity += dt * imass * (force + gravity);
+CUDASoftBodySolver::~CUDASoftBodySolver(void)
+{
+	shutdown();
+}
 
-		// 2. Damp velocities.
-		velocity *= 0.99f; // Naive damping
+bool CUDASoftBodySolver::cudaInitializeDevice(SolverPrivate *cuda)
+{
+	cudaError_t err;
+	cudaDeviceProp  prop;
+	memset(&prop, 0x0, sizeof(prop));
+	prop.major = 3;
+	prop.minor = 5;
 
-		// 3. projecting positions
-		vec3 projection = position + velocity * dt;
+	// choose device for us. Prefer with compute capabilities ~ 3.5
+	err = cudaChooseDevice(&cuda->deviceId, &prop);
+	if (err != cudaSuccess) return false;
 
-		// update global tables
-		projections[idx] = projection;
-		velocities[idx] = velocity;
+	err = cudaSetDevice(cuda->deviceId);
+	if (err != cudaSuccess) return false;
+
+	err = cudaGetDeviceProperties(&cuda->devProp, cuda->deviceId);
+	if (err != cudaSuccess) return false;
+	
+	err = cudaStreamCreate(&cuda->stream);
+	if (err != cudaSuccess) return false;
+
+	DBG("Choosen CUDA Device: %s", cuda->devProp.name);
+	DBG("Multiprocessor count: %d", cuda->devProp.multiProcessorCount);
+	DBG("Compute capability: %d.%d", cuda->devProp.major, cuda->devProp.minor);
+
+	return true;
+}
+
+bool CUDASoftBodySolver::cudaShutdownDevice(SolverPrivate *cuda)
+{
+	cudaError_t err;
+
+	err = cudaDeviceSynchronize();
+	if (err != cudaSuccess) return false;
+
+	err = cudaDeviceReset();
+	if (err != cudaSuccess) return false;
+
+	return true;
+}
+
+static void *allocateCUDABuffer(size_t bytes, bool zeroed=false)
+{
+	cudaError_t err;
+	void *ret = NULL;
+	err = cudaMalloc(&ret, bytes);
+	if (err != cudaSuccess) {
+		ERR("%s", cudaGetErrorString(err));
+		return NULL;
+	}
+	if (zeroed) {
+		err = cudaMemset(ret, 0x0, bytes);
+		if (err != cudaSuccess) {
+			ERR("%s", cudaGetErrorString(err));
+			return NULL;
+		}
+	}
+	return ret;
+}
+
+long CUDASoftBodySolver::cudaAllocateDeviceBuffers(SoftBodyDescriptor *descr)
+{
+	int bytesArray = 0, bytesMass = 0, bytesMapping = 0, bytesLinks = 0;
+
+	bytesArray = descr->nParticles * sizeof(vec3);
+	bytesMass = descr->nParticles * sizeof(float_t);
+	bytesMapping = descr->nMapping * sizeof(uint_t);
+	bytesLinks = descr->nLinks * sizeof(LinkConstraint);
+
+	descr->positions = (vec3*)allocateCUDABuffer(bytesArray);
+	if (!descr->positions) goto on_fail;
+
+	descr->projections = (vec3*)allocateCUDABuffer(bytesArray);
+	if (!descr->projections) goto on_fail;
+
+	descr->velocities = (vec3*)allocateCUDABuffer(bytesArray, true);
+	if (!descr->velocities) goto on_fail;
+
+	descr->forces  = (vec3*)allocateCUDABuffer(bytesArray, true);
+	if (!descr->forces) goto on_fail;
+
+	descr->massesInv = (float_t*)allocateCUDABuffer(bytesMass);
+	if (!descr->massesInv) goto on_fail;
+
+	descr->mapping = (uint*)allocateCUDABuffer(bytesMapping);
+	if (!descr->mapping) goto on_fail;
+
+	descr->links = (LinkConstraint*)allocateCUDABuffer(bytesLinks);
+	if (!descr->links) goto on_fail;
+
+	return 4 * bytesArray + bytesMass + bytesMapping + bytesLinks;
+
+on_fail:
+	cudaDeallocateDeviceBuffers(descr);
+	return -1;
+}
+
+void CUDASoftBodySolver::cudaDeallocateDeviceBuffers(SoftBodyDescriptor *descr)
+{
+	if (descr->positions) cudaFree(descr->positions);
+	if (descr->projections) cudaFree(descr->projections);
+	if (descr->velocities) cudaFree(descr->velocities);
+	if (descr->forces) cudaFree(descr->forces);
+	if (descr->massesInv) cudaFree(descr->massesInv);
+	if (descr->links) cudaFree(descr->links);
+	if (descr->mapping) cudaFree(descr->mapping);
+}
+
+CUDASoftBodySolver::SoftBodyDescriptor CUDASoftBodySolver::cudaCreateDescriptor(SoftBody *body)
+{
+	SoftBodyDescriptor descr;
+
+	descr.body = body;
+	descr.graphics = NULL;
+	descr.nParticles = body->mParticles.size();
+	descr.nLinks = body->mLinks.size();
+	descr.nMapping = body->mMeshVertexParticleMapping.size();
+
+	return descr;
+}
+
+bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr)
+{
+	cudaError_t err;
+
+	SoftBody *body = descr->body;
+
+	unsigned int bytesPart = descr->nParticles * sizeof(vec3);
+	unsigned int bytesLnk = descr->nLinks * sizeof(LinkConstraint);
+	unsigned int bytesMass = descr->nParticles * sizeof(float_t);
+	unsigned int bytesMap = descr->nParticles * sizeof(uint_t);
+
+	err = cudaMemcpy(descr->positions, &(body->mParticles[0]), bytesPart, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) return false;
+
+	err = cudaMemcpy(descr->forces, &(body->mForces[0]), bytesPart, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) return false;
+
+	err = cudaMemcpy(descr->mapping, &(body->mMeshVertexParticleMapping[0]), bytesMap, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) return false;
+
+	err = cudaMemcpy(descr->massesInv, &(body->mMassInv[0]), bytesMass, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) return false;
+
+	err = cudaMemcpy(descr->links, &(body->mLinks[0]), bytesLnk, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) return false;
+
+	return true;
+}
+
+cudaGraphicsResource *cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb)
+{
+	cudaError_t err;
+	cudaGraphicsResource *ret = NULL;
+	GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
+	err = cudaGraphicsGLRegisterBuffer(&ret, id, cudaGraphicsRegisterFlagsNone);
+	if (err != cudaSuccess) {
+		ERR("Unable to register GL buffer object %d", id);
+		return false;
+	}
+	return ret;
+}
+
+bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr)
+{
+	const Mesh_t *mesh;
+
+	if (!descr->body) {
+		ERR("No SoftBody reference in descriptor!");
+		return false;
+	}
+
+	mesh = descr->body->getMesh();
+	if (!mesh) {
+		ERR("No mesh data");
+		return false;
+	}
+
+	const VertexBuffer *buf = mesh->vertexes;
+	if (buf) {
+		switch (buf->getType()) {
+			case VertexBuffer::OPENGL_BUFFER:
+				descr->graphics = cudaRegisterGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf));
+				if (!descr->graphics)
+					return false;
+				break;
+			default:
+				break;
+		}
+	}
+
+	return true;
+}
+
+bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
+{
+	cudaError_t err;
+	size_t bytes;
+
+	bytes = cuda->collBodyDescrHost.size() * sizeof(CollisionBodyInfoDescriptor);
+	cuda->collBodyDescrDevice = (CollisionBodyInfoDescriptor*)allocateCUDABuffer(bytes);
+	if (!cuda->collBodyDescrDevice) return false;
+
+	err = cudaMemcpy(cuda->collBodyDescrDevice, &cuda->collBodyDescrHost[0], bytes, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) {
+		cudaFree(cuda->collBodyDescrDevice);
+		cuda->collBodyDescrDevice = NULL;
+		return false;
 	}
 }
 
-//
-///**
-//  step 4. solving links constraints.
-//  */
-//__global__ void solveLinks(
-//		glm::float_t k,
-//		glm::uvec2 *links,
-//		glm::vec3 *projections,
-//		glm::float_t *masses_inv,
-//		glm::float_t *rest_length2,
-//		glm::uint_t max_idx)
-//{
-//	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	if (link_idx < max_idx) {
-//		glm::float_t restLen2 = rest_length2[link_idx];
-//		glm::uvec2 idx = links[link_idx];
-//
-//		glm::vec3 pos0 = projections[idx[0]];
-//		glm::vec3 pos1 = projections[idx[1]];
-//
-//		glm::float_t mass_inv0 = masses_inv[idx[0]];
-//		glm::float_t mass_inv1 = masses_inv[idx[1]];
-//
-//		glm::vec3 dist = pos0 - pos1;
-//		glm::float_t len2 = glm::dot(dist, dist);
-//		glm::float_t c = k * (restLen2 - len2);
-//
-//		pos0 = pos0 - c * mass_inv0 * dist;
-//		pos1 = pos1 + c * mass_inv1 * dist;
-//
-//		projections[idx[0]] = pos0;
-//		projections[idx[1]] = pos1;
-//	}
-//}
-//
-//struct {
-//	enum Type {
-//		TRIANGLE,
-//	} type;
-//	union {
-//		struct {
-//			glm::uvec3 idx;
-//		} triangle;
-//	} data;
-//	bool fixed;
-//} CollisionBodyData;
-//
-///**
-//  step 5. solving collision constraints.
-//  */
-//__global__ void solveCollisions(
-//		glm::uvec2 *collisions,
-//		CollisionBody *collisions_bodies_data,
-//		glm::vec3 *projections,
-//		glm::vec3 *positions,
-//		glm::vec3 *velocities,
-//		glm::vec3 *masses_inv,
-//		glm::vec3 *forces,
-//		glm::uint max_idx
-//	)
-//{
-//	int coll_idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	if (coll_idx < max_idx) {
-//		uvec2 *coll_data = collisions[coll_idx];
-//
-//		/**
-//		  * coll_data[0] keeps id of colliding particle
-//		  * coll_data[1] keeps id of colliding body
-//		  */
-//		glm::vec3 position = positions[coll_data[0]];
-//		glm::vec3 projection = positions[coll_data[0]];
-//		glm::float_t mass = masses_inv[coll_data[0]];
-//		glm::vec3 force = forces[coll_data[0]];
-//		glm::vec3 velocity = velocities[coll_data[0]];
-//
-//		CollisionBodyData body = collisions_bodies_data[coll_data[1]];
-//
-//		if (body.type == CollisionBody.TRIANGLE) {
-//			glm::vec3 tri0 = positions[body.data.triangle.idx[0]];
-//			glm::vec3 tri1 = positions[body.data.triangle.idx[1]];
-//			glm::vec3 tri2 = positions[body.data.triangle.idx[2]];
-//
-//			// for barycentric coord test
-//			glm::vec3 a = tri1 - tri0;
-//			glm::vec3 b = tri2 - tri0;
-//
-//			glm::vec3 norm = glm::cross(a, b);
-//			glm::vec3 diff = projection - position;
-//			glm::float_t k = dot(norm, diff);
-//			if (k < 0.0001f)
-//				return;
-//
-//			k = dot(norm, (tri1 - position)) / k;
-//			projection = position + k * diff;
-//
-//			// barycentric coord test
-//			glm::vec3 c = projection - tri0;
-//
-//			glm::float_t dot00 = dot(a, a);
-//			glm::float_t dot01 = dot(a, b);
-//			glm::float_t dot02 = dot(a, c);
-//			glm::float_t dot11 = dot(b, b);
-//			glm::float_t dot12 = dot(b, c);
-//
-//			glm::float_t den = 1 / (dot00 * dot11 - dot01 * dot01);
-//			glm::float_t u = (dot11 * dot02 - dot01 * dot12) * den;
-//			glm::float_t v = (dot00 * dot12 - dot01 * dot02) * den;
-//
-//			if (u < 0 || v < 0 || u + v >= 1)
-//				return;
-//		}
-//
-//		projections[coll_data[0]] = projection;
-//		velocities[coll_data[0]] = velocity;
-//		forces[coll_data[0]] = force;
-//	}
-//}
-//
-///**
-//  */
-//
-/**
-  step 6. Integrate motion.
-  */
-__global__ void integrateMotionKernel(
-		glm::float_t dt,
-		glm::vec3 *positions,
-		glm::vec3 *projections,
-		glm::vec3 *velocities,
-		glm::uint max_idx
-		)
+void CUDASoftBodySolver::cudaAppendCollsionDescriptors(collisionBodyDescriptorArray_t *arr, SoftBodyDescriptor *descr)
 {
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	FOREACH(it, &descr->body->mCollisionBodies) {
+		CollisionBodyInfoDescriptor cb;
+		cb.positions = descr->positions;
+		cb.collInfo = *it;
 
-	if (idx < max_idx) {
-		glm::vec3 pos = positions[idx];
-		glm::vec3 proj = projections[idx];
-
-		velocities[idx] = (proj - pos) * dt;
-		positions[idx] = proj;
+		arr->push_back(cb);
 	}
 }
 
-
-__global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
+CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbodyArray_t *bodies)
 {
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	SolverPrivate *cuda;
+	long total_alloc = 0;
+	bool res;
 
-	if (idx < max_idx) {
-		glm::uint index = mapping[idx];
-		glm::vec3 vertex = positions[index];
-		vboPtr[idx] = vertex;
+	cuda = new SolverPrivate;
+	memset(cuda, 0x0, sizeof(SolverPrivate));
+
+	if (!cudaInitializeDevice(cuda)) {
+		ERR("CUDA Device initialization failed!");
+		delete cuda;
+		return NULL;
 	}
+
+	FOREACH(it, bodies) {
+		if (!*it) continue;
+
+		SoftBodyDescriptor descr = cudaCreateDescriptor(*it);
+
+		long mem = cudaAllocateDeviceBuffers(&descr);
+		if (mem == -1) {
+			ERR("Unable to allocate memory for SoftBody");
+			return false;
+		}
+		res = cudaCopyBodyToDeviceBuffers(&descr);
+		if (!res) {
+			ERR("Error occured while copying Soft bodies data to device!");
+			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+			return false;
+		}
+		res = cudaRegisterVertexBuffers(&descr);
+		if (!res) {
+			ERR("Error occured registering SoftBody vertex buffers.");
+			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+			return false;
+		}
+		cuda->descriptors.push_back(descr);
+		cudaAppendCollsionDescriptors(&cuda->collBodyDescrHost, &descr);
+		cuda->resArray.push_back(descr.graphics);
+
+		total_alloc += mem;
+	}
+	cudaInitCollisionDescriptors(cuda);
+	DBG("Allocated %ld bytes on device", total_alloc);
+
+	return cuda;
+}
+
+void CUDASoftBodySolver::cudaContextShutdown(SolverPrivate *cuda)
+{
+	FOREACH(it, &cuda->descriptors)
+		cudaDeallocateDeviceBuffers(&(*it));
+	if (cuda->collBodyDescrDevice) cudaFree(cuda->collBodyDescrDevice);
+	cudaShutdownDevice(cuda);
+}
+
+bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
+{
+	SolverPrivate *cuda;
+
+	if (mInitialized) return true;
+
+	cuda = cudaContextCreate(bodies);
+		if (!cuda) {
+		ERR("Unable to create CUDA context.");
+		return false;
+	}
+
+	mInitialized = true;
+	mCuda = cuda;
+	return true;
+}
+
+void CUDASoftBodySolver::shutdown(void)
+{
+	if (!mInitialized) return;
+
+	if (mCuda) {
+		cudaContextShutdown(mCuda);
+		mCuda = NULL;
+	}
+	mInitialized = false;
+}
+
+void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async = false)
+{
+	cudaError_t err;
+	vec3 *ptr;
+
+	// map all in one call
+	err = cudaGraphicsMapResources(cuda->resArray.size(), &cuda->resArray[0]);
+	if (err != cudaSuccess) return;
+
+	FOREACH(it, &cuda->descriptors) {
+		size_t size;
+		err = cudaGraphicsResourceGetMappedPointer((void**)&ptr, &size, it->graphics);
+		if (err != cudaSuccess) {
+			ERR("Unable to map VBO pointer");
+			return;
+		}
+		if (size != it->nParticles * sizeof(vec3)) {
+			ERR("Invalid size!");
+			return;
+		}
+		cudaUpdateVertexBuffer(it->positions, it->mapping, ptr, it->nParticles);
+	}
+
+	cudaGraphicsUnmapResources(cuda->resArray.size(), &cuda->resArray[0]);
+}
+
+void CUDASoftBodySolver::updateVertexBuffersAsync(void)
+{
+	if (mInitialized)
+		updateVertexBuffers(mCuda, true);
+}
+
+void CUDASoftBodySolver::updateVertexBuffers(void)
+{
+	if (mInitialized)
+		updateVertexBuffers(mCuda, false);
+}
+
+void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
+{
+	FOREACH(it, &cuda->descriptors) {
+		cudaProjectSystem(dt, &mGravity, it->positions, it->velocities, it->forces,
+				it->projections, it->massesInv, it->nParticles);
+	}
+}
+
+void CUDASoftBodySolver::projectSystem(float_t dt)
+{
+	if (mInitialized)
+		projectSystem(mCuda, dt);
 }
 
 void CUDASoftBodySolver::cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
