@@ -75,6 +75,7 @@ private:
     bool mMousePressed;
     Camera mCamera;
     CUDASoftBodySolver mSolver;
+	int	mEnginUpdateTime;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -119,6 +120,7 @@ Demo::Demo(int argc, char **argv) :
     addMenuEntry(id2, "Hello4");
 
     attachMenu(id1, RIGHT_BUTTON);
+	mEnginUpdateTime = getElapsedTime();
 }
 
 Demo::~Demo(void)
@@ -127,27 +129,45 @@ Demo::~Demo(void)
         delete *b;
 }
 
+#define ENGINE_TIME_STEP 15
+#define DIFF_MAX 200
+
 void Demo::onDisplay(void)
 {
 	static int time;
 	static int frames;
 	static int engine_iter;
+	static int simTime;
 
 	frames++;
 
 	int tm = getElapsedTime();
-	if (tm - time > 50) {
-		mSolver.projectSystem(0.02f);
-		mSolver.updateVertexBuffers();
+
+	int diff = tm - mEnginUpdateTime;
+	if (diff > DIFF_MAX)
+		diff = DIFF_MAX;
+
+	simTime += diff;
+
+	while (simTime > ENGINE_TIME_STEP) {
+		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
 		engine_iter++;
+		simTime -= ENGINE_TIME_STEP;
 	}
+
+	mEnginUpdateTime = tm;
+
+	mSolver.updateVertexBuffers();
+
+#if 0
 	if (tm - time > 1000) {
-		ERR("Display: %lf fps, engine: %f", (double)frames * 1000 / (tm - time),
+		ERR("Display: %lf fps, engine: %f it/s", (double)frames * 1000 / (tm - time),
 				(double)engine_iter * 1000 / (tm - time));
 		time = tm;
 		frames = 0;
 		engine_iter = 0;
 	}
+#endif
 	renderer.clearScreen();
 	FOREACH(b, &mSoftBodies)
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
