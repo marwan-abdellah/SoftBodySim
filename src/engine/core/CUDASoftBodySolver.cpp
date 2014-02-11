@@ -166,20 +166,17 @@ void CUDASoftBodySolver::cudaDeallocateDeviceBuffers(SoftBodyDescriptor *descr)
 	if (descr->mapping) cudaFree(descr->mapping);
 }
 
-void CUDASoftBodySolver::cudaAppendDescriptors(descriptorArray_t *descriptors, softbodyArray_t *bodies)
+CUDASoftBodySolver::SoftBodyDescriptor CUDASoftBodySolver::cudaCreateDescriptor(SoftBody *body)
 {
-	FOREACH(it, bodies) {
-		SoftBodyDescriptor descr;
-		SoftBody *body = *it;
-		descr.body = *it;
-		descr.graphics = NULL;
+	SoftBodyDescriptor descr;
 
-		descr.nParticles = body->mParticles.size();
-		descr.nLinks = body->mLinks.size();
-		descr.nMapping = body->mMeshVertexParticleMapping.size();
+	descr.body = body;
+	descr.graphics = NULL;
+	descr.nParticles = body->mParticles.size();
+	descr.nLinks = body->mLinks.size();
+	descr.nMapping = body->mMeshVertexParticleMapping.size();
 
-		descriptors->push_back(descr);
-	}
+	return descr;
 }
 
 bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr)
@@ -272,14 +269,14 @@ bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
 	}
 }
 
-void CUDASoftBodySolver::cudaAppendCollsionDescriptor(collisionBodyDescriptorArray_t *collArray, SoftBodyDescriptor *descr)
+void CUDASoftBodySolver::cudaAppendCollsionDescriptors(collisionBodyDescriptorArray_t *arr, SoftBodyDescriptor *descr)
 {
 	FOREACH(it, &descr->body->mCollisionBodies) {
 		CollisionBodyInfoDescriptor cb;
 		cb.positions = descr->positions;
 		cb.collInfo = *it;
 
-		collArray->push_back(cb);
+		arr->push_back(cb);
 	}
 }
 
@@ -298,29 +295,33 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 		return NULL;
 	}
 
-	cudaAppendDescriptors(&cuda->descriptors, bodies);
+	FOREACH(it, bodies) {
+		if (!*it) continue;
 
-	FOREACH(it, &cuda->descriptors) {
-		long mem = cudaAllocateDeviceBuffers(&(*it));
+		SoftBodyDescriptor descr = cudaCreateDescriptor(*it);
+
+		long mem = cudaAllocateDeviceBuffers(&descr);
 		if (mem == -1) {
 			ERR("Unable to allocate memory for SoftBody");
 			return false;
 		}
-		res = cudaCopyBodyToDeviceBuffers(&(*it));
+		res = cudaCopyBodyToDeviceBuffers(&descr);
 		if (!res) {
 			ERR("Error occured while copying Soft bodies data to device!");
 			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
 			return false;
 		}
-		res = cudaRegisterVertexBuffers(&(*it));
+		res = cudaRegisterVertexBuffers(&descr);
 		if (!res) {
 			ERR("Error occured registering SoftBody vertex buffers.");
 			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
 			return false;
 		}
-		cudaAppendCollsionDescriptor(&cuda->collBodyDescrHost, &(*it));
+		cuda->descriptors.push_back(descr);
+		cudaAppendCollsionDescriptors(&cuda->collBodyDescrHost, &descr);
+		cuda->resArray.push_back(descr.graphics);
+
 		total_alloc += mem;
-		cuda->resArray.push_back(it->graphics);
 	}
 	cudaInitCollisionDescriptors(cuda);
 	DBG("Allocated %ld bytes on device", total_alloc);
