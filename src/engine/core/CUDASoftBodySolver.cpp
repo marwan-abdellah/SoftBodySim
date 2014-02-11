@@ -40,7 +40,9 @@ struct CUDASoftBodySolver::SolverPrivate {
 
 	descriptorArray_t descriptors;
 	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
-	collisionBodyDescriptorArray_t collisionDescriptors;
+
+	collisionBodyDescriptorArray_t collBodyDescrHost;
+	CollisionBodyInfoDescriptor *collBodyDescrDevice;
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(void)
@@ -253,6 +255,23 @@ bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr)
 	return true;
 }
 
+bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
+{
+	cudaError_t err;
+	size_t bytes;
+
+	bytes = cuda->collBodyDescrHost.size() * sizeof(CollisionBodyInfoDescriptor);
+	cuda->collBodyDescrDevice = (CollisionBodyInfoDescriptor*)allocateCUDABuffer(bytes);
+	if (!cuda->collBodyDescrDevice) return false;
+
+	err = cudaMemcpy(cuda->collBodyDescrDevice, &cuda->collBodyDescrHost[0], bytes, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) {
+		cudaFree(cuda->collBodyDescrDevice);
+		cuda->collBodyDescrDevice = NULL;
+		return false;
+	}
+}
+
 void CUDASoftBodySolver::cudaAppendCollsionDescriptor(collisionBodyDescriptorArray_t *collArray, SoftBodyDescriptor *descr)
 {
 	FOREACH(it, &descr->body->mCollisionBodies) {
@@ -299,10 +318,11 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
 			return false;
 		}
-		cudaAppendCollsionDescriptor(&cuda->collisionDescriptors, &(*it));
+		cudaAppendCollsionDescriptor(&cuda->collBodyDescrHost, &(*it));
 		total_alloc += mem;
 		cuda->resArray.push_back(it->graphics);
 	}
+	cudaInitCollisionDescriptors(cuda);
 	DBG("Allocated %ld bytes on device", total_alloc);
 
 	return cuda;
@@ -312,6 +332,7 @@ void CUDASoftBodySolver::cudaContextShutdown(SolverPrivate *cuda)
 {
 	FOREACH(it, &cuda->descriptors)
 		cudaDeallocateDeviceBuffers(&(*it));
+	if (cuda->collBodyDescrDevice) cudaFree(cuda->collBodyDescrDevice);
 	cudaShutdownDevice(cuda);
 }
 

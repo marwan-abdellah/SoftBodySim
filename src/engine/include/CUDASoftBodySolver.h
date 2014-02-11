@@ -41,6 +41,7 @@ class CUDASoftBodySolver {
 
 		bool cudaInitializeDevice(SolverPrivate*);
 		bool cudaShutdownDevice(SolverPrivate*);
+		bool cudaInitCollisionDescriptors(SolverPrivate *cuda);
 
 		void cudaAppendDescriptors(descriptorArray_t*, softbodyArray_t *bodies);
 		void cudaAppendCollsionDescriptor(collisionBodyDescriptorArray_t *, SoftBodyDescriptor *);
