@@ -1,4 +1,5 @@
 #include "glm/glm.hpp"
+#include "SoftBody.h"
 
 __global__ void cudaUpdateVelocitiesKernel(
 	glm::vec3 gravity,
@@ -20,4 +21,7 @@ __global__ void integrateMotionKernel(
 
 
 __global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx);
+
+__global__ void solveConstraints(unsigned int steps, glm::float_t k, LinkConstraint *links, glm::vec3 *projections,
+		glm::float_t *masses_inv, glm::uint_t max_idx);
 

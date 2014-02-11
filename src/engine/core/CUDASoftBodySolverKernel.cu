@@ -38,42 +38,46 @@ __global__ void cudaUpdateVelocitiesKernel(
 	}
 }
 
-//
-///**
-//  step 4. solving links constraints.
-//  */
-//__global__ void solveLinks(
-//		glm::float_t k,
-//		glm::uvec2 *links,
-//		glm::vec3 *projections,
-//		glm::float_t *masses_inv,
-//		glm::float_t *rest_length2,
-//		glm::uint_t max_idx)
-//{
-//	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	if (link_idx < max_idx) {
-//		glm::float_t restLen2 = rest_length2[link_idx];
-//		glm::uvec2 idx = links[link_idx];
-//
-//		glm::vec3 pos0 = projections[idx[0]];
-//		glm::vec3 pos1 = projections[idx[1]];
-//
-//		glm::float_t mass_inv0 = masses_inv[idx[0]];
-//		glm::float_t mass_inv1 = masses_inv[idx[1]];
-//
-//		glm::vec3 dist = pos0 - pos1;
-//		glm::float_t len2 = glm::dot(dist, dist);
-//		glm::float_t c = k * (restLen2 - len2);
-//
-//		pos0 = pos0 - c * mass_inv0 * dist;
-//		pos1 = pos1 + c * mass_inv1 * dist;
-//
-//		projections[idx[0]] = pos0;
-//		projections[idx[1]] = pos1;
-//	}
-//}
-//
+
+/**
+  step 4. solving links constraints.
+  */
+__global__ void solveConstraints(
+		unsigned int max_steps,
+		glm::float_t k,
+		LinkConstraint *links,
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
+		glm::uint_t max_idx)
+{
+	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (link_idx < max_idx) {
+		for (int i = 0; i < max_steps; i++) {
+			LinkConstraint lnk = links[link_idx];
+			glm::float_t restLen2 = lnk.restLength;
+
+			glm::vec3 pos0 = projections[lnk.index[0]];
+			glm::vec3 pos1 = projections[lnk.index[1]];
+
+			glm::float_t mass_inv0 = masses_inv[lnk.index[0]];
+			glm::float_t mass_inv1 = masses_inv[lnk.index[1]];
+
+			glm::vec3 dist = pos0 - pos1;
+			glm::float_t len2 = glm::dot(dist, dist);
+			glm::float_t c = k * (restLen2 - len2);
+
+			pos0 = pos0 - c * mass_inv0 * dist;
+			pos1 = pos1 + c * mass_inv1 * dist;
+
+			projections[lnk.index[0]] = pos0;
+			projections[lnk.index[1]] = pos1;
+
+			__syncthreads();
+		}
+	}
+}
+
 //struct {
 //	enum Type {
 //		TRIANGLE,
