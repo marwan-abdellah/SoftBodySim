@@ -259,6 +259,8 @@ bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
 	cudaError_t err;
 	size_t bytes;
 
+	if (!cuda->collBodyDescrHost.size()) return true;
+
 	bytes = cuda->collBodyDescrHost.size() * sizeof(CollisionBodyInfoDescriptor);
 	cuda->collBodyDescrDevice = (CollisionBodyInfoDescriptor*)allocateCUDABuffer(bytes);
 	if (!cuda->collBodyDescrDevice) return false;
@@ -269,6 +271,7 @@ bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
 		cuda->collBodyDescrDevice = NULL;
 		return false;
 	}
+	return true;
 }
 
 void CUDASoftBodySolver::cudaAppendCollsionDescriptors(collisionBodyDescriptorArray_t *arr, SoftBodyDescriptor *descr)
@@ -305,19 +308,22 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 		long mem = cudaAllocateDeviceBuffers(&descr);
 		if (mem == -1) {
 			ERR("Unable to allocate memory for SoftBody");
-			return false;
+			cudaContextShutdown(cuda);
+			return NULL;
 		}
 		res = cudaCopyBodyToDeviceBuffers(&descr);
 		if (!res) {
 			ERR("Error occured while copying Soft bodies data to device!");
 			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-			return false;
+			cudaContextShutdown(cuda);
+			return NULL;
 		}
 		res = cudaRegisterVertexBuffers(&descr);
 		if (!res) {
 			ERR("Error occured registering SoftBody vertex buffers.");
 			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-			return false;
+			cudaContextShutdown(cuda);
+			return NULL;
 		}
 		cuda->descriptors.push_back(descr);
 		cudaAppendCollsionDescriptors(&cuda->collBodyDescrHost, &descr);
@@ -325,7 +331,11 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 
 		total_alloc += mem;
 	}
-	cudaInitCollisionDescriptors(cuda);
+	if (!cudaInitCollisionDescriptors(cuda)) {
+		ERR("Error on allocatin collision object data.");
+		cudaContextShutdown(cuda);
+		return NULL;
+	}
 	DBG("Allocated %ld bytes on device", total_alloc);
 
 	return cuda;
@@ -337,6 +347,7 @@ void CUDASoftBodySolver::cudaContextShutdown(SolverPrivate *cuda)
 		cudaDeallocateDeviceBuffers(&(*it));
 	if (cuda->collBodyDescrDevice) cudaFree(cuda->collBodyDescrDevice);
 	cudaShutdownDevice(cuda);
+	delete cuda;
 }
 
 bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
@@ -371,6 +382,7 @@ void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 {
 	cudaError_t err;
 	vec3 *ptr;
+	int threadCount = 128;
 
 	// map all in one call
 	err = cudaGraphicsMapResources(cuda->resArray.size(), &cuda->resArray[0]);
@@ -387,7 +399,9 @@ void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 			ERR("Invalid size!");
 			return;
 		}
-		cudaUpdateVertexBuffer(it->positions, it->mapping, ptr, it->nParticles);
+		int blockCount = it->nParticles / threadCount + 1;
+		cudaUpdateVertexBufferKernel<<<blockCount, threadCount >>>(ptr,
+				it->positions, it->mapping, it->nParticles);
 	}
 
 	cudaGraphicsUnmapResources(cuda->resArray.size(), &cuda->resArray[0]);
@@ -407,9 +421,16 @@ void CUDASoftBodySolver::updateVertexBuffers(void)
 
 void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 {
+	int threadCount = 128;
 	FOREACH(it, &cuda->descriptors) {
-		cudaProjectSystem(dt, &mGravity, it->positions, it->velocities, it->forces,
-				it->projections, it->massesInv, it->nParticles);
+		int blockCount = it->nParticles / threadCount + 1;
+
+		cudaUpdateVelocitiesKernel<<<blockCount, threadCount>>>(mGravity, it->positions,
+				it->projections, it->velocities, it->forces, it->massesInv, dt,
+				it->nParticles);
+
+		integrateMotionKernel<<<blockCount, threadCount>>>(dt, it->positions, it->projections,
+				it->velocities, it->nParticles);
 	}
 }
 
@@ -417,24 +438,4 @@ void CUDASoftBodySolver::projectSystem(float_t dt)
 {
 	if (mInitialized)
 		projectSystem(mCuda, dt);
-}
-
-void CUDASoftBodySolver::cudaUpdateVertexBuffer(glm::vec3 *positions, glm::uint
-		*mapping, glm::vec3 *vboPtr, unsigned int len)
-{
-	int threadCount = 128;
-	int blockCount = len / threadCount + 1;
-	cudaUpdateVertexBufferKernel<<<blockCount, threadCount >>>(vboPtr, positions, mapping, len);
-}
-
-void CUDASoftBodySolver::cudaProjectSystem(float_t dt, vec3 *gravity, vec3
-		*positions, vec3 *velocities, vec3 *forces, vec3 *projections, float_t *massInv, uint_t
-		maxId)
-{
-	int threadCount = 128;
-	int blockCount = maxId / threadCount + 1;
-	cudaUpdateVelocitiesKernel<<<blockCount, threadCount>>>(*gravity, positions,
-			projections, velocities, forces, massInv, dt, maxId);
-	integrateMotionKernel<<<blockCount, threadCount>>>(dt, positions, projections,
-			velocities, maxId);
 }
