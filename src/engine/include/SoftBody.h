@@ -31,7 +31,7 @@ typedef std::vector<CollisionBodyInfo> collisionBodyInfoArray_t;
 
 struct LinkConstraint {
     glm::uvec2          index;
-    glm::float_t        restLength;
+    glm::float_t        restLength2;
 };
 
 struct VolumeConstraint {

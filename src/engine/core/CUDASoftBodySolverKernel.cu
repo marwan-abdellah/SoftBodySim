@@ -55,7 +55,7 @@ __global__ void solveConstraints(
 	if (link_idx < max_idx) {
 		for (int i = 0; i < max_steps; i++) {
 			LinkConstraint lnk = links[link_idx];
-			glm::float_t restLen2 = lnk.restLength;
+			glm::float_t restLen2 = lnk.restLength2;
 
 			glm::vec3 pos0 = projections[lnk.index[0]];
 			glm::vec3 pos1 = projections[lnk.index[1]];
@@ -67,13 +67,11 @@ __global__ void solveConstraints(
 			glm::float_t len2 = glm::dot(dist, dist);
 			glm::float_t c = k * (restLen2 - len2);
 
-			pos0 = pos0 - c * mass_inv0 * dist;
-			pos1 = pos1 + c * mass_inv1 * dist;
+			pos0 = pos0 - c *  dist;
+			pos1 = pos1 + c *  dist;
 
 			projections[lnk.index[0]] = pos0;
 			projections[lnk.index[1]] = pos1;
-
-			__syncthreads();
 		}
 	}
 }

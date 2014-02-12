@@ -84,6 +84,10 @@ bool CUDASoftBodySolver::cudaInitializeDevice(SolverPrivate *cuda)
 	DBG("Choosen CUDA Device: %s", cuda->devProp.name);
 	DBG("Multiprocessor count: %d", cuda->devProp.multiProcessorCount);
 	DBG("Compute capability: %d.%d", cuda->devProp.major, cuda->devProp.minor);
+	DBG("Total global mem: %d", cuda->devProp.totalGlobalMem);
+	DBG("Shared mem per block: %d", cuda->devProp.sharedMemPerBlock);
+	DBG("Warp size: %d", cuda->devProp.warpSize);
+	DBG("Concurrent kenels: %d", cuda->devProp.concurrentKernels);
 
 	return true;
 }

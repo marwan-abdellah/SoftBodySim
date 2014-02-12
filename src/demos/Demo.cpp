@@ -149,11 +149,13 @@ void Demo::onDisplay(void)
 
 	simTime += diff;
 
+#if 0
 	while (simTime > ENGINE_TIME_STEP) {
 		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
 		engine_iter++;
 		simTime -= ENGINE_TIME_STEP;
 	}
+#endif
 
 	mEnginUpdateTime = tm;
 
@@ -179,6 +181,8 @@ void Demo::onKeyboard(unsigned char key, int x, int y)
     float angle = 2.0f;
     float delta = 0.1f;
 
+    if (key == 'i')
+		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
     if (key == 'w')
         mCamera.moveUp(angle);
     if (key == 's')
