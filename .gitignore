@@ -8,3 +8,16 @@ install_manifest.txt
 bin/
 Demo
 *.so
+
+praca/artykuly
+praca/*.aux
+praca/*.bbl
+praca/*.blg
+praca/*.loc
+praca/*.lod
+praca/*.lof
+praca/*.log
+praca/*.lot
+praca/*.lol
+praca/*.pdf
+praca/*.toc
