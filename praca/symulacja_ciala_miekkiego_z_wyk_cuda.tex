@@ -1,62 +1,51 @@
-%Autor: Rados≥aw Klimas, gervazy89@gmail.com
-%przyk≥adowy dokument .tex wykorzystujπcy klasÍ wfaiis.cls, styl bibliograficzny wfaiis.bst oraz bazÍ bibliograficznπ literatura.bib 
-
-\documentclass[twoside,openright]{wfaiis} %marginesy lustrzane, nowy rozdzia≥ na stronie nieparzystej
-\usepackage{polski} %polskie nazwy
-\usepackage{listings} %dodatkowy pakiet do kodÛw ürÛd≥owych, opcjonalny jeúli nie ma ich w pracy
+\documentclass[twoside,openright]{wfaiis}
+\usepackage{polski}
+\usepackage{listings}
 \linespread{1.3}
 \usepackage{tikz}
 \usepackage{amssymb}
 \usetikzlibrary{positioning}
 \usetikzlibrary{snakes}
-\usepackage[cp1250]{inputenc} %kodowanie dokumentu
-\usepackage{graphicx} %pakiet wstawiajπcy rysunki, opcjonalny jeúli nie ma ich w pracy
-%w celu kompilacji tego dokumentu w obecnej postaci, w celach potrzebny bÍdzie plik "rysunek.jpg" umieszczony w katalogu razem z plikiem wfaiis.tex, jeúli takiego obrazka nie bÍdzie, kompilator zg≥osi b≥πd
-\usepackage{url} %pakiet odpowiednio formatujπcy adresy url, opcjonalny jeúli nie ma ich w pracy
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{url}
 
-\autor{£ukasz Stanis≥awski\album{200617} } %imiÍ i nazwisko, numer indeksu
-\tytul{Symulacja cia≥a miÍkkiego z wykorzystaniem technologii CUDA} %tytu≥ pracy
-\kierunek{informatyka stosowana} %kierunek studiÛw studenta
-\zaklad{Katedra Informatyki Stosowanej} %zak≥ad
-\rodzajpracy{inøynierska} %akceptowane wartoúci: "inøynierska", "magisterska" lub "licencjacka"
-\promotor{dr Jacek Matulewski} %tytu≥, imiÍ i nazwisko promotora
-\jednostkapromotora{Zak≥ad Mechaniki Kwantowej} %jednostka zatrudniajπca promotora
-\rok{2014} %rok obrony
+\autor{≈Åukasz Stanis≈Çawski\album{200617} }
+\tytul{Symulacja cia≈Ça miƒôkkiego z wykorzystaniem technologii CUDA}
+\kierunek{informatyka stosowana}
+\zaklad{Katedra Informatyki Stosowanej}
+\rodzajpracy{in≈ºynierska}
+\promotor{dr hab. Jacek Matulewski}
+\jednostkapromotora{Zak≈Çad Mechaniki Kwantowej}
+\rok{2014}
 
-\lstset{language=PHP,tabsize=2,basicstyle=\small} %ustawienie g≥Ûwnego jÍzyka dla pakietu listings, ustawienia rozmiaru
+\lstset{language=C,tabsize=2,basicstyle=\small}
 
-\begin{document} %poczπtek dokumentu
+\begin{document}
 
-\maketitle %wstawianie strony tytu≥owej, strony z podziÍkowaniami, strony z oúwiadczeniem
+\maketitle
 
-\tableofcontents %spis treúci, dla zmian tego fragmentu kompilowaÊ 2 razy
-
+\tableofcontents
 
 \input{wstep}
 \input{cialo_miekkie}
 
-\input{cuda}
+%\input{cuda}
 
 \chapter{Podsumowanie}
-Tu tekst podsumowania, poniøej wstawiono diagram:
+Tu tekst podsumowania, poni¬øej wstawiono diagram:
 
+\listoffigures
+\listoftables
+\listofcharts
+\listofdiagrams
+\listofcodes
 
-
-%naleøy wstawiÊ odpowiednie spisy, do zmian kompilowaÊ 2 razy:
-\listoffigures % spis rysunkÛw
-\listoftables % spis tabel
-\listofcharts % spis wykresÛw
-\listofdiagrams % spis diagramÛw
-\listofcodes % spis kodÛw ürÛd≥owych (inaczej niø w manualu do pakietu listings!)
-
-\appendix %od tego momentu polecenia "chapter" bÍdπ siÍ nazywa≥y "Dodatek"
+\appendix
 \chapter{Nazwa dodatku}
-NiektÛre nazwy moøna zapisaÊ kursywπ, np. pakiet \textit{url}. Ten i inne szablony w wersji aktualnej moøna znaleüÊ takøe na stronie\\ \url{http://www.rklimas.pl/wfaiis}. %wykorzystanie pakietu url
 
+\nocite{*} 
+\bibliographystyle{wfaiis}
+%\bibliography{literatura}
 
-%po dodatkach bibliografia, ktÛrπ skompilowaÊ teø BiBTeX'em wed≥ug za≥πczonych instrukcji
-\nocite{*} %to polecenie wstawia wszystkie pozycje z bazy bibliograficznej, niezaleønie czy uøyto cytowania pozycji, komentujπc tπ liniÍ LaTeX bÍdzie korzysta≥ z cytowaÒ uøytych w tekúcie (\cite{nazwa}), z tego powodu w wyniku kompilacji na stronie 9 jest znak zapytania
-\bibliographystyle{wfaiis} %korzystaÊ ze stylu bibliograficznego wfaiis.bst
-\bibliography{literatura} %korzystaÊ z bazy pozycji bibliograficznych w pliku literatura.bib
-
-\end{document} %koniec dokumentu
+\end{document}
