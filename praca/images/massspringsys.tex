@@ -1,0 +1,20 @@
+\begin{tikzpicture}
+
+    \draw[-,snake=coil] (0,0 ,0) -- (0,3 ,0);
+    \draw[-,snake=coil] (0,0 ,3) -- (0,3 ,3);
+	 \draw[-,snake=coil] (3,0 ,0) -- (3,3 ,0);
+	 \draw[-,snake=coil] (3,0 ,3) -- (3,3 ,3);
+\foreach \y in{0,3}
+{
+    \draw[-,snake=coil] (0,\y ,0) -- (3,\y ,0);
+    \draw[-,snake=coil] (0,\y ,3) -- (3,\y ,3);
+	 \draw[-,snake=coil] (0,\y ,0) -- (0,\y ,3);
+	 \draw[-,snake=coil] (3,\y ,0) -- (3,\y ,3);
+
+	 \filldraw[fill=red, draw=black] (0, \y, 0) circle (5pt);
+	 \filldraw[fill=red, draw=black] (3, \y, 0) circle (5pt);
+	 \filldraw[fill=red, draw=black] (0, \y, 3) circle (5pt);
+    \filldraw[fill=red, draw=black] (3, \y, 3) circle (5pt);
+}
+
+\end{tikzpicture}

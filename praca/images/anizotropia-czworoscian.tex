@@ -1,0 +1,44 @@
+\begin{tikzpicture}
+
+\coordinate (A) at (0, 0, 0);
+\coordinate (B) at (6, 0, 0);
+\coordinate (C) at (3, 0, 4.22);
+\coordinate (D) at (3, 4.89, 2.11);
+
+\draw[-] (D) -- (B) -- (C) -- (D) -- (A) -- (C);
+\draw[-, dashed] (A) -- (B);
+
+\filldraw[fill=red, draw=black] (A) circle (3pt);
+\filldraw[fill=red, draw=black] (B) circle (3pt);
+\filldraw[fill=red, draw=black] (C) circle (3pt);
+\filldraw[fill=red, draw=black] (D) circle (3pt);
+
+\node[above left] at (D) {A};
+\node[below right] at (B) {B};
+\node[below left] at (C) {C};
+\node[below left] at (A) {D};
+
+%intersection points
+\coordinate (I1) at (barycentric cs:D=0.5,B=0.7,C=0.5);
+\coordinate (I2) at (barycentric cs:A=0.7,B=0.5,D=0.5);
+\coordinate (Imid) at (barycentric cs:I1=0.5,I2=0.5);
+
+\filldraw[fill=blue, draw=black] (I1) circle (3pt);
+\filldraw[fill=blue, draw=black] (I2) circle (3pt);
+\node[above right] at (I1) {$P_1$};
+\node[above left] at (I2) {$P_2$};
+\node[below=25pt, right] at (I1) {$\alpha$};
+\node[below=15pt, left] at (I2) {$\beta$};
+\node[right, above=20pt] at (I1) {$\gamma$};
+
+\draw[-,snake=snake] (I1) -- (I2);
+\draw[<->,thick, shorten >=4pt, shorten <=4pt] (I1) -- (I2);
+\draw[->,thick] (Imid) -- ++(0,0.6,0);
+\draw[->,thick] (Imid) -- ++(0,-0.6,0);
+
+\draw[-,densely dotted] (I1) -- (C);
+\draw[-,densely dotted] (I1) -- (D);
+\draw[-,densely dotted] (I1) -- (B);
+
+
+\end{tikzpicture}

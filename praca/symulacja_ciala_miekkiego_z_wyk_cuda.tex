@@ -1,0 +1,62 @@
+%Autor: Rados³aw Klimas, gervazy89@gmail.com
+%przyk³adowy dokument .tex wykorzystuj¹cy klasê wfaiis.cls, styl bibliograficzny wfaiis.bst oraz bazê bibliograficzn¹ literatura.bib 
+
+\documentclass[twoside,openright]{wfaiis} %marginesy lustrzane, nowy rozdzia³ na stronie nieparzystej
+\usepackage{polski} %polskie nazwy
+\usepackage{listings} %dodatkowy pakiet do kodów Ÿród³owych, opcjonalny jeœli nie ma ich w pracy
+\linespread{1.3}
+\usepackage{tikz}
+\usepackage{amssymb}
+\usetikzlibrary{positioning}
+\usetikzlibrary{snakes}
+\usepackage[cp1250]{inputenc} %kodowanie dokumentu
+\usepackage{graphicx} %pakiet wstawiaj¹cy rysunki, opcjonalny jeœli nie ma ich w pracy
+%w celu kompilacji tego dokumentu w obecnej postaci, w celach potrzebny bêdzie plik "rysunek.jpg" umieszczony w katalogu razem z plikiem wfaiis.tex, jeœli takiego obrazka nie bêdzie, kompilator zg³osi b³¹d
+\usepackage{url} %pakiet odpowiednio formatuj¹cy adresy url, opcjonalny jeœli nie ma ich w pracy
+
+\autor{£ukasz Stanis³awski\album{200617} } %imiê i nazwisko, numer indeksu
+\tytul{Symulacja cia³a miêkkiego z wykorzystaniem technologii CUDA} %tytu³ pracy
+\kierunek{informatyka stosowana} %kierunek studiów studenta
+\zaklad{Katedra Informatyki Stosowanej} %zak³ad
+\rodzajpracy{in¿ynierska} %akceptowane wartoœci: "in¿ynierska", "magisterska" lub "licencjacka"
+\promotor{dr Jacek Matulewski} %tytu³, imiê i nazwisko promotora
+\jednostkapromotora{Zak³ad Mechaniki Kwantowej} %jednostka zatrudniaj¹ca promotora
+\rok{2014} %rok obrony
+
+\lstset{language=PHP,tabsize=2,basicstyle=\small} %ustawienie g³ównego jêzyka dla pakietu listings, ustawienia rozmiaru
+
+\begin{document} %pocz¹tek dokumentu
+
+\maketitle %wstawianie strony tytu³owej, strony z podziêkowaniami, strony z oœwiadczeniem
+
+\tableofcontents %spis treœci, dla zmian tego fragmentu kompilowaæ 2 razy
+
+
+\input{wstep}
+\input{cialo_miekkie}
+
+\input{cuda}
+
+\chapter{Podsumowanie}
+Tu tekst podsumowania, poni¿ej wstawiono diagram:
+
+
+
+%nale¿y wstawiæ odpowiednie spisy, do zmian kompilowaæ 2 razy:
+\listoffigures % spis rysunków
+\listoftables % spis tabel
+\listofcharts % spis wykresów
+\listofdiagrams % spis diagramów
+\listofcodes % spis kodów Ÿród³owych (inaczej ni¿ w manualu do pakietu listings!)
+
+\appendix %od tego momentu polecenia "chapter" bêd¹ siê nazywa³y "Dodatek"
+\chapter{Nazwa dodatku}
+Niektóre nazwy mo¿na zapisaæ kursyw¹, np. pakiet \textit{url}. Ten i inne szablony w wersji aktualnej mo¿na znaleŸæ tak¿e na stronie\\ \url{http://www.rklimas.pl/wfaiis}. %wykorzystanie pakietu url
+
+
+%po dodatkach bibliografia, któr¹ skompilowaæ te¿ BiBTeX'em wed³ug za³¹czonych instrukcji
+\nocite{*} %to polecenie wstawia wszystkie pozycje z bazy bibliograficznej, niezale¿nie czy u¿yto cytowania pozycji, komentuj¹c t¹ liniê LaTeX bêdzie korzysta³ z cytowañ u¿ytych w tekœcie (\cite{nazwa}), z tego powodu w wyniku kompilacji na stronie 9 jest znak zapytania
+\bibliographystyle{wfaiis} %korzystaæ ze stylu bibliograficznego wfaiis.bst
+\bibliography{literatura} %korzystaæ z bazy pozycji bibliograficznych w pliku literatura.bib
+
+\end{document} %koniec dokumentu

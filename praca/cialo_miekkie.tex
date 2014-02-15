@@ -1,0 +1,147 @@
+\chapter{Cia³o miêkkie w symulacji komputerowej} 
+
+Zjawiska fizyczne ju¿ od wielu lat stanowi¹ przedmiot szczególnego zainteresowania autorów symulacji komputerowych. Naturalnie wygl¹daj¹ce animacje tkanin, p³ynów, oœwietlenia, w³osów, skóry, wszelkiego rodzaju cia³ mog¹cych doznaæ odkszta³ceñ w wyniku interakcji z u¿ytkownikiem, niew¹tpliwie dodaj¹ symulacji walorów wizualnych. Taka wizualna atrakcyjnoœæ, np. w przypadku produkcji gier, czêsto okazuje siê jednym z g³ównych czynników decyduj¹cych o sukcesie komercyjnym produktu. Nie dziwi zatem pokaŸna liczba ludzi i nak³adów zaanga¿owanych w badania nad sposobami symulacji zjawisk fizycznych, czego efektem s¹ liczne publikacje, równie¿ na temat symulacji cia³ deformowalnych.
+
+Wiele ze stworzonych dotychczas metod symulacji cia³ miêkkich za priorytet stawia  stabilnoœæ, responsywnoœæ oraz szybkoœæ symulacji, czêsto kosztem dok³adnoœci obliczeñ oraz poprawnoœci modelu fizycznego. Implikuje to fakt, ¿e powsta³e modele staj¹ siê mocno wyspecjalizowane, zdolne do symulacji tylko jednego w¹skiego spektrum zjawisk fizycznych, jak np. symulacja tkanin, czy w³osów. Ponadto, oprócz zawê¿enia przedmiotu symulacji, zawê¿a siê te¿ jej zakres zastosowañ. Z racji niedok³adnoœci obliczeñ nie mo¿na owych modeli wykorzystaæ do obliczeñ in¿ynierskich, wiêc znajduj¹ one g³ówne zastosowanie w grach komputerowych, czy ogólniej - animacji komputerowej. \cite{pbdyn}
+
+Jedn¹ z najczêœciej wykorzystywanych technik s³u¿¹cych do symulacji cia³a miêkkiego jest operowanie na si³ach dzia³aj¹cych na cia³o. Schemat takiej symulacji mo¿na uogólniæ, zak³adaj¹c, ¿e cia³o miêkkie przedstawiamy jako zbiór punktów na które mog¹ dzia³aæ si³y. W ka¿dym kroku akumulowane s¹ si³y zewnêtrzne i wewnêtrzne dzia³aj¹ce na ka¿dy punkt modelu. Jako si³y wewnêtrzne najczêœciej wymieniane s¹ si³y sprê¿ystoœci czy ciœnienia, jako si³y zewnêtrzne si³a grawitacji czy si³y powsta³e w nastêpstwie kolizji z innymi obiektami. Nastêpnie w ka¿dym kroku symulacji z si³ wyliczane jest przyspieszenie punktów zgodnie z drugim prawem dynamiki Newtona. W kolejnych krokach, wykorzystuj¹c dowoln¹ metodê, ca³kujemy otrzymany uk³ad si³ obliczaj¹c prêdkoœci, a nastêpnie nowe pozycje punktów modelu.\cite{pbdyn}
+
+Przyk³adem modelu z w/w rodziny jest omawiany w nastêpnych podrozdziale - system sprê¿yn i punktów masy, (ang. mass-spring system). W kolejnych podrozdzia³ach zostan¹ omówione dodatkowe, wybrane z literatury przedmiotu obostrzenia modelu, maj¹ce na celu zniwelowaæ wiele niepo¿¹danych efektów symulacji.
+
+\section{System Punktów Masy i Sprê¿yn'}
+W tym rozdziale zostanie scharakteryzowana jedna z najpowszechniejszych metod symulacji cia³a miêkkiego. Jak wskazuje nazwa modelu system sk³ada siê z systemu  dwóch podstawowych elementów:
+\begin{itemize}
+\item  Punkt Masy - punkt w przestrzeni posiadaj¹ce masê, na który mog¹ oddzia³ywaæ si³y.
+\item Sprê¿yna - rozci¹gniêta pomiêdzy dwoma punktami masy, posiada swoj¹ normaln¹ d³ugoœæ, nie posiada masy.
+
+\end{itemize} 
+
+% szeœcian 2x2x2 sk³adaj¹cy siê z punktów masy i sprê¿yn miêdzy nimi
+\begin{figure}[ht]
+\centering
+\input{images/massspringsys}
+\caption{Zbiór punktów masy z przyk³adowym uk³adem po³¹czeñ}
+\end{figure}
+Model ten posiada podstawy fizyczne, poniewa¿ si³y generowane przez rozci¹gniêt¹ sprê¿ynê s¹ zgodne z prawem Hook'a. W swoim podstawowym wariancie si³y dzia³aj¹ce na jeden punkt masy uk³adu s¹ zdefiniowane jako:
+
+%
+% Równanie ogólne si³y dzia³aj¹cej na punkt masy
+%
+\begin{equation}
+F_{i} = \sum_{j} g_{ij} + f^{d}_i + f^{ex}_{i}
+\end{equation}
+
+W powy¿szym równaniu na punkt masy w danej chwili $t$ dzia³aj¹ si³y:
+\begin{itemize}
+\item  Sprê¿ystoœci $g_{ji}$ generowane przez sprê¿yny zawieszone miêdzy s¹siaduj¹cymi punktami.
+
+\begin{equation}
+g_{ij} = k_s (| x_{ij}| - l_{ij})\frac{x_{ij}}{|x_{ij}|}
+\end{equation}
+,gdzie $x_{ij} = x_i - x_j$, jest wektorem ró¿nicy po³o¿eñ miêdzy s¹siaduj¹cymi punktami masy. Si³a sprê¿ystoœci w modelu jest zgodna z prawem Hook'a, czyli jest proporcjonalna do odchylenia sprê¿yny od jej spoczynkowej d³ugoœci $l_{ij}$. Wspó³czynnik $k_s$ jest wspó³czynnikiem sprê¿ystoœci i z za³o¿enia jest zale¿ny od materia³u z którego sk³ada siê symulowane cia³o.
+
+\item T³umienia $f^{d}_i$ wynikaj¹ca z faktu, i¿ symulowanie cia³o nie jest doskonale elastyczne i nie zachowuje energii uk³adu. (Tzn. energia mechaniczna jest transformowana w energiê wewnêtrzn¹ cia³a, jednak z punktu widzenia symulacji energia nie jest zachowana.)
+
+\begin{equation}
+f^{d}_i = k_d(v_j - v_i)
+\end{equation}
+,gdzie $v_i$ i $v_j$ s¹ wektorami prêdkoœci dwóch punktów masy po³¹czony sprê¿ynami, a $ k_d$ jest wspó³czynnikiem t³umienia charakterystycznym dla symulowanego materia³u.
+
+\item Zewnêtrzne $f^{ex}_{i}$ dzia³aj¹ce na punkt materialny, takie jak np. grawitacja.
+\end{itemize}. 
+
+Zdefiniowany model jest w istocie równaniem ró¿niczkowym drugiego rzêdu i mo¿e
+byæ rozwi¹zany jednym z wielu algorytmów numerycznych. Jedn¹ z najczêœciej
+wykorzystywanych metod jest algorytm Verleta, który cechuje siê prostot¹, daj¹c
+jednoczeœnie wystarczaj¹co dok³adne rozwi¹zania. Badania przeprowadzone w \cite{var} pokaza³y, ¿e algorytm Verleta okaza³ siê najwydajniejszy w porównaniu z innymi metodami numerycznymi, dlatego te¿ bêdzie stosowany w niniejszej pracy.
+
+Wzór na pozycjê punku masy w czasie $t + dt$ jest w modelu wyra¿ona wzorem:
+
+% Wzór na dynamikê punktu w modelu (Verlet)
+\begin{equation}
+x_i(t + dt) = \frac{F_i(t)}{m} dt^2 + 2x_i(t) - x_i(t - dt)
+\end{equation}
+
+Ze wzglêdu na fakt, i¿ niektóre si³y s¹ zale¿ne od poprzednich prêdkoœci punktu masy, do symulacji wykorzystywane bêdzie te¿ wariant prêdkoœciowy algorytmu Verleta. Jest on zapisany wzorem:
+
+% Wzór na dynamikê punktu w modelu (prêdkoœciowy Verlet)
+\begin{eqnarray}
+x_i(t + dt) = \frac{F_i(t)}{2m} dt^2 + x_i(t) + v_i(t)dt \\
+v_i(t + dt) = \frac{F_i(t + dt) + F_i(t)}{2m}dt + v_i(t)
+\end{eqnarray}
+
+%
+% MODYFIKACJE MODELU
+%
+\subsection{Modyfikacje modelu}
+
+\subsubsection{Si³a t³umienia}
+Si³a t³umienia zdefiniowana jako ró¿nica prêdkoœci miêdzy dwoma punktami masy w podstawowym modelu jest rzadko stosowana, ze wzglêdu na wiele niepo¿¹danych w³asnoœci. T³umi ona np. obrót cia³a wokó³ nieruchomego punktu masy, jak przedstawiono na rys. \ref{tlumienie}.
+
+\begin{figure}[ht]
+\centering
+\input{images/part_rotation}
+\caption{Rotacja wokó³ nieruchomego punktu}
+\label{tlumienie}
+\end{figure}
+
+Wed³ug \cite{pbdo} przyjêcie prostej ró¿nicy prêdkoœci punktów w przypadku symulacji materia³ów t³umi ich po¿¹dane w³asnoœci, takie jak podatnoœæ na giêcie i marszczenie. Dlatego te¿ warunek na si³ê t³umienia zdefiniujemy jako:
+\begin{equation}
+f^{d}_i = k_d (\frac{v_{ij}^\intercal x_{ij}}{x_{ij}^\intercal x_{ij}}) x_{ij}
+\end{equation}
+
+,gdzie $v_{ij} = v_i - v_j$. Powy¿sze równanie wyznacza si³ê t³umienia modelu równ¹ iloczynowi wspó³czynnika t³umienia i projekcji ró¿nicy prêdkoœci dwóch punktów masy na wektor ich ró¿nicy po³o¿eñ. Definicja nak³ada zatem ograniczenie, i¿ si³a t³umienia mo¿e dzia³aæ tylko w tym samymi kierunku co wektor ró¿nicy po³o¿eñ.
+
+\subsubsection{Zachowanie objêtoœci}
+Kolejnym, istotnym aspektem symulacji cia³a miêkkiego jest zachowanie jego objêtoœci. System punktów mas i sprê¿yn nie symuluje obiektów posiadaj¹cych objêtoœæ, tak¿e czêsto mo¿e siê zdarzyæ, ¿e uk³ad znajdzie siê w stanie stabilnym, jednak ró¿nym od wyjœciowego. W praktyce czêsto oznacza to, ¿e w wyniku dzia³ania du¿ych si³ elementy modelu zostan¹ obrócone lub zapadn¹ siê w swoj¹ w³asn¹ strukturê. Przyk³ad tego jest przedstawiony na rysunku \ref{stany} szeœcian 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=7cm, height=7cm]{images/stabilny.png}
+\includegraphics[width=7cm, height=7cm]{images/niestabilny.png}
+\caption{Dwa stany stabilne dla szeœciennego modelu.}
+\label{stany}
+\end{figure}
+
+Rozwi¹zaniem problemu przechodzenia uk³adu miêdzy stanami stabilnymi okaza³o siê wprowadzenie sztucznej si³y, pozwalaj¹cej zachowaæ objêtoœæ. Takie podejœcie po raz pierwszy zaproponowano w \cite{rmofa}. Autorzy publikacji pogrupowali znajduj¹ce siê w uk³adzie punkty masy w obiekty dla których mo¿na by³o zdefiniowaæ objêtoœæ. Nastêpnie w zale¿noœci od ró¿nicy pomiêdzy objêtoœci¹ spoczynkow¹ a aktualn¹ generowana by³a si³a oddzia³uj¹ca punkty masy. Kierunek tej si³y jest zgodny z dzia³aniem pewnej z góry zdefiniowanej normalnej. W \cite{isodb} autorzy przedstawiaj¹ bardziej ogólny przypadek przyjmuj¹c, ¿e obiektem posiadaj¹cym objêtoœæ jest czworoœcian.Wierzcho³ki figury s¹ punktami masy, a krawêdzie sprê¿ynami. Si³a zachowawcza dzia³aj¹ca na dany punktu masy $i$ czworoœcianu, okreœla siê wzorem:
+
+\begin{equation}
+F_i^d = d_v ( v - v_0) n_i
+\end{equation}
+,gdzie $v$ jest aktualn¹ objêtoœci¹ symulowanego czworoœcianu, $v_0$ jest jego spoczynkow¹ objêtoœci¹ a $d_v$ jest arbitralnie zdefiniowan¹ sta³¹. $n_i$ jest to normalna przeciwleg³ej œciany czworoœcianu. Podana metoda pozwala unikn¹æ odwrócenia wierzcho³ków symulowanego obiektu, poniewa¿ w takim przypadku obliczona objêtoœæ bêdzie ujemna i powsta³a, du¿a si³a $F_i^d$ wymusi powrót uk³adu do stanu wejœciowego \cite{isodb}.
+
+\subsubsection{Zale¿noœæ od topologii}
+W analizowanym modelu topologia po³¹czeñ miêdzy punktami mas jest z góry zdefiniowana. Mo¿na powiedzieæ, ¿e jest to kolejny parametrem symulacji, który w istotny sposób decyduje o jej jakoœci. Takie za³o¿enie samo w sobie nie jest b³êdne, gdy¿ modeluj¹c wewnêtrzn¹ strukturê cia³a mo¿emy okreœliæ jego fizyczn¹ charakterystykê. Na przyk³ad, symuluj¹c elastyczny szeœcian i dodaj¹c dodatkowe po³¹czenia miêdzy punktami masy w jednej p³aszczyŸnie otrzymamy obiekt ró¿nie podatny na odkszta³canie w zale¿noœci od kierunku dzia³ania si³y. Tak¹ mechaniczn¹ w³aœciwoœæ cia³a nazywany anizotropi¹. Anizotropia stanowi bardzo ciekawy przyk³ad w³asnoœci mechanicznej materia³u, której implementacji w modelu punktów mas i sprê¿yn jest czêsto problematyczna. 
+
+Idealny model powinien umo¿liwiaæ symulowanie materia³ów izotropowych (o w³asnoœciach mechanicznych niezale¿nych od kierunki dzia³añ si³y) jak i anizotropowych. Poprzez mo¿liwoœæ manipulacji rozmieszczeniem punktów materialnych, sposoby ich po³¹czeñ sprê¿ynami czy manipulowanie sta³ymi sprê¿ystoœci, model dostarcza narzêdzi do implementacji tych w³asnoœci. Nie mniej jednak niektóre w³asnoœci mog¹ pojawiaæ siê wbrew wczeœniejszym za³o¿eniom. Przyk³ad niepo¿¹danej anizotropii, otrzymanej poprzez ró¿ne struktury wewnêtrzne modelu przedstawiono na rys. \ref{anizotropia}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.5]{images/anisotropy.png}
+\caption{Porównanie dwóch zastosowanych siatek w obiekcie przytwierdzonym górn¹ podstaw¹ i poddanemu sile grawitacji. Lewo: Anizotropia obserwowana w czworoœciennej siatce po³¹czeñ. Prawo: Brak anizotropii w szeœciennej siatce po³¹czeñ. ród³o: \cite{ca}}
+\label{anizotropia}
+\end{figure}
+
+Okazuje siê, ¿e kalibracja parametrów modelu nie jest trywialna. W \cite{usa} autorzy proponujê metodê kalibracji poszczególnych sta³ych sprê¿ystoœci sprê¿yn. Ich metoda pozwala na symulacjê zarówno izotropowych jak i anizotropowych. Jednak jak sami autorzy wskazuj¹ jest z³o¿ona obliczeniowo,a w publikacji zosta³a zaprezentowany tylko przyk³ad dla siatek dwuwymiarowych. Inne podejœcie w swojej publikacji przedstawili francuscy badacze wykorzystuj¹c do estymacji parametrów sprê¿ystoœci algorytmy genetyczne.\cite{ei}
+
+Alternatywne podejœcie, odchodz¹ce nieco od klasycznego modelu punktów mas i sprê¿yn, zosta³o przedstawione w publikacji D. Bourguignon i M-P. Cani \cite{ca}. Metoda ta, pochodna od systemu punktów mas i sprê¿yn, pozwala na definiowanie w³asnoœci mechanicznych symulowanych obiektów niezale¿nie od przyjêtej geometrii czy topologii. Pozwala to na wczytanie do symulacji obiektów utworzonych w programach do modelowania 3D i co wa¿niejsze, odci¹¿enia grafika z koniecznoœci uwzglêdnienia podczas pracy fizycznych charakterystyk modelu.\cite{ca}
+
+Metoda zak³ada, wszystkie punkty masy w modelu s¹ pogrupowane w tzw. jednostki objêtoœci (volume element), którymi najczêœciej s¹ czworoœciany. Dla ka¿dej jednostki wyznacza siê tymczasowe punkty masy po³o¿one wzd³u¿ sta³ych, predefiniowanych osi. Umiejscowienie osi ma odzwierciedlaæ mechaniczn¹ charakterystykê obiektu. Z regu³y stosuje siê standardowo 3 osie, jednak mo¿liwa jest te¿ ich wiêksza iloœæ \cite{ca}. Sposób wyznaczania punktów przeciêcia przedstawiony jest na rysunku \ref{anizotropia-czworoscian}.
+
+\begin{figure}[ht]
+\centering
+\input{images/anizotropia-czworoscian}
+\caption{Wyznaczanie punktu przeciêcia z osiami w czworoœcianie.}
+\label{anizotropia-czworoscian}
+\end{figure}
+
+Przedstawiony czworoœcian posiada zdefiniowane dwie osie. Wyznaczono te¿ dwa punkty przeciêcia $P_1$ oraz $P_2$ z osi¹ poziom¹ figury. W celu zapamiêtania pozycji punktów przeciêcia wyznacza siê wspó³czynniki kombinacji liniowej z wierzcho³kami tworz¹cymi œcianê. $P_1 = \alpha * A + \beta *B + \gamma *C$. Wspó³czynniki te musz¹ byæ wyznaczane dla czworoœcianu znajduj¹cego siê w stanie spoczynku. Punkty przeciêcia traktowane s¹ odt¹d jak nowe punkty masy. Dzia³aj¹ na nie si³y wewnêtrzne i zewnêtrzne uk³adu. Dwa punkty (zaznaczonymi na rys. \ref{anizotropia-czworoscian} kolorem niebieskim) zostaj¹ w istocie po³¹czone sprê¿yn¹.
+
+Nastêpnie dokonuje siê omawianych w poprzednich podrozdzia³ach obliczeñ si³ dzia³aj¹cych na punkt przeciêcia. Maj¹c dane wspó³czynniki kombinacji liniowej, wyznaczyæ mo¿na si³y dzia³aj¹ce na punkty masy $A,B,C$ pierwotnie zdefiniowane w modelu. 
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.5]{images/fixed_anisotropy.png}
+\caption{Porównanie dwóch zastosowanych siatek w obiekcie przytwierdzonym górn¹ podstaw¹ i poddanemu sile grawitacji. W modelu wykorzystano metodê D. Bourguignon i M-P. Cani, ród³o: \cite{ca}}
+\label{anizotropia-czworoscian-fix}
+\end{figure}

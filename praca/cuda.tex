@@ -1,0 +1,66 @@
+\chapter{Technologia CUDA}
+\section{Wspó³bie¿na przysz³oœæ}
+Kiedy w roku 2005 H. Sutter \cite{lunch} opublikowa³ artyku³ o intryguj¹co brzmi¹cej nazwie 'Koniec darmowego lanczu', w szeroko pojêtym œrodowisku deweloperskim rozgorza³a dyskusja. Autor przedstawi³, ¿e obserwujemy kres wyk³adniczego wzrostu wydajnoœci mikroprocesorów, rozumianego przez wzrost czêstotliwoœci taktowania ich zegarów czy iloœci mo¿liwych do wykonania operacji mierzonych w GFLOP/S-ach. Z tym argumentem, nie mo¿na siê nie zgodziæ patrz¹c na oferowane na rynku procesory firmy Intel przedstawione na rys \ref{proce}.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=1.0]{images/CPU.png}
+\caption{.  ród³o: http://www.gotw.ca/}
+\label{proce}
+\end{figure}
+
+Wa¿niejsz¹ jednak tez¹ postawion¹ przez Suttera by³o stwierdzenie, ¿e programiœci nie bêd¹ mogli d³u¿ej korzystaæ ze wzrostu mocy obliczeniowej sprzêtu. Taki wzrost wydajnoœci czêsto okazywa³ siê dla twórców aplikacji niezast¹piony. Napotykaj¹c problemy wydajnoœciowe w swoim oprogramowania programiœci mogli albo poœwiêciæ siê ¿mudnemu procesowi optymalizacji, albo poprostu podnieœæ jej wymaganie sprzêtowe. Czêsto, g³ównie ze wzglêdów ekonomicznych drugi wariant by³o wybierany, gdy¿ ogranicza³ siê do tylko do poczekania nowe generacje sprzêtu. To zjawisko, ciekawie scharakteryzowa³ J. Spolsky przytaczany w \cite{nolunch} ,,Jako programista masz wybór, albo spêdzisz pó³ roku na przedesignowaniu swojej aplikacji, wstawiaj¹c kod asemblera w krytycznych sekcjach, albo na wakacjach, graj¹c na perkusji w rockowej kapeli. Niezale¿nie od alternatywy któr¹ wybierzesz, twoja aplikacji bêdzie dzia³a³a szybciej,,.
+
+Czy jednak za³o¿enie o niskim wzroœcie wydajnoœci wspó³czesnym mikroprocesorów jest prawdziwe? Wprawdzie czêstotliwoœæ taktowania nie podlega ju¿ takim trendom co wczeœniej, jednak dzisiejsze architektury CPU oferuj¹ wiêcej ni¿ jeden rdzeni zdolnych do wykonywania programu. Obecnie na rynku jest ju¿ oferowany procesor Intel z serii i7, który mo¿e posiadaæ do 8 fizycznych rdzeni. Dodatkowo, nowe technologie takie jak hyperthreading, pipelining czy zaawansowany brach prediction pozwalaj¹ na mo¿liwie szybkie, czy wrêcz równoleg³e wykonywanie fragmentów sekwencyjnego kodu.
+
+Mimo nowoczesnej architektury CPU, sekwencyjnie programy i tak wykonywane s¹ tylko na pojedynczym rdzeniu\cite{massive}, który jak by³o to opisane wczeœniej, na przestrzeni ostatnich lat sta³ siê znacz¹co szybszy. Nawet najbardziej zaawansowane heurystyki stosowane w dzisiejszych kompilatorach nie s¹ w stanie zamieniæ sekwencyjnego kodu w wydajny kod zrównoleglony. 
+
+Sutter stwierdza, ¿e odpowiedz¹ na postawiony wy¿ej problem jest zmiana paradygmatu z programowania sekwencyjnego na wspó³bie¿ne. Tworzone wielow¹tkowe aplikacje bêd¹ w stanie korzystaæ z wielordzeniowych architektur, co przyspieszy ich wykonywanie a programistom pozwoli nadal oczekiwaæ na ,,darmowy lancz''. Samo jednak przejœcie nie bêdzie ³atwe, przyjemne, a przede wszystkim tanie. Wg Suttera taka zmiana wi¹zaæ siê bêdzie nie tylko ze zmian¹ architektury aplikacji, lecz te¿ systemu operacyjnego czy konstrukcjami jêzyków programowania. 
+
+Zmiany w stronê wielow¹tkowoœci obserwowane s¹ jakiegoœ czasu. W nowym standardzie jêzyka C++ 11, biblioteka obs³uguj¹ca w¹tki bêdzie wchodziæ w sk³ad biblioteki standardowej, Microsoft publikuje wielow¹tkowe wersje popularnych bibliotek dla Platformy .NET jak PLINQ, a NVIDIA biblioteki algorytmiczne (CUFFT) wykonywane na GPU. Marsz w stronê wielow¹tkowoœci obserwujemy ca³y czas, ale nie bêdzie to jednak rewolucja zapowiadana w \cite{rewolucja}, lecz moim zdaniem bardziej ewolucja. Warto dodaæ, ¿e du¿o pracy zosta³o ju¿ wykonane. Serwery www oraz bazy danych s¹ œwietnym przyk³adem wielow¹tkowych aplikacji.
+
+Kolej¹ istotn¹ kwesti¹ w projektowaniu wielow¹tkowych aplikacji jest jej skalowalnoœæ. Je¿eli dany problem programistyczny nie bêdzie w stanie byæ dynamicznie dzielony na podproblemy, które bêd¹ móg³y byæ rozwi¹zany indywidualnie, korzyœci zwi¹zane z przyrostem iloœci rdzeni w sprzêcie nie bêd¹ zauwa¿ane. Taki podzia³ czêsto okazuje siê byæ nietrywialny, a czasem niemo¿liwy. Nie mo¿na te¿ oczekiwaæ wielkich wzrostów wydajnoœci, poniewa¿ nie ca³y kod aplikacji mo¿e byæ zrównoleglony. Dobrze opisuje to formu³a stworzona w 1967 r. przez G. Amdahl.
+
+\begin{equation}
+W(N) = \frac{1}{(1-S) + \frac{S}{N}}
+\end{equation}
+,gdzie $N$ jest iloœci¹ jednostek wykonywania, a $S$ jest \% kodu programu, który mo¿e byæ zrównoleglony. I tak dla 8 rdzeni i programu i wspó³czynnika $S=60\%$ otrzymujemy wzrost wydajnoœci oko³o 2.1 raza.
+
+Wspó³bie¿noœæ jest bez w¹tpienia problemem z którym ka¿demu programiœcie przyjdzie siê kiedyœ zmierzyæ. Mo¿liwe, ¿e do niektórych problemów wystarcz¹ mu gotowe rozwi¹zania z dostêpnych bibliotek, jednak myœlenie o problemie i przedstawienie go w postaci daj¹cej siê zrównolegliæ bêdzie rzecz¹ najwa¿niejsz¹. Œrodowiska naukowe pomagaj¹ w tym aspekcie bardzo istotnie. Ka¿dego roku publikowane s¹ artyku³y przedstawiaj¹ce czêsto nowatorskie podejœcia do zagadnieñ wskazuj¹c mo¿liwoœæ ich wspó³bie¿nego rozwi¹zania. Oczekujê, ¿e w nastêpnych latach trend z programowaniem równoleg³ym bêdzie przybiera³ na sile, czego owocem bêd¹ nowe, innowacyjne metody i technologie.
+
+\section{Powstanie CUDA}
+
+Technologia CUDA (Compute Unified Device Architecture) zosta³a po raz pierwszy zaprezentowana przez NVIDIA w listopadzie 2006 r. Przedstawi³a ona nowy model programowania aplikacji w którym sekwencyjne fragmenty kodu s¹ wykonywane na CPU, natomiast te wymagaj¹ce obliczeniowo, na procesorach graficznych (GPU). Pierwsze karty graficzne z serii GeForce 8800, implementuj¹ce technologiê CUDA, pojawi³y siê w roku 2006 r. Programiœci od tego czasu mog¹ korzystaæ ze specjalnie zaprojektowanych w tym celów interfejsów programistycznych bibliotek CUDA.
+
+Sama koncepcja programowania procesorów graficznych jest znana od dawna. Programiœci u¿ywaj¹c interfejsów do programowania shaderów, dostêpnych chocia¿by w OpenGL 1.4 (2002) czy Direct3D 8.0 (2001), mogli dokonywaæ równoleg³ych obliczeñ na kartach graficznych. Wymaga³o to jednak czêsto wielu trików, takich jak przekazywanie danych poprzez tekstury czy odczytywania danych wyjœciowych z wygenerowanej ramki obrazu. NVIDIA wysz³a naprzeciw tym problemom, tworz¹c dedykowane na ten cel interfejsy programistyczne napisane w C i C++.
+
+Na sukces technologi CUDA z³o¿y³o siê wg \cite{massive} parê czynników. Pierwszym jest fakt, ¿e programiœci aplikacji równoleg³ych otrzymali œrodowisko w którym ich kod, wg zapewnieñ NVIDIA, bêdzie wykonywany poprawnie, niezale¿nie od u¿ywanego sprzêtu. Ma to szczególnie wa¿ne znaczenie, bior¹c pod uwagê fakt, ¿e projektanci kart graficznych nie zak³adali pocz¹tkowo ich u¿ycia do obliczeñ in¿ynierskich. I tak np. kalkulacje na liczbach zmiennoprzecinkowych na ró¿nych kartach graficznych NVIDIA do 2006 r. mog³y skutkowaæ innymi wynikami. Dopiero specyfikacja technologii CUDA wymusi³a na projektantach sprzêtu zgodnoœæ ze standardami publikowanymi przez IEEE.
+
+Kolejnym czynnikiem, który zdecydowa³ o sukcesie technologii CUDA jest dostêpnoœæ medium, na którym wielow¹tkowe, zrównoleglone aplikacje mog¹ byæ wykonywane. W chwili obecnej na rynku znajduj¹ siê setki milionów kart graficznych wyprodukowanych przez NVIDIA zdolnych do wykonania kodu napisanego w CUDA. Ma to bardzo istotny wymiar ekonomiczny, poniewa¿ wiele specjalistycznych (np. w medycynie) aplikacji nie musi byæ wiêcej dostarczana z drogim, dedykowanym dla tego celu sprzêtem. Spowodowa³o to zatem wzrost rynku dla tego typu rozwi¹zañ i stworzy³o ekonomiczne uzasadnienie do dalszej pracy nad wspó³bie¿nie wykonywanymi aplikacjami.
+
+Ostatnim, najbardziej oczywistym czynnikiem, jest wzrost wydajnoœci. Procesory graficzne sk³adaj¹ce siê z multiprocesorów strumieniowych s¹ przystosowane do przetwarzania du¿ej iloœæi danych jednoczeœnie. W nowych architekturach takich jak GeForce z serii 680 posiadaj¹c¹ a¿ 1536 rdzeni zdolnych do równoleg³ego wykonywania kodu. Efektem tego mo¿e byæ wzrost wydajnoœci aplikacji w niektórych zastosowaniach nawet do 150 razy \cite{prez}.
+
+\section{Model programowania}
+
+Zaproponowany we frameworku CUDA model programowania zak³ada mo¿liwoœæ skompilowania kodu w dwóch ró¿nych kontekstach - na CPU (host) oraz GPU (device). Jako kontekst rozumiany jest specyficzny dla danej architektury zestaw instrukcji dla procesora. Fragmenty programu, których zrównoleglenie jest niemo¿liwe s¹ tworzone w kontekœcie hosta, natomiast te wymagaj¹ce intensywnych, wielow¹tkowych obliczeñ w kontekœcie device'a. Wspó³istnienie dwóch konteksów w jednym programie wykonywanlym mo¿liwe jest dziêki zestawie bibliotek i narzêdzi dostarczanych wraz z pakietem CUDA. Z punktu widzenia programisty zmiana kontekstu ogranicza siê do wykonania specyficznego rodzaju funkcji, nazywanego w nomenklaturze CUDA kernelami.
+
+Skompilowanie kodu dla karty graficznej mo¿liwe jest za pomoc¹ dostarczanego przez NVIDIA kompilatora nvcc. Kod Ÿród³owy dla nvcc jest najczêœciej napisany w ANSI C z rozszerzeniami. Mo¿liwe jest jednak pisanie kodu urz¹dzenia w innych jêzykach programowania takich jak C++, Fortran, Java czy Python. 
+
+\begin{figure}[ht]
+\centering
+\input{images/cuda}
+\caption{CUDA}
+\label{cuda-model}
+\end{figure}
+
+\section{GPU}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.8]{images/gpu.png}
+\caption{.  ród³o: CUDA Manual}
+\label{proce}
+\end{figure}
+
+
+
