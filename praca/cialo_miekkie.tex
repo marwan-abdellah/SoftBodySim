@@ -1,15 +1,82 @@
-\chapter{Ciało miękkie w symulacji komputerowej} 
+\chapter{Ciało miękkie w symulacji komputerowej}
 
-Modelowanie zjawisk fizycznych od wielu lat stanowi przedmiot szczególnego
-zainteresowania branży gier komputerowych. Naturalnie wyglądające animacje tkanin, płynów, oświetlenia, włosów, skóry, wszelkiego rodzaju ciał mogących doznać odkształceń w wyniku interakcji z użytkownikiem, niewątpliwie dodają symulacji walorów wizualnych. Taka wizualna atrakcyjność, np. w przypadku produkcji gier, często okazuje się jednym z głównych czynników decydujących o sukcesie komercyjnym produktu. Nie dziwi zatem pokaźna liczba ludzi i nakładów zaangażowanych w badania nad sposobami symulacji zjawisk fizycznych, czego efektem są liczne publikacje, również na temat symulacji ciał deformowalnych.
+\section{Wprowadzenie}
 
-Wiele ze stworzonych dotychczas metod symulacji ciał miękkich za priorytet stawia  stabilność, responsywność oraz szybkość symulacji, często kosztem dokładności obliczeń oraz poprawności modelu fizycznego. Implikuje to fakt, że powstałe modele stają się mocno wyspecjalizowane, zdolne do symulacji tylko jednego wąskiego spektrum zjawisk fizycznych, jak np. symulacja tkanin, czy włosów. Ponadto, oprócz zawężenia przedmiotu symulacji, zawęża się też jej zakres zastosowań. Z racji niedokładności obliczeń nie można owych modeli wykorzystać do obliczeń inżynierskich, więc znajdują one główne zastosowanie w grach komputerowych, czy ogólniej - animacji komputerowej. \cite{pbdyn}
+W literaturze przedmiotu odnaleźć można szereg metod opisujących symulacje komputerowe ciał
+miękkich. Metody te, mimo faktu, że potrafią symulować ten sam zakres zjawisk
+fizycznych potrafią znacząco się różnić w zależności od zakresu ich zastosowań.
+Symulacje fizyczne ciał miękkich będą zatem ukierunkowane na otrzymanie wyników
+zbieżnych do obserwowanych doświadczalnie, natomiast te używane w grafice
+komputerowej będą stawiały za cel stworzenie przeyjemnego dla oka efektu
+wizualnego oraz stabiloność i responsywność symulacji.
+
+Mnogość zastosowań symulacji ciał miękkich sprawiła, że tematyką tą
+zainteresowali są badacze z różnych dziedzin. W efekcie tego obszar modelowania ciał
+deformowalnych nabrał prawdziwie interdyscyplinarnego charakteru i łączy dzisiaj w sobie
+taki obszary naukowe jak dynamika newtonowska, mechanika ośrodków ciągłych,
+metody numeryczne, geometria różniczkowa czy metody apksymacji\cite{pbdo}.
+
+Pierwsze próby sklasyfikowania znanych wówczas metod symulacji ciał miękkich
+podjęli w swoim opracowaniu z 1997 r. Sarah oraz Gibson\cite{survey}. Podzielili
+oni wszystkie znane modele na fizyczne oraz niefizyczne. Metody fizyczne, czyli
+takie które uwględniają w swojej budowie pewne prawa fizyczne będą przedmiotem
+wnikliwszej analizy w tej pracy. Do modeli niefizycznych zaliczyć można natomiast
+krzywe paramtryczne oparte na krzywych Breziera czy deformacje brył sztywnych (Free-Form Deformations).\cite{pbdo}
+
+Pokaźna ilość stworzonych metod symulacji ciał miękkich sprawia, że w pracy tej mogą zostać
+opisane tylko wybrane przykłady. Spośród dostępnych metod zostały wybrane tylko 
+te najbardziej rozpowszechnione i cechujące się się
+relatywnie prostą implementacją. Pomimo prostoty przedstawione w pracy
+metody są podstawą współczesnych technik symulacji ciał
+miękkich i stanowią bazę do tworzenia bardziej skomplikowanych i 
+wyspecjalizowanych modeli używanych w zaawansowanych silnikach graficznych
+takich jak PhysiX czy Bullet.
+
+\section{Kategoryzacja modeli fizycznych}
+
+Zanim zostaną przedstawione konkretne modele stosowane, przytoczona 
+zostanie ogólna kategoryzacja współczesnych metod symulacji ciał miękkich
+stworzona w opracowaniu 'Physically Based Deformable Models in Computer
+Graphics' \cite{pbdo}.
+
+Według autorów sposoby modelowania ciał miękkich można
+podzielić na dwie główne kategoria ze względu na sposób dyskretyzacji
+obiektu w celu przeprowadzenia jego numerycznej symulacji.
+\begin{itemize}
+\item Metody Lagrange'a
+\begin{itemize}
+\item Metody bazujące na siatce obiektu.
+\item Metody nie bazujące na siatce obiektu.
+\end{itemize}
+\item Metody Eulera
+\begin{itemize}
+\item Metody bazujące na siatce obiektu.
+\item Metody nie bazujące na siatce obiektu.
+\end{itemize}
+\end{itemize}
+
+Metody Lagrange'a jest to kategoria modeli ciał miękkich w których obiekt
+deformowanly przestawiony jest jako zbiór ruchomych punktów materialnych,
+ których pozycja może zmieniać się w czasie. Punkty te posiadają
+ specyficzne dla danego materiału właściwości. Z reguły metody
+ Lagrange'a przedstawiają symulowane ciało jako zbiór połączonych ze
+ sobą punktów.
+ 
+Metody Eulera natomiast, rozpatrują ciało miękkie jako zbiór punktów
+stacjonarnych i wyliczają jak właściwości materiału w tych arbitralnie zdanych
+punktach zmieniają się w czasie. Wadą tych metod jest fakt, że granice obiektu
+deformowalnego nie są już jawnie określone.\cite{pbdo}
+
+\section{Podstawy fizyczne}
+\subsection{Prawo Hooka}
+\subsection{Moduł Younga}
+
+\section{Wybrane modele ciał miękkich}
+
+
+\subsection{System Punktów Masy i Sprężyn}
 
 Jedną z najczęściej wykorzystywanych technik służących do symulacji ciała miękkiego jest operowanie na siłach działających na ciało. Schemat takiej symulacji można uogólnić, zakładając, że ciało miękkie przedstawiamy jako zbiór punktów na które mogą działać siły. W każdym kroku akumulowane są siły zewnętrzne i wewnętrzne działające na każdy punkt modelu. Jako siły wewnętrzne najczęściej wymieniane są siły sprężystości czy ciśnienia, jako siły zewnętrzne siła grawitacji czy siły powstałe w następstwie kolizji z innymi obiektami. Następnie w każdym kroku symulacji z sił wyliczane jest przyspieszenie punktów zgodnie z drugim prawem dynamiki Newtona. W kolejnych krokach, wykorzystując dowolną metodę, całkujemy otrzymany układ sił obliczając prędkości, a następnie nowe pozycje punktów modelu.\cite{pbdyn}
-
-Przykładem modelu z w/w rodziny jest omawiany w następnych podrozdziale - system sprężyn i punktów masy, (ang. mass-spring system). W kolejnych podrozdziałach zostaną omówione dodatkowe, wybrane z literatury przedmiotu obostrzenia modelu, mające na celu zniwelować wiele niepożądanych efektów symulacji.
-
-\section{System Punktów Masy i Sprężyn'}
 W tym rozdziale zostanie scharakteryzowana jedna z najpowszechniejszych metod symulacji ciała miękkiego. Jak wskazuje nazwa modelu system składa się z systemu  dwóch podstawowych elementów:
 \begin{itemize}
 \item  Punkt Masy - punkt w przestrzeni posiadające masę, na który mogą oddziaływać siły.
@@ -74,7 +141,7 @@ v_i(t + dt) = \frac{F_i(t + dt) + F_i(t)}{2m}dt + v_i(t)
 %
 % MODYFIKACJE MODELU
 %
-\subsection{Modyfikacje modelu}
+\subsubsection{Modyfikacje modelu}
 
 \subsubsection{Siła tłumienia}
 Siła tłumienia zdefiniowana jako różnica prędkości między dwoma punktami masy w podstawowym modelu jest rzadko stosowana, ze względu na wiele niepożądanych własności. Tłumi ona np. obrót ciała wokół nieruchomego punktu masy, jak przedstawiono na rys. \ref{tlumienie}.
@@ -146,3 +213,5 @@ Następnie dokonuje się omawianych w poprzednich podrozdziałach obliczeń sił
 \caption{Porównanie dwóch zastosowanych siatek w obiekcie przytwierdzonym górną podstawą i poddanemu sile grawitacji. W modelu wykorzystano metodę D. Bourguignon i M-P. Cani, Źródło: \cite{ca}}
 \label{anizotropia-czworoscian-fix}
 \end{figure}
+
+\subsection{Metody bazujące na pozycji}
