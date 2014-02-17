@@ -300,6 +300,7 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 
 	if (!cudaInitializeDevice(cuda)) {
 		ERR("CUDA Device initialization failed!");
+		ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
 		delete cuda;
 		return NULL;
 	}
