@@ -8,7 +8,7 @@ fizycznych potrafią znacząco się różnić w zależności od zakresu ich zast
 Symulacje fizyczne ciał miękkich będą zatem ukierunkowane na otrzymanie wyników
 zbieżnych do obserwowanych doświadczalnie, natomiast te używane w grafice
 komputerowej będą stawiały za cel stworzenie przyjemnego dla oka efektu
-wizualnego oraz stabiloność i responsywność symulacji.
+wizualnego oraz stabilność i responsywność symulacji.
 
 Mnogość zastosowań symulacji ciał miękkich sprawiła, że tematyką tą
 zainteresowali są badacze z różnych dziedzin. W efekcie tego obszar modelowania ciał
@@ -18,14 +18,14 @@ metody numeryczne, geometria różniczkowa czy metody apksymacji\cite{pbdo}.
 
 Rozdział ten ma za zadanie łagodnie wprowadzić czytelnika w bogaty świat metod symulacji
 ciał miękkich. Zostaną podjęte próby usystematyzowania dotychczasowych
-osiągnięcięć w tej dziedzinie oraz pokazania w jakich obszarach stosowane są
+osiągnięć w tej dziedzinie oraz pokazania w jakich obszarach stosowane są
 dane typy symulacji. Rozdział ten nie ma jednak na celu dokładnego omówienia sposobów 
 działania wszystkich metod, lecz tylko pobieżnym omówieniu aktualnego stanu
 wiedzy a skupienie się na wybranych metodach.
 
 Przedstawione zostaną też podstawowe prawa fizyki ciał deformowalnych. Ze
-względu jednak na obszerność tego zagadnienia, sięgającego aż czsów Galileusza
-\cite{elast}, niemożliwe będzie jego wyczrpujące opisanie. Zamiast tego nacisk
+względu jednak na obszerność tego zagadnienia, sięgającego aż czasów Galileusza
+\cite{elast}, niemożliwe będzie jego wyczerpujące opisanie. Zamiast tego nacisk
 zostanie położony na omówienie praw fizycznych mających zastosowanie w
 konkretnych modelach opisanych w dalszej części tego rozdziału.
 
@@ -38,29 +38,31 @@ miękkich i stanowią bazę do tworzenia bardziej skomplikowanych i
 wyspecjalizowanych modeli używanych w zaawansowanych silnikach graficznych
 takich jak PhysiX czy Bullet.
 
-\section{Kategoryzacja modeli fizycznych}
+\section{Kategoryzacja symulacji}
 
 Dostępne publikacje naukowe w dziedzinie symulacji ciał miękkich często mają charakter
 iteracyjny. Po stworzeniu nowej metody powstają jej modyfikacje, inni badacze
-dokonją zmian w metodzie, poprawiają jej parametry, upraszczją czy też
+dokonują zmian w metodzie, poprawiają jej parametry, upraszczają czy też
 uszczegóławiają lub nawet łączą ją z innymi znanymi technikami. W 
 dynamicznym obszarze zastosowań takim jak grafika komputerowa skutkuje to
-szybkim zasępowaniem starych metod nowymi i niejednokrotnie całkowitym
+szybkim zastępowaniem starych metod nowymi i niejednokrotnie całkowitym
 porzuceniem prac nad starymi metodami. 
 
 Bardzo zmienne środowisko, relatywnie młody wiek dziedziny czy jej 
 interdyscyplinarny charakter sprawia
 że obszar komputerowej symulacji ciał deformowalnych relatywnie trudno opisać.
 Jak dotąd znane są autorowi pracy tylko 2 próby usystematyzowania stanu wiedzy w
-tej dziedznie podjęte w przeciągu ostatnich 30 lat, odnoszące się wyłącznie do
+tej dziedzinie podjęte w przeciągu ostatnich 30 lat, odnoszące się wyłącznie do
 ciał miękkich.
+
+\subsection{Metody fizyczne i niefizyczne}
 
 Pierwszą próbę sklasyfikowania znanych metod symulacji ciał miękkich
 podjęli w swoim opracowaniu z 1997 r. Sarah oraz Gibson\cite{TR97-19}. Podzielili
 oni wszystkie znane modele na 2 ogólne kategorie: fizyczne oraz niefizyczne. Metody fizyczne, czyli
 takie które uwzględniają w swojej budowie pewne prawa fizyczne będą przedmiotem
 wnikliwszej analizy w tej pracy. Do modeli niefizycznych zaliczyć można natomiast
-krzywe paramtryczne oparte na krzywych Breziera czy deformacje brył sztywnych (Free-Form Deformations).\cite{pbdo}
+krzywe parametryczne oparte na krzywych Breziera czy deformacje brył sztywnych (Free-Form Deformations).\cite{pbdo}
 
 Metody niefizyczne znajdują zastosowanie w obszarach, w których właściwości
 fizyczne czy też symulacja w czasie obiektu nie ma zastosowania. Przykładem
@@ -69,15 +71,15 @@ projektowany obiekt musi być przekształcony ze stanu A w B zachowując określ
 właściwości. Nie dziwi zatem fakt, że wszystkie metody niefizyczne są także 
 nazywane technikami geometrycznymi.
 
-Do kategorii modeli fizycznych Sarah i Gibson zliczyli następujące klasy medeli:
+Do kategorii modeli fizycznych Sarah i Gibson zliczyli następujące klasy modeli:
 \begin{itemize}
 \item System Sprężyn
 \item Metody ciągłe (Continuum Models)
 \end{itemize}
 
-System sprężyn będzie przedmiotem wnikliwszej analizy w dalszej częsci tego
+System sprężyn będzie przedmiotem wnikliwszej analizy w dalszej części tego
 rozdziału. W tym miejscu należy jednak określić zakres stosowalności tego
-modelu, który obejmue głównie grafikę komputerową oraz szeroko rozumianą
+modelu, który obejmuje głównie grafikę komputerową oraz szeroko rozumianą
 inżynierię biomedyczną. System sprężyn ze względu na swoje właściwości 
 często jest wykorzystywany do symulacji tkanek ciała, gdyż pozwala łatwo łączyć ze
 sobą ośrodki o potencjalnie różnych własnościach fizycznych. Dodatkowo symulacje
@@ -91,7 +93,7 @@ fragment przestrzeni (tzw. continuum) i wykorzystuje równania różniczkowe do
 opisania deformacji obiektu. Metody te znajdują zastosowanie w symulacjach
 tkanek, analizie obrazów.\cite{TR97-19}
 
-Metodu bazujące na modelu continuum są bardziej fizycznie poprawne niż model
+Metody bazujące na modelu continuum są bardziej fizycznie poprawne niż model
 systemu sprężyn\cite{TR97-19}. Jednak posiadają one pewne niepożądane cechy.
 Pierwszą jest fakt, że nie zawsze daje się znaleźć analityczne rozwiązanie
 równań różniczkowych opisujących deformację ciała. Dlatego też w celu
@@ -103,20 +105,18 @@ deformację ciała są metody pozwalające na numeryczne rozwiązanie układu. D
 metody tych zaliczamy: Metodę Elementów Skończonych (Finite Element Method),
  Metody Aproksymacyjne (Approximate Continuum Method), Metoda Róznic Skończonych
  (Method of Finite Differencies, Metoda Skończonych Objętości (Method of Finite
- Volumes)
-
-Nastepną istotną wadą modeli continuum jest ich duża złożoność obliczeniowa
-czyniąca je trudnymi, lub wręcz niemożliwymi do zastowowania w symulacjach czasu
+ Volumes). Istotną wadą modeli continuum jest ich duża złożoność obliczeniowa
+czyniąca je trudnymi, lub wręcz niemożliwym do zastosowania w symulacjach czasu
 rzeczywistego.
 
-Drugim opracowaniem starającym się usystematyzować zagadnienia związane z
-ciałami miękkimi jest artykuł 'Physically Based Deformable Models in Computer
-Graphics' opublikowany w 2005 r. W pracy tej autorzy przedstawili dwa
-zasadnicze kierunki w symulacjach ciał miękkich bazujących na prawach fizyki.
+\subsection{Metody Lagrange'a i Eulera}
 
-Według autorów sposoby modelowania ciał miękkich można
+Drugim opracowaniem starającym się usystematyzować zagadnienia związane z
+ciałami miękkimi jest 'Physically Based Deformable Models in Computer
+Graphics' opublikowany w 2005 r. Według autorów sposoby modelowania ciał miękkich można
 podzielić na dwie główne kategoria ze względu na sposób dyskretyzacji
 obiektu w celu przeprowadzenia jego numerycznej symulacji.
+
 \begin{itemize}
 \item Metody Lagrange'a
 	\begin{itemize}
@@ -138,26 +138,49 @@ obiektu w celu przeprowadzenia jego numerycznej symulacji.
 	\end{itemize}
 \end{itemize}
 
-Metody Lagrange'a jest to kategoria modeli ciał miękkich w których obiekt
-deformowanly przestawiony jest jako zbiór ruchomych punktów materialnych,
- których pozycja może zmieniać się w czasie. Punkty te posiadają
- specyficzne dla danego materiału właściwości. Z reguły metody
- Lagrange'a przedstawiają symulowane ciało jako zbiór połączonych ze
- sobą punktów.
- 
-Metody Eulera natomiast, rozpatrują ciało miękkie jako zbiór punktów
-stacjonarnych i wyliczają jak właściwości materiału w tych arbitralnie zdanych
-punktach zmieniają się w czasie. Wadą tych metod jest fakt, że granice obiektu
-deformowalnego nie są już jawnie określone.\cite{pbdo}
+Metody Lagrange'a przedstawiają ciało miękkie jako zbiór punktów mogących
+przemieszać się w czasie. Każdy punkt modelu posiada własności
+charakterystyczne dla symulowanego materiału, które ewoluują wraz z ruchem
+modelu\cite{pbdo}. Do definiowania ciał miękkich w metodach Lagrange'a
+używane są siatki modeli, takie jak np. wykorzystywane w grafice komputerowej. 
+Ze względu na użycie siatki modele Lagrange'a dzielą się na te zdefiniowane na
+siatce oraz nie. Do metod zdefiniowanych na siatce zaliczamy omawiane wcześniej 
+metody ciągłe oraz system sprężyn. Metody nieoparte na siatkach to przede
+wszystkich systemy szeroko rozumianych cząstek.
+
+Systemy cząstek aplikowane są głównie do symulacji rozmytych obiektów takich jak
+chmury, woda, piasek, czy w ogólności do obiektów o niezdefiniowanej
+powierzchni. Powstały one na potrzeby filmowych efektów specjalnych i do dzisiaj
+są w tym obszarze powszechnie używane. System cząstek składa się obiektów cząstek,
+reprezentowanych przez prymitywy takie jak punkt czy sfera. Każda cząstka
+rozpoczyna swój cykl życia, od generacji, która łączy się z generowaniem 
+jej unikalnych parametrów takich jak pozycja, prędkość, temperatura czy długość życia.
+Następną fazą symulacji cząstki jest faza dynamiki, w której parametry cząstki
+są aktualizowane względem czasu symulacji. Ostatecznie każda cząstka po
+przekroczeniu swojej długości życie zostaje zniszczona i usunięta z modelu.
+Wielką zaletą systemu cząstek jest jej nieskomplikowana budowa, co pozwala na
+symulację bardzo dużych systemów cząstek. 
+
+Drugą techniką modelowania ciał miękkich są metody Eulera. Zasadniczą różnicą
+pomiędzy przytoczonymi wcześniej metodami Lagrange'a jest fakt, że nie skupiają 
+się one na symulacji punktów ciała miękkiego, lecz definiują zbiór arbitralnie
+określonych punktów w których wyliczane są parametry symulowanego materiału.
+
+Typowym schematem modelowania płynów technikami Eulera jest podział przestrzeni w
+której rozpatrywana jest symulacja na regularną siatkę voxeli i użycie równań Naviera-Stokes'a do
+obliczenia parametrów symulacji takich jak objętość płynu w każdym voxelu,
+ prędkość płynu zdefiniowana na ścianie voxela, czy ciśnienie w centrum voxela.
+
+Metody Eulera najczęściej wykorzystywane są do symulacji płynów oraz gazów.
 
 \section{Podstawy fizyczne}
 \subsection{Prawo Hooka}
 Jest jednym z pierwszych odkrytych praw fizycznych formalnie opisujących deformację ciał pod wpływam
 działających na nie sił. Zostało ono odkryte w 1660 r. przez Roberta Hooka i 
-stanowi bazę dzisiejszej teorii Eleastyczności\cite{elast}.
+stanowi bazę dzisiejszej teorii Elastyczności\cite{elast}.
 
 Prawo Hooka jest prawem mechaniki określającym, że odkształcenie ciała jest
-proporcjonalne do sił dziających na ciało,
+proporcjonalne do sił działających na ciało,
 Zakładając najprostszy wariant statycznego rozciągania pręta, prawo to definiuje
 się:
 $$\delta = \frac{F}{S} = E\frac{\Delta l}{l}$$
@@ -183,17 +206,17 @@ sprężyn, w którym to siły działająca na model próbują sprowadzić go do 
 równowagi w którym naprężenia zgodne z w/w prawem nie występują.
 
 \subsection{Moduł Younga}
-Moduł Younga jest wpółczynnikiem proporcjonalności liniowej określającym
-sprężystość meteriałów. Określa on chrakterystyczną dla danego materiału
+Moduł Younga jest współczynnikiem proporcjonalności liniowej określającym
+sprężystość materiałów. Określa on charakterystyczną dla danego materiału
 zależność względnego między względnym odkształceniem liniowym $\varepsilon$, a
 naprężeniem $\delta$.
 
 Tak jak w fizyce, moduł Younga w symulacji komputerowej ma określać fizyczne
-właściowści materiałów. Analizując literaturę przedmiotu nie znajdujemy jednak 
+właściwości materiałów. Analizując literaturę przedmiotu nie znajdujemy jednak 
 bezpośrednich odwołań do tej wielkości fizycznej. Zamiast tego, większość modeli wprowadza
 własne bezwymiarowe wielkości mające na celu symulowanie podobnego spektrum
-zachowań. I tak model punktów mas i spężyn wprowadza swój współczynnik
-sprężystości, który jest współczynnikiem proporcjonalności między względym
+zachowań. I tak model punktów mas i sprężyn wprowadza swój współczynnik
+sprężystości, który jest współczynnikiem proporcjonalności między względnym
 odkształceniem liniowym a działającą siłą. Modele z kategorii dynamiki
 pozycyjnej, modelują właściwości materiałów poprzez wprowadzenia parametru
 'stiffness' określającego temp zbieżności danej deformacji ciała do jego
@@ -343,3 +366,76 @@ Następnie dokonuje się omawianych w poprzednich podrozdziałach obliczeń sił
 \end{figure}
 
 \subsection{Metody bazujące na pozycji}
+Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
+ciał miękkich. Pierwsze propozycje takiego podejścia przedstawione zostało w
+roku 2001 r.\cite{jak}, natomiast uogólniona wersja będąca bazą kolejnych
+iteracji modelu, została oficjalnie opublikowana w 2006 r.\cite{pbdyn}. Metody te
+szybko stały się popularne w obszarze grafiki komputerowej i jest dzisiaj
+implementowana w profesjonalnych silnikach fizycznych takich jak PhysiX czy
+Bullet.
+
+Model przedstawiony w tej pracy jest fizycznym modelem Lagrange'a. Termin
+bazujący na pozycji oznacza, że w odróżnieniu od symulacji bazujących na siłach, to pozycje
+wszystkich punktów materialnych symulowanego ciała podlegają w symulacji pewnym
+regułom. Zastosowania reguł, czy jak to będzie zwane później ograniczeń, na
+punkty modelu skutkuje poprawą stabilności symulacji oraz ułatwia jej
+implementację. Do najważniejszych zalet modeli bazujących na pozycji należą:
+\begin{itemize}
+	\item bezpośrednia kontrola nad całkowaniem równań ruchu, pozwala rozwiązań
+	problemy z niestabilnością model.
+	\item punkty materialne mogą być bezpośrednio manipulowane, bez użycia sił.
+	\item model ograniczeń bazujących na pozycji może być wykorzystany do
+	symulowania szerokiego zakresu zdarzeń fizycznych.
+	\item system rozwiązujący ograniczenia w modelu jest łatwy w implementacji.
+\end{itemize}
+
+\subsubsection{Definicja}
+Model zakłada, że każdy obiekt deformowalny jest przedstawiony jako zbiór $N$
+punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ ograniczeń
+zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek modelu posiada
+następujące atrybuty:
+
+\begin{tabular}{|r|l|}
+\hline
+$x_i$ & pozycja w $R^3$ \\
+\hline
+$v_i$ & prędkość \\
+\hline
+$m_i$ & masa\\
+\hline
+\end{tabular}
+
+Natomiast j-te ograniczenie posiada następujące atrybuty:
+
+\begin{tabular}{|r|l|}
+\hline
+$n_j$ & liczność ograniczenia \\
+\hline
+$C_j$ & funkcja $R^{3n_j} -> R$\\
+\hline
+${i_1, ..., i_{n_j}}, i_k \in [1,..N]$ & zbiór indeksów\\
+\hline
+$k_j \in [0.. 1]$ & sztywność\\
+\hline
+typ & równość lub nierówność\\
+\hline
+\end{tabular}
+
+Dane j-te ograniczenie typu równości jest spełnione wtedy gdy $C_j(x_{i_1},...,
+		x_{i_{n_j}}) = 0$, natomiast typu nierówności wtedy gdy $C_j(x_{i_1},...,
+		x_{i_{n_j}}) > 0$. Parametr $k_j$ definiuje siłę ograniczenia w
+		przedziale od $0...1$, gdzie 0 oznacza ograniczenie, które nie powoduje
+		przemieszczenia symulowanych wierzchołków, natomiast 1 oznacza, że
+		wierzchołki muszę tak zostać przesunięte aby spełnić ograniczenie w
+		danym kroku symulacji.
+\paragraph{Algorytm}
+Mając dany zbiór ${X_N, C_M, \Delta t}$ każda iteracja symulacji przebiega
+następująco:
+
+
+\subsubsection{Ograniczenia}
+\paragraph{Dystans między punktami}
+\paragraph{Zachowanie objętości}
+\paragraph{Kolizje}
+\subsubsection{Rozwiązywanie układu ograniczeń}
+
