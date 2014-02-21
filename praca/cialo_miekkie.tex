@@ -10,12 +10,6 @@ zbieżnych do obserwowanych doświadczalnie, natomiast te używane w grafice
 komputerowej będą stawiały za cel stworzenie przyjemnego dla oka efektu
 wizualnego oraz stabilność i responsywność symulacji.
 
-Mnogość zastosowań symulacji ciał miękkich sprawiła, że tematyką tą
-zainteresowali są badacze z różnych dziedzin. W efekcie tego obszar modelowania ciał
-deformowalnych nabrał prawdziwie interdyscyplinarnego charakteru i łączy dzisiaj w sobie
-taki obszary naukowe jak dynamika newtonowska, mechanika ośrodków ciągłych,
-metody numeryczne, geometria różniczkowa czy metody apksymacji\cite{pbdo}.
-
 Rozdział ten ma za zadanie łagodnie wprowadzić czytelnika w bogaty świat metod symulacji
 ciał miękkich. Zostaną podjęte próby usystematyzowania dotychczasowych
 osiągnięć w tej dziedzinie oraz pokazania w jakich obszarach stosowane są
@@ -23,35 +17,41 @@ dane typy symulacji. Rozdział ten nie ma jednak na celu dokładnego omówienia 
 działania wszystkich metod, lecz tylko pobieżnym omówieniu aktualnego stanu
 wiedzy a skupienie się na wybranych metodach.
 
-Przedstawione zostaną też podstawowe prawa fizyki ciał deformowalnych. Ze
-względu jednak na obszerność tego zagadnienia, sięgającego aż czasów Galileusza
-\cite{elast}, niemożliwe będzie jego wyczerpujące opisanie. Zamiast tego nacisk
+Przedstawione zostaną też prawa fizyki mające zastosowanie w opisie ciał deformowalnych. Ze
+względu jednak na obszerność tego zagadnienia, 
+niemożliwe będzie jego wyczerpujące opisanie. Zamiast tego nacisk
 zostanie położony na omówienie praw fizycznych mających zastosowanie w
 konkretnych modelach opisanych w dalszej części tego rozdziału.
 
-Pokaźna ilość stworzonych metod symulacji ciał miękkich sprawia, że w pracy tej mogą zostać
-opisane tylko wybrane przykłady. Spośród dostępnych metod zostały wybrane 
-te najbardziej rozpowszechnione i cechujące się się
+Spośród wielu dostępnych technik symulacji ciała miękkiego zostały wybrane
+dwie najbardziej rozpowszechnione i cechujące się się
 relatywnie prostą implementacją. Pomimo prostoty przedstawione w pracy
-metody są podstawą współczesnych technik symulacji ciał
+metody są podstawą współczesnych symulacji ciał
 miękkich i stanowią bazę do tworzenia bardziej skomplikowanych i 
 wyspecjalizowanych modeli używanych w zaawansowanych silnikach graficznych
 takich jak PhysiX czy Bullet.
 
 \section{Kategoryzacja symulacji}
 
-Dostępne publikacje naukowe w dziedzinie symulacji ciał miękkich często mają charakter
+Publikacje naukowe w dziedzinie symulacji ciał miękkich często mają charakter
 iteracyjny. Po stworzeniu nowej metody powstają jej modyfikacje, inni badacze
-dokonują zmian w metodzie, poprawiają jej parametry, upraszczają czy też
-uszczegóławiają lub nawet łączą ją z innymi znanymi technikami. W 
-dynamicznym obszarze zastosowań takim jak grafika komputerowa skutkuje to
-szybkim zastępowaniem starych metod nowymi i niejednokrotnie całkowitym
-porzuceniem prac nad starymi metodami. 
+poprawiają jej parametry, upraszczają,
+uszczegóławiają lub nawet łączą ją z innymi znanymi technikami tworząc w ten
+sposób nowe rozwiązania. W połączeniu z bardzo dynamicznym rozwojem technologii 
+skutkuje to wypieraniem pewnych metod przez inne lepiej dopasowanych do obecnego
+stanu wiedzy i elektroniki.
+
+Mnogość zastosowań symulacji ciał miękkich sprawiła też, że tematyką tą
+zainteresowali są badacze z różnych dziedzin. W efekcie tego obszar modelowania ciał
+deformowalnych nabrał prawdziwie interdyscyplinarnego charakteru i łączy dzisiaj w sobie
+taki obszary naukowe jak dynamika newtonowska, mechanika ośrodków ciągłych,
+metody numeryczne, geometria różniczkowa czy metody aproksymacji\cite{pbdo}.
 
 Bardzo zmienne środowisko, relatywnie młody wiek dziedziny czy jej 
 interdyscyplinarny charakter sprawia
-że obszar komputerowej symulacji ciał deformowalnych relatywnie trudno opisać.
-Jak dotąd znane są autorowi pracy tylko 2 próby usystematyzowania stanu wiedzy w
+że obszar wiedzy na temat komputerowej symulacji ciał deformowalnych relatywnie
+trudno opisać.
+Jak dotąd znane są autorowi pracy tylko 2 próby usystematyzowania osiągnięć
 tej dziedzinie podjęte w przeciągu ostatnich 30 lat, odnoszące się wyłącznie do
 ciał miękkich.
 
@@ -67,8 +67,8 @@ krzywe parametryczne oparte na krzywych Breziera czy deformacje brył sztywnych 
 Metody niefizyczne znajdują zastosowanie w obszarach, w których właściwości
 fizyczne czy też symulacja w czasie obiektu nie ma zastosowania. Przykładem
 takiego obszaru jest projektowanie komputerowe w programach typu CAD, gdzie
-projektowany obiekt musi być przekształcony ze stanu A w B zachowując określone
-właściwości. Nie dziwi zatem fakt, że wszystkie metody niefizyczne są także 
+projektowany obiekt musi być przekształcony ze stanu A do B zachowując określone
+własności. Nie dziwi zatem fakt, że wszystkie metody niefizyczne są także 
 nazywane technikami geometrycznymi.
 
 Do kategorii modeli fizycznych Sarah i Gibson zliczyli następujące klasy modeli:
@@ -199,9 +199,9 @@ ciał deformowalnych:
 \item odkształcenie względne $\varepsilon = \frac{\Delta l}{l}$
 \end{itemize}
  
-W symulacji komputerowej prawo Hooka wykorzystywane jest najczęsciej do określenia sił
+W symulacji komputerowej prawo Hooka wykorzystywane jest najczęściej do określenia sił
 działających na model w wyniku jego deformacji. Takie podejście wykorzystywane
-jest np. w omawianym w kolejnym podrozdziale tej pracy, modelu punktów mas i
+jest np. w omawianym w kolejnym podrozdziale tej pracy, modelu systemu
 sprężyn, w którym to siły działająca na model próbują sprowadzić go do stanu
 równowagi w którym naprężenia zgodne z w/w prawem nie występują.
 
@@ -215,20 +215,22 @@ Tak jak w fizyce, moduł Younga w symulacji komputerowej ma określać fizyczne
 właściwości materiałów. Analizując literaturę przedmiotu nie znajdujemy jednak 
 bezpośrednich odwołań do tej wielkości fizycznej. Zamiast tego, większość modeli wprowadza
 własne bezwymiarowe wielkości mające na celu symulowanie podobnego spektrum
-zachowań. I tak model punktów mas i sprężyn wprowadza swój współczynnik
+zachowań. I tak model systemu sprężyn wprowadza swój współczynnik
 sprężystości, który jest współczynnikiem proporcjonalności między względnym
 odkształceniem liniowym a działającą siłą. Modele z kategorii dynamiki
 pozycyjnej, modelują właściwości materiałów poprzez wprowadzenia parametru
-'stiffness' określającego temp zbieżności danej deformacji ciała do jego
+sztywności (stiffness) określającego tempo zbieżności danej deformacji ciała do jego
 spoczynkowego stanu.
 
 \section{Wybrane modele ciał miękkich}
 
 
-\subsection{System Punktów Masy i Sprężyn}
+\subsection{System Sprężyn}
 
 Jedną z najczęściej wykorzystywanych technik służących do symulacji ciała miękkiego jest operowanie na siłach działających na ciało. Schemat takiej symulacji można uogólnić, zakładając, że ciało miękkie przedstawiamy jako zbiór punktów na które mogą działać siły. W każdym kroku akumulowane są siły zewnętrzne i wewnętrzne działające na każdy punkt modelu. Jako siły wewnętrzne najczęściej wymieniane są siły sprężystości czy ciśnienia, jako siły zewnętrzne siła grawitacji czy siły powstałe w następstwie kolizji z innymi obiektami. Następnie w każdym kroku symulacji z sił wyliczane jest przyspieszenie punktów zgodnie z drugim prawem dynamiki Newtona. W kolejnych krokach, wykorzystując dowolną metodę, całkujemy otrzymany układ sił obliczając prędkości, a następnie nowe pozycje punktów modelu.\cite{pbdyn}
-W tym rozdziale zostanie scharakteryzowana jedna z najpowszechniejszych metod symulacji ciała miękkiego. Jak wskazuje nazwa modelu system składa się z systemu  dwóch podstawowych elementów:
+
+W tym rozdziale zostanie scharakteryzowana zostanie jedna z najpowszechniejszych
+fizycznych metod Lagrange'a. Jak wskazuje nazwa modelu składa się on z systemu dwóch podstawowych elementów:
 \begin{itemize}
 \item  Punkt Masy - punkt w przestrzeni posiadające masę, na który mogą oddziaływać siły.
 \item Sprężyna - rozciągnięta pomiędzy dwoma punktami masy, posiada swoją normalną długość, nie posiada masy.
@@ -241,7 +243,6 @@ W tym rozdziale zostanie scharakteryzowana jedna z najpowszechniejszych metod sy
 \input{images/massspringsys}
 \caption{Zbiór punktów masy z przykładowym układem połączeń}
 \end{figure}
-Model ten posiada podstawy fizyczne, ponieważ siły generowane przez rozciągniętą sprężynę są zgodne z prawem Hook'a. W swoim podstawowym wariancie siły działające na jeden punkt masy układu są zdefiniowane jako:
 
 %
 % Równanie ogólne siły działającej na punkt masy
@@ -312,7 +313,12 @@ f^{d}_i = k_d (\frac{v_{ij}^\intercal x_{ij}}{x_{ij}^\intercal x_{ij}}) x_{ij}
 ,gdzie $v_{ij} = v_i - v_j$. Powyższe równanie wyznacza siłę tłumienia modelu równą iloczynowi współczynnika tłumienia i projekcji różnicy prędkości dwóch punktów masy na wektor ich różnicy położeń. Definicja nakłada zatem ograniczenie, iż siła tłumienia może działać tylko w tym samymi kierunku co wektor różnicy położeń.
 
 \subsubsection{Zachowanie objętości}
-Kolejnym, istotnym aspektem symulacji ciała miękkiego jest zachowanie jego objętości. System punktów mas i sprężyn nie symuluje obiektów posiadających objętość, także często może się zdarzyć, że układ znajdzie się w stanie stabilnym, jednak różnym od wyjściowego. W praktyce często oznacza to, że w wyniku działania dużych sił elementy modelu zostaną obrócone lub zapadną się w swoją własną strukturę. Przykład tego jest przedstawiony na rysunku \ref{stany} sześcian 
+Kolejnym, istotnym aspektem symulacji ciała miękkiego jest zachowanie jego
+objętości. System punktów mas i sprężyn nie symuluje obiektów posiadających
+objętość, także często może się zdarzyć, że układ znajdzie się w stanie
+stabilnym, jednak różnym od wyjściowego. W praktyce często oznacza to, że w
+wyniku działania dużych sił elementy modelu zostaną obrócone lub zapadną się w
+swoją własną strukturę. Przykład tego jest przedstawiony na rysunku \ref{stany}.
 
 \begin{figure}[ht]
 \centering
@@ -395,6 +401,7 @@ punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ ograniczeń
 zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek modelu posiada
 następujące atrybuty:
 
+\centering
 \begin{tabular}{|r|l|}
 \hline
 $x_i$ & pozycja w $R^3$ \\
@@ -405,8 +412,10 @@ $m_i$ & masa\\
 \hline
 \end{tabular}
 
+\raggedright
 Natomiast j-te ograniczenie posiada następujące atrybuty:
 
+\centering
 \begin{tabular}{|r|l|}
 \hline
 $n_j$ & liczność ograniczenia \\
@@ -421,6 +430,7 @@ typ & równość lub nierówność\\
 \hline
 \end{tabular}
 
+\raggedright
 Dane j-te ograniczenie typu równości jest spełnione wtedy gdy $C_j(x_{i_1},...,
 		x_{i_{n_j}}) = 0$, natomiast typu nierówności wtedy gdy $C_j(x_{i_1},...,
 		x_{i_{n_j}}) > 0$. Parametr $k_j$ definiuje siłę ograniczenia w
@@ -428,14 +438,139 @@ Dane j-te ograniczenie typu równości jest spełnione wtedy gdy $C_j(x_{i_1},..
 		przemieszczenia symulowanych wierzchołków, natomiast 1 oznacza, że
 		wierzchołki muszę tak zostać przesunięte aby spełnić ograniczenie w
 		danym kroku symulacji.
-\paragraph{Algorytm}
-Mając dany zbiór ${X_N, C_M, \Delta t}$ każda iteracja symulacji przebiega
-następująco:
 
+\paragraph{Algorytm}
+
+Mając dany model $\{X_N, C_M, \Delta t \} $ każda iteracja symulacji przebiega
+następująco:
+\begin{enumerate}
+\item \textbf{for} $i = 1:N$
+\item \hspace{1cm} $x_i = x_i^0, v_i = v_i^0, w_i = 1/m_i$
+\item \textbf{end for}
+\item \textbf{loop}
+\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $v_i \leftarrow v_i + \Delta t w_i f_{ext}(x_i)$
+\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $p_i \leftarrow x_i + \Delta t v_i$
+\item \hspace{1cm} \textbf{for} $j = 1:liczbaIteracjiSolwera$
+\item \hspace{2cm} $rozwiazOgrnaiczenia(C_1,..., C_{M}, p_1, ..., p_N)$
+\item \hspace{1cm} \textbf{end for}
+\item \hspace{1cm} \textbf{for} $i = 1:N$
+\item \hspace{2cm} $v_i = (p_i - x_i) / \Delta t$
+\item \hspace{2cm} $x_i = p_i$
+\item \hspace{1cm}\textbf{end for}
+\item \textbf{end loop}
+
+\end{enumerate}
+
+W zaproponowanej przez Mullera symulacji bazującej na pozycji, najważniejszą częścią stanowią są
+fragmenty (6), (8), (11-12). W linii (6) następuje całkowanie równania ruchu za 
+pomocą metody Eulera, ustala się w ten sposób predykcję pozycji $p_i$. Następnie
+wszystkie predykcje są rzutowane w taki sposób aby spełniły wszystkie
+ograniczenia $C_M$. Ostatnim krokiem symulacji jest ponowne wyliczenie
+prędkości oraz przypisane zrzutowanej predykcji do pozycji wierzchołka.
+
+Model pozwala do włączenia do symulacji sił zewnętrznych $f_{ext}$, którymi na ogół jest
+grawitacja. W celu symulowania innych sił działających na symulowane ciało
+operuje się bezpośrednio na prędkościach wierzchołków, które mogę zostać
+zmienione pomiędzy liczeniem predykcji, (między 5-6) oraz po
+zaktualizowaniu pozycji oraz prędkości (13-14).
+
+Przedstawiona symulacja jest bezwarunkowo stabilna ponieważ nowe pozycje nie są
+ekstrapolacją wynikająca z kroku całkowania (6), tyko pewnym rzutowaniem na
+stabilne konfiguracje systemu wyliczane podczas iteracji solwera (8). Jedynym
+źródłem niestabilności jest sam solwer, którym używa metody Newtona do wyliczenia
+stabilnej konfiguracji. Jednakże niestabilność nie zależy od przyjętego kroku
+całkowania systemu $\Delta t$, tylko od samej funkcji danego
+ograniczenia\cite{pbdyn}.
+
+\subsubsection{Rozwiązywanie układu ograniczeń}
+Problem rozwiązania ograniczeń $C_1, .., C_M$ dla projekcji układu $p_1, ..., p_N$
+jest podobny do problemu rozwiązania układu równań. Do rozwiązania takiego
+układu możemy się posłużyć metodami Jacobiego oraz Gaussa-Seidela. 
+
+Niestety, w modelu funkcje ograniczeń mają też postać nierówności, a
+najczęściej spotykane funkcje ograniczeń mają charakter nieliniowy. Powoduje to,
+że niemożliwe jest użycie klasycznych wersji w/w metod. Muller proponuje
+zmodyfikowana metodę, w której to każde równanie (lub nierówność) będzie rozwiązane
+oddzielnie metodą Newtona, a następnie otrzymane rozwiązanie zostanie użyte w
+następnej iteracji solwera. Zmodyfikowana metoda Gaussa-Seidela dodatkowo używa
+poprzedniego rozwiązania równania do estymacji następnego co skutkuje szybszą
+zbieżnością metody\cite{pbdyn}.
 
 \subsubsection{Ograniczenia}
+Ograniczenia mają za cel rzutowanie wyliczonej projekcji $p_i$ do przestrzeni
+rozwiązań możliwych. Spełnienie warunków ograniczenia oznacza w 
+modelu pozycyjnym przemieszczenie danej projekcji wierzchołka o wektor $\Delta p$.
+Jeżeli dane ograniczenie modeluje zależności między punktami należącymi do
+obiektu to przesunięcie $\Delta p$ powinno posiadać
+pewne pożądane z punktu widzenia symulacji własności: zachowanie pędu oraz
+momentu pędu.
+
+Pęd jest zachowane jeśli przesunięcie $\Delta p$ posiada własność:
+$$ \sum_i m_i \Delta p_i = 0$$
+Natomiast moment pędu jest zachowany gdy:
+$$ \sum_i r_i \times m_i p_i = 0$$, gdzie $r_i$ jest odległością $p_i$ do punktu
+rotacji.
+
+Nie spełnienie w/w równości skutkuje powstawaniem dodatkowych sił, które
+oddziałują na punkty obiektu tak jak siły zewnętrzne. Jeżeli dane ograniczenie
+nie dotyczy zewnętrznych właściwości (np. odległości od punktu kolizji),
+własności te nie muszą być zachowane\cite{pbdyn}.
+
+Muller proponuje następujący wzór na obliczanie przemieszczenie $\Delta d$ dla
+ograniczeń, których funkcja jest niezależna od translacji i obrotu punktów.
+Jeżeli $p = [ p_1^T, p_2^T, ..., p_K^T]^T$, gdzie $K$ jest licznością
+ograniczenia $C$:
+\begin{equation} \label{con_eq}
+\Delta p = - \frac{C(p)}{\mid \nabla_p C(p) \mid^2}\nabla_p C(p)
+\end{equation}
+,gdzie $\nabla_p C(p)$ jest gradientem dla ograniczenia $C$ w $p$
+
+Przemieszczenie dla poszczególnego wierzchołka wyraża się wzorem:
+$$\Delta p_i = -s w_i\nabla_{p_i}C(p_1, ..., p_K)$$ 
+$$ s = \frac{C(p_1, ..., p_K)}{\sum_j w_j\mid \nabla_{p_j}C(p_1, ..., p_K)
+	\mid^2}$$
+
+,gdzie $w_i = 1 / m_i$
+
+Przedstawiona powyżej projekcja jest przeprowadzana w kroku (8) głównego
+algorytmu dla każdego ograniczenia $C_i$ o typie równość.
+W przypadku gdy typ ograniczenia jest nierównością przemieszczenie $p$
+o wyliczony wektor wektorów $\Delta p$ następuje tylko wtedy gdy $C(p_1, ...,
+		p_k) < 0$.
+
+Ostatnią istotną własnością każdego ograniczenia jest jej parametr sztywności
+$k$, Informuje on jaka część korekty $\Delta p$ może być dodana do obecnych
+predykcji $p$. Ma to na celu uniemożliwienie powrotu układu do jego konfiguracji
+stabilnej, tzn. takiej gdzie spełnione są wszystkie ograniczenia, w jednej
+iteracji głównego algorytmu. Jeżeli $k$ równałoby się jedności dla wszystkich
+ograniczeń modelu, to symulowany obiekt byłby zbyt usztywniony co nie byłoby
+pożądanym efektem.
+
 \paragraph{Dystans między punktami}
-\paragraph{Zachowanie objętości}
-\paragraph{Kolizje}
-\subsubsection{Rozwiązywanie układu ograniczeń}
+Ograniczenie w dystansie między punktami pozwala symulować efekt rozciągania
+ciała. W swojej podstawowej wersji funkcja ograniczenia dana jest wzorem:
+$$ C(p_1, p_2) = \mid p_1 - p_2 \mid - d$$, gdzie $d$ jest wartością
+spoczynkową, czyli odległością między punktami $p_1$ i $p_2$ w stabilnej
+konfiguracji.
+
+Funkcja ograniczenia spełnia warunku dla wzoru \ref{con_eq}, czyli jest
+niezależna od translacji i obrotu punktów. Dlatego też wzór na korektę dla
+ograniczenia dystansu jest równy:
+
+$$\Delta p_1 = - \frac{w_1}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
+	p_2}{\mid p_1 - p_2 \mid}$$
+
+$$\Delta p_2 = + \frac{w_2}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
+	p_2}{\mid p_1 - p_2 \mid}$$
+
+Aby otrzymać ostateczną korektę projekcji $p_1$ i $p_2$ w danym kroku solwera,
+	trzeba otrzymane wartości $\Delta _1$ oraz $\Delta p_2$ pomnożyć przez
+	sztywność ograniczenia $k$, gdzie $k \in (0, 1)$. 
+	$$ p_i = p_i + k * \Delta p_i$$
+	Powyższe równanie ma jedną niepożądaną własność, ostatecznie przesunięcie
+	$\Delta p_i$ jest zależne od ilości iteracji solwera układu ograniczeń
+	. Efekt po $n_s$ iteracjach na ostateczne przesunięcie $\Delta p$
+	będzie nieliniowy i równy $\Delta p_0 k^n$. Aby pozbyć się zależności od
+	liczby iteracji, parametr $k$ musi być funkcją $n_s$, czyli:
+	$$ k' = 1 - (1 - k)^{1/n_s}$$
 
