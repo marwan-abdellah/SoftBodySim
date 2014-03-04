@@ -150,9 +150,9 @@ zastosowaniach nawet do 150 razy \cite{prez}.
 \section{GPU}
 
 Procesory graficzne od początku swojej historii projektowane były z myślą o
-wykonywaniu współbieżnym dużej ilości zadań. Zadania te obejmowały z początku
-tylko akcelerację grafiki 3D, jednak wraz ze wzrostem mocy obliczeniowej
-pojawiło się zapotrzebowanie do wykorzystania ich w bardziej
+wykonywaniu współbieżnym dużej ilości obliczeń na liczbach zmiennoprzecikowych. 
+Wykorzystywane były głównie do akceleracji grafiki 3D, jednak wraz ze wzrostem mocy obliczeniowej
+pojawiło się zapotrzebowanie na wykorzystanie ich w bardziej
 generycznych rozwiązaniach. Aby to było możliwe procesory graficzne musiały
 zostać zmodyfikowane, aby sprostać postawionym przed nimi nowym zadaniom.
 Pierwsza modyfikacja obejmowała wprowadzenie standardu IEEE 754-2008 dla
@@ -161,26 +161,42 @@ zmiennoprzecinkowych podwójnej precyzji w serii Nvidii Tesla, zwiększenie ilo�
 pamięci podręcznej L1 dla multiprocesorów czy większa liczba instrukcji
 możliwych do wykonania w każdym wątku.
 
-Procesor strumieniowy mimo swojej coraz to bardziej zaawansowanej budowy nadal
+Procesor graficzny mimo swojej coraz to bardziej zaawansowanej budowy nadal
 znacznie różni się od architektury CPU. Przedstawia to rysunek \ref{cpugpu}, na
 którym widać podział użytych tranzystorów pomiędzy logiczne moduły procesora.
 Wynika z niego, że procesory graficzne nadal posiadają mniejszą ilość pamięci cache oraz
 mniej skomplikowane sterowanie przepływem instrukcji niż ich Intelowi
-odpowiednicy. Taka różnica sprawia że procesory te są wyspecjalizowane w rozwiązywaniu
+odpowiednicy. Wyróżniają się natomiast ilością jednostek arytmetyczno-logicznych
+(ALU) dostępnych na układzie scalonym. Taka różnica sprawia że procesory te są wyspecjalizowane w rozwiązywaniu
 problemów wymagających dużej intensywności obliczeniowej mierzonej jako stosunek
 operacji arytmetycznych do operacji na pamięci. Przykładem takich zdań jest nie tylko 
 renderowanie grafiki 3D, lecz również przetwarzanie obrazów, kodowanie i
-dekodowanie video, stereo wizja, rozpoznawanie wzorców, przetwarzanie sygnałów,
-inżynieria finansowa czy bioinżynieria.
+dekodowanie video, stereo wizja, rozpoznawanie wzorców czy przetwarzanie sygnałów.
 
-Typowy procesor graficzny, zwany też multiprocesorem, zaprojektowany jest do
-wykonywanie dużej ilości wątków jednocześnie. Jest to możliwe dzięki
-zastosowaniu architektury SIMT (Single Intruction Multiple Thread). W
-odróżnieniu od SIMD, SIMT udostępnia programiście interfejs do tworzenia i programowania
-współbieżnych wątków w których ścieżki egzekucji mogą się różnić. SIMD natomiast
-oferuje tylko 
+Współbieżne wykonywanie dużej ilości zadań jednoczśnie możliwe jest dzięki 
+zastosowaniu architektury SIMT (Single Intruction Multiple Thread), która
+przypomina architekturę SIMD używaną w współczesnych procesorach. W
+odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
+opracji na wektorze danych, SIMT umożliwia też równoległe wykonywanie wielu
+niezależnych wątków. Zaletą wykonywania wątków, zamiast elementarnych operacji jest większa
+elastyczność w sterowaniu przepływem programu. Każdy wykonywany wątek
+na procesorze graficznym posiada własny licznik programu, dzięki czemu możliwe
+jest wykonanie innych zestawów instrukcji procesora (tzw. branching).
+
+Budowa multprocesora
+
+Każda produkowana dzisiaj prze NVidie karta graficzna jest zbudowana z
+multiprocesorów. 
+
+Multiprocesor - z czego się składa 
+
+Warpy - podstawowa jednostka
+
+Branching - konsekwencje
 
 Device capabilities
+
+
 
 \begin{figure}[ht]\label{cpugpu}
 \centering
@@ -207,6 +223,13 @@ przez NVIDIA kompilatora nvcc. Kod Źródłowy dla nvcc jest najczęściej pisan
 ANSI C ze specyficznymi dla CUDA rozszerzeniami. Możliwe jest jednak pisanie
 kodu urządzenia w innych językach programowania takich jak C++, Fortran, Java
 czy Python. 
+
+Kernele
+
+Block - Watek
+
+Pamiec
+
 
 \begin{figure}[ht]
 \centering
