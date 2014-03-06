@@ -147,6 +147,95 @@ jak GeForce z serii 680 posiadającą aż 1536 rdzeni zdolnych do równoległego
 wykonywania kodu. Efektem tego może być wzrost wydajności aplikacji w niektórych
 zastosowaniach nawet do 150 razy \cite{prez}.
 
+\section{Interfejs programisty}
+
+\subsection{Kompilacja}
+
+Zaproponowany we frameworku CUDA model programowania zakłada możliwość
+skompilowania kodu w dwóch różnych kontekstach - hosta (CPU) oraz device'a
+(procerora graficznego). Jako kontekst rozumiany jest specyficzny dla danej architektury zestaw
+instrukcji dla procesora. Fragmenty programu, których zrównoleglenie jest
+niemożliwe są tworzone w kontekście hosta, natomiast te wymagające intensywnych,
+wielowątkowych obliczeń w kontekście device'a. Współistnienie dwóch
+kontekstów w jednym programie wykonywalnym możliwe jest dzięki zestawie
+bibliotek i narzędzi dostarczanych wraz z pakietem CUDA.
+
+Biblioteki dostarczane wraz z pakietem CUDA umożliwiają pisanie kodu CUDA w różnych
+językach programowani. Najczęściej stosowanych jest język C, istnieją jednak bibioteki
+dla języków C++, Java, Python, C czy Fortran. Dodatkowo kod CUDA może być też pisany w specjalnie stworzonym do tego celu
+niskopoziomowym języku PTX (Pararell Thread Execution), przypominającym asembler.
+Cechą wyróżniającą kod PTX od skompilowanego kodu binarnego, jest możliwość jego
+kompilacji w locie z użyciem tzw. Just-In-Time komilatora dostarczanego przez
+NVIDIĘ wraz ze sterownikami do karty graficznej. Pozwala to na uruchamianie kodu
+CUDA nie tylko na różnych wersjach sterowników karty graficznej, lecz również na
+innych procesorach graficznych firmy NVIDIA bez potrzeby rekompilacji.
+
+Niezależnie od wybranego języka programowania ostatecznie kod programu CUDA musi
+zostać skompilowany do postaci binarnej i uruchomoiony w kontekście hosta. W
+czasie działania programu wykonywanego sekwencyjnie na CPU, następuje zmiana
+kontekstów i uruchomienie skompilowanych fragmentów kodu na procesorze graficznym.
+Przełączanie konteksów jest transparentne dla programisty,
+ponieważ ogranicza się tylko do wywołania odpowiednich funkcji z bibliotek
+dostarczanych wraz z pakietem CUDA.
+
+CUDA to nie tylko zestaw bibliotek, lecz również zestaw rozszerzeń do języków
+programowania. Istnienie rozszerzeń dla języka C, jest
+podyktowane faktem, że składania C jest językiem wystarczającym do opisu kodu
+wykonywanego w kontekście device'a oraz potrzebą jednoznacznego rozróżnienia
+fragmentów programu każdego z kontekstów w kodzie źródłowym. W rezultacie
+można więc pisać kod CUDA używając ANSI C oraz specjalnych rozszerzeń
+przypominających znane wszystkim atrybuty kompilatora. W ten sposób NVIDIA
+zaoszczędziła programistom CUDA potrzeby nauki nowego języka programowania, czy
+pisania kodu w niskopoziomowym języku PTX. Użycie specjalistycznych atrybutów
+kompilacji dla języka C, możliwe jest tylko dzięku wykorzystaniu dostarczaniego wraz z
+frameworkiem CUDA kompilatora 'nvcc'.
+
+NVIDIA Cuda Compiler (nvcc) nie jest kompilatorem w pełnym tego słowa
+znaczeniu, a bardziej zestawem narzędzi służących do kompilacji. W przypadku gdy
+kod źródłowy będzie kompilowany tylko w kontekście hosta, właściwą kompilacją
+zajmują się kompilatory dedykowane dla danego systemu operacyjnego. I tak dla
+Windows, nvcc wykorzystuje kompilator Visual Studio, natomiast dla systemu Linux
+użyty jest m.in. GCC. Zadaniem NVCC jest ukrycie przed programistą etapów kompilacji
+specyficznego kodu CUDA dla konkretnej implementacji, którą jest procesor
+graficzny. Schemat kompilacji wraz z poszczególnymi etapami przedstawia rysunek
+
+NVCC używane jest zazwyczaj do kompilacji kodu źródłowego do postaci binarnej.
+Możliwe jest natomiast użycie kompilatora NVIDIA do kompilacji kodu napisanego w
+C do postaci PTX, kompilacji do postaci cubin - kodu binarnego CUDA
+przeznaczonego dla określonego procesora graficznego. NVCC wspiera też inne
+standardowe etapy kompilacji takie jak preprocessing, generowanie plików
+objektów czy linkowanie.
+
+Pliki źródłowe programu napisanego w języku C zawierające rozszerzenia CUDA, przyjęło się zwyczajowo
+sufiksować końcówką ".cu", aby odróżnić je od konwencjonalnych programów C
+oznaczanuch sufiksem ".c". Oba rodzaje rozszerzeń są akceptowane przez NVCC, co
+pozwala na wykorzstanie do kompilacji projektów CUDA tylko jednego kompilatora.
+W celu ułatwienia procesu budowania NVCC wspiera większość tradycyjnych
+parametrów kompilatora znanych z GCC czy Visual Studio Compiler. 
+
+\subsection{Kernele}
+Z punktu widzenia programisty wykonanie fragmentu kodu w kontekście device'a
+ogranicza się do wywołania specyficznego rodzaju funkcji, nazywanego w nomenklaturze CUDA kernelami.
+Kernele we języku C oznaczone są specjalnym atrybutem kompilatora device oraz mają
+specyficzną konwencję wywołania przedstawioną na XXX.
+
+Funkcja kernela wykonywana jest na procesorze graficzny jednocześnie przez N
+różnych wątków. W celu określenia dokładnej ilości wątków dla których ma się ona
+wykonać oraz sposobu indeksowania poszczególnych wątków dwa dodatkowe parametry
+są przekazane do funkcji między znacznikami <<< oraz >>>. Pierwszy parametr
+oznacza 
+
+\subsection{Hierarchia pamieci}
+
+
+
+\begin{figure}[ht]
+\centering
+\input{images/cuda}
+\caption{CUDA}
+\label{cuda-model}
+\end{figure}
+
 \section{GPU}
 
 Procesory graficzne od początku swojej historii projektowane były z myślą o
@@ -183,10 +272,19 @@ elastyczność w sterowaniu przepływem programu. Każdy wykonywany wątek
 na procesorze graficznym posiada własny licznik programu, dzięki czemu możliwe
 jest wykonanie innych zestawów instrukcji procesora (tzw. branching).
 
-Budowa multprocesora
+\begin{figure}[ht]\label{cpugpu}
+\centering
+\includegraphics{images/gpu-devotes-more-transistors-to-data-processing.png}
+\caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
+\end{figure}
 
-Każda produkowana dzisiaj prze NVidie karta graficzna jest zbudowana z
-multiprocesorów. 
+\subsection{Architektura procesorów graficznych}
+
+W rozdziale tym omówiona zostanie architektura procesora graficznego
+w kontekście 
+Multiprocesor to według ogólnej definicji systemem, który zawiera więcej niż
+jeden procesor\cite{multi}. Każdy multiprocesor składa się z procesorów
+przeznaczonych do obliczeń, pamięci cache
 
 Multiprocesor - z czego się składa 
 
@@ -194,53 +292,11 @@ Warpy - podstawowa jednostka
 
 Branching - konsekwencje
 
-Device capabilities
-
-
-
-\begin{figure}[ht]\label{cpugpu}
-\centering
-\includegraphics{images/gpu-devotes-more-transistors-to-data-processing.png}
-\caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
-\end{figure}
-
-
-\section{Model programowania}
-
-Zaproponowany we frameworku CUDA model programowania zakłada możliwość
-skompilowania kodu w dwóch różnych kontekstach - na CPU (host) oraz GPU
-(device). Jako kontekst rozumiany jest specyficzny dla danej architektury zestaw
-instrukcji dla procesora. Fragmenty programu, których zrównoleglenie jest
-niemożliwe są tworzone w kontekście hosta, natomiast te wymagające intensywnych,
-wielowątkowych obliczeń w kontekście device'a. Współistnienie dwóch
-kontekstów w jednym programie wykonywalnym możliwe jest dzięki zestawie
-bibliotek i narzędzi dostarczanych wraz z pakietem CUDA. Z punktu widzenia
-programisty zmiana kontekstu ogranicza się do wykonania specyficznego
-rodzaju funkcji, nazywanego w nomenklaturze CUDA kernelami.
-
-Skompilowanie kodu dla karty graficznej możliwe jest za pomocą dostarczanego
-przez NVIDIA kompilatora nvcc. Kod Źródłowy dla nvcc jest najczęściej pisany w
-ANSI C ze specyficznymi dla CUDA rozszerzeniami. Możliwe jest jednak pisanie
-kodu urządzenia w innych językach programowania takich jak C++, Fortran, Java
-czy Python. 
-
-Kernele
-
-Block - Watek
-
-Pamiec
-
-
-\begin{figure}[ht]
-\centering
-\input{images/cuda}
-\caption{CUDA}
-\label{cuda-model}
-\end{figure}
-
-
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=0.8]{images/gpu.png}
 \caption{Źródło: CUDA Manual}
 \end{figure}
+
+\subsection{Device capabilities}
+sasda
