@@ -40,6 +40,11 @@ const uvec2 links[] = {
     uvec2(1,5),
     uvec2(2,6),
     uvec2(3,7),
+
+    uvec2(0,6),
+    uvec2(1,7),
+    uvec2(2,4),
+    uvec2(3,5),
 };
 
 const uvec2 faces[] = {
