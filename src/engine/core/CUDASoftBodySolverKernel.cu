@@ -221,7 +221,6 @@ __global__ void integrateMotionKernel(
 	}
 }
 
-
 __global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -230,5 +229,20 @@ __global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *posit
 		glm::uint index = mapping[idx];
 		glm::vec3 vertex = positions[index];
 		vboPtr[idx] = vertex;
+	}
+}
+
+__global__ void calculateLinkStiffness(
+		unsigned int solver_steps,
+		LinkConstraint *links,
+		glm::uint_t max_idx)
+{
+	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (link_idx < max_idx) {
+		LinkConstraint lnk = links[link_idx];
+
+		links[link_idx].stiffness = 1.0f - powf(1.0 - lnk.stiffness, 1.0f /
+				solver_steps);
 	}
 }

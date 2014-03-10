@@ -11,34 +11,35 @@ using namespace glm;
 
 #include "CUDASoftBodySolverKernel.h"
 
+#define DEFAULT_SOLVER_STEPS 10
+
 struct CUDASoftBodySolver::CollisionBodyInfoDescriptor {
-	vec3 *positions;
+	vec3              *positions;
 	CollisionBodyInfo collInfo;
 };
 
 struct CUDASoftBodySolver::SoftBodyDescriptor {
-	SoftBody *body;
+	SoftBody             *body;
 	cudaGraphicsResource *graphics;
-
-	vec3 *positions;
-	vec3 *projections;
-	vec3 *velocities;
-	vec3 *forces;
-	float_t *massesInv;
-	unsigned int nParticles;
-
-	LinkConstraint *links;
-	unsigned int nLinks;
-
-	uint_t *mapping;  /* Mapping between particles positions and vertexes is VertexBuffer.
-						 Used for updating Vertex poistions */
-	unsigned int nMapping;
+	vec3                 *positions;
+	vec3                 *projections;
+	vec3                 *velocities;
+	vec3                 *forces;
+	float_t              *massesInv;
+	unsigned int         nParticles;
+	LinkConstraint       *links;
+	unsigned int         nLinks;
+	uint_t               *mapping;  /* Mapping between particles positions and vertexes 
+									   is VertexBuffer.
+									 Used for updating Vertex poistions */
+	unsigned int         nMapping;
 };
 
 struct CUDASoftBodySolver::SolverPrivate {
-	int			 deviceId;
+	int             deviceId;
 	cudaDeviceProp  devProp;
 	cudaStream_t	stream;
+	int             solverSteps;
 
 	descriptorArray_t descriptors;
 	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
@@ -279,6 +280,13 @@ bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
 	return true;
 }
 
+void CUDASoftBodySolver::cudaUpdateConstraintStiffness(SoftBodyDescriptor
+		*descr, int solverSteps)
+{
+	int blocks = descr->nLinks / 128;
+	calculateLinkStiffness<<<blocks, 128>>>(solverSteps, descr->links, descr->nLinks);
+}
+
 void CUDASoftBodySolver::cudaAppendCollsionDescriptors(collisionBodyDescriptorArray_t *arr, SoftBodyDescriptor *descr)
 {
 	FOREACH(it, &descr->body->mCollisionBodies) {
@@ -298,6 +306,8 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 
 	cuda = new SolverPrivate;
 	memset(cuda, 0x0, sizeof(SolverPrivate));
+
+	cuda->solverSteps = DEFAULT_SOLVER_STEPS;
 
 	if (!cudaInitializeDevice(cuda)) {
 		ERR("CUDA Device initialization failed!");
@@ -331,6 +341,8 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 			cudaContextShutdown(cuda);
 			return NULL;
 		}
+		cudaUpdateConstraintStiffness(&descr, cuda->solverSteps);
+
 		cuda->descriptors.push_back(descr);
 		cudaAppendCollsionDescriptors(&cuda->collBodyDescrHost, &descr);
 		cuda->resArray.push_back(descr.graphics);
@@ -438,7 +450,7 @@ void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 		threadsPerBlock = MAX_LINKS;
 		blockCount = it->nLinks / threadsPerBlock + 1;
 
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < cuda->solverSteps; i++)
 			solveConstraints<<<blockCount, threadsPerBlock>>>(1, it->links,
 					it->projections, it->massesInv, it->nLinks);
 

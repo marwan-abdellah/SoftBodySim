@@ -34,3 +34,7 @@ __global__ void solveConstraints(
 		glm::float_t *masses_inv,
 		glm::uint_t max_idx);
 
+__global__ void calculateLinkStiffness(
+		unsigned int solver_steps,
+		LinkConstraint *links,
+		glm::uint_t max_idx);

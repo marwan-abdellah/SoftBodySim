@@ -56,6 +56,7 @@ class CUDASoftBodySolver {
 		void cudaDeallocateDeviceBuffers(SoftBodyDescriptor*);
 		bool cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor*);
 		bool cudaRegisterVertexBuffers(SoftBodyDescriptor *descr);
+		void cudaUpdateConstraintStiffness(SoftBodyDescriptor *descr, int solverSteps);
 
 		void updateVertexBuffers(SolverPrivate *cuda, bool async);
 		void projectSystem(SolverPrivate *cuda, float_t dt);
