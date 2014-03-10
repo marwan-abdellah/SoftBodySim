@@ -19,9 +19,16 @@ __global__ void integrateMotionKernel(
 		glm::uint max_idx
 		);
 
+__global__ void cudaUpdateVertexBufferKernel(
+		glm::vec3 *vboPtr,
+		glm::vec3 *positions,
+		glm::uint *mapping,
+		glm::uint max_idx);
 
-__global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx);
-
-__global__ void solveConstraints(unsigned int steps, glm::float_t k, LinkConstraint *links, glm::vec3 *projections,
-		glm::float_t *masses_inv, glm::uint_t max_idx);
+__global__ void solveConstraints(
+		unsigned int steps,
+		LinkConstraint *links,
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
+		glm::uint_t max_idx);
 

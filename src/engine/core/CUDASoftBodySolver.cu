@@ -388,7 +388,7 @@ void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 {
 	cudaError_t err;
 	vec3 *ptr;
-	int threadCount = 128;
+	int threadsPerBlock = 128;
 
 	// map all in one call
 	err = cudaGraphicsMapResources(cuda->resArray.size(), &cuda->resArray[0]);
@@ -405,8 +405,8 @@ void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 			ERR("Invalid size!");
 			return;
 		}
-		int blockCount = it->nParticles / threadCount + 1;
-		cudaUpdateVertexBufferKernel<<<blockCount, threadCount >>>(ptr,
+		int blockCount = it->nParticles / threadsPerBlock + 1;
+		cudaUpdateVertexBufferKernel<<<blockCount, threadsPerBlock >>>(ptr,
 				it->positions, it->mapping, it->nParticles);
 	}
 
@@ -427,23 +427,23 @@ void CUDASoftBodySolver::updateVertexBuffers(void)
 
 void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 {
-	int threadCount = 128;
+	int threadsPerBlock = 128;
 	FOREACH(it, &cuda->descriptors) {
-		int blockCount = it->nParticles / threadCount + 1;
+		int blockCount = it->nParticles / threadsPerBlock + 1;
 
-		cudaUpdateVelocitiesKernel<<<blockCount, threadCount>>>(mGravity, it->positions,
+		cudaUpdateVelocitiesKernel<<<blockCount, threadsPerBlock>>>(mGravity, it->positions,
 				it->projections, it->velocities, it->forces, it->massesInv, dt,
 				it->nParticles);
 
-		blockCount = it->nLinks / threadCount + 1;
-		solveConstraints<<<blockCount, threadCount>>>(1, 0.1, it->links,
-				it->projections, it->massesInv, it->nLinks);
+		blockCount = it->nLinks / threadsPerBlock + 1;
 
-		blockCount = it->nParticles / threadCount + 1;
-		integrateMotionKernel<<<blockCount, threadCount>>>(dt, it->positions, it->projections,
+		for (int i = 0; i < 10; i++)
+			solveConstraints<<<blockCount, threadsPerBlock>>>(1, it->links,
+					it->projections, it->massesInv, it->nLinks);
+
+		blockCount = it->nParticles / threadsPerBlock + 1;
+		integrateMotionKernel<<<blockCount, threadsPerBlock>>>(dt, it->positions, it->projections,
 				it->velocities, it->nParticles);
-
-		ERR("%s", cudaGetErrorString(cudaGetLastError()));
 	}
 }
 

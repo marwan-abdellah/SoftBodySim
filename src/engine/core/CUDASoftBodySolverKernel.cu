@@ -44,7 +44,6 @@ __global__ void cudaUpdateVelocitiesKernel(
   */
 __global__ void solveConstraints(
 		unsigned int max_steps,
-		glm::float_t k,
 		LinkConstraint *links,
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
@@ -55,7 +54,9 @@ __global__ void solveConstraints(
 	if (link_idx < max_idx) {
 		for (int i = 0; i < max_steps; i++) {
 			LinkConstraint lnk = links[link_idx];
-			glm::float_t restLen2 = lnk.restLength2;
+
+			glm::float_t restLen = lnk.restLength;
+			glm::float_t k = lnk.stiffness;
 
 			glm::vec3 pos0 = projections[lnk.index[0]];
 			glm::vec3 pos1 = projections[lnk.index[1]];
@@ -63,12 +64,16 @@ __global__ void solveConstraints(
 			glm::float_t mass_inv0 = masses_inv[lnk.index[0]];
 			glm::float_t mass_inv1 = masses_inv[lnk.index[1]];
 
-			glm::vec3 dist = pos0 - pos1;
-			glm::float_t len2 = glm::dot(dist, dist);
-			glm::float_t c = k * (restLen2 - len2);
+			glm::vec3 diff = pos0 - pos1;
+			glm::float_t len = length(diff);
 
-			pos0 = pos0 - c *  dist;
-			pos1 = pos1 + c *  dist;
+			float_t m0 = mass_inv0 / (mass_inv0 + mass_inv1) * (len - restLen) /
+				len;
+			float_t m1 = mass_inv1 / (mass_inv0 + mass_inv1) * (len - restLen) /
+				len;
+
+			pos0 -= k * m0 * diff;
+			pos1 += k * m1 * diff;
 
 			projections[lnk.index[0]] = pos0;
 			projections[lnk.index[1]] = pos1;
@@ -180,7 +185,7 @@ __global__ void integrateMotionKernel(
 		glm::vec3 pos = positions[idx];
 		glm::vec3 proj = projections[idx];
 
-		velocities[idx] = (proj - pos) * dt;
+		velocities[idx] = (proj - pos) / dt;
 		positions[idx] = proj;
 	}
 }
