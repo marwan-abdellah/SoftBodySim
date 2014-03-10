@@ -164,24 +164,24 @@ on_fail:
 
 void CUDASoftBodySolver::cudaDeallocateDeviceBuffers(SoftBodyDescriptor *descr)
 {
-	if (descr->positions) cudaFree(descr->positions);
+	if (descr->positions)   cudaFree(descr->positions);
 	if (descr->projections) cudaFree(descr->projections);
-	if (descr->velocities) cudaFree(descr->velocities);
-	if (descr->forces) cudaFree(descr->forces);
-	if (descr->massesInv) cudaFree(descr->massesInv);
-	if (descr->links) cudaFree(descr->links);
-	if (descr->mapping) cudaFree(descr->mapping);
+	if (descr->velocities)  cudaFree(descr->velocities);
+	if (descr->forces)      cudaFree(descr->forces);
+	if (descr->massesInv)   cudaFree(descr->massesInv);
+	if (descr->links)       cudaFree(descr->links);
+	if (descr->mapping)     cudaFree(descr->mapping);
 }
 
 CUDASoftBodySolver::SoftBodyDescriptor CUDASoftBodySolver::cudaCreateDescriptor(SoftBody *body)
 {
 	SoftBodyDescriptor descr;
 
-	descr.body = body;
-	descr.graphics = NULL;
+	descr.body       = body;
+	descr.graphics   = NULL;
 	descr.nParticles = body->mParticles.size();
-	descr.nLinks = body->mLinks.size();
-	descr.nMapping = body->mMeshVertexParticleMapping.size();
+	descr.nLinks     = body->mLinks.size();
+	descr.nMapping   = body->mMeshVertexParticleMapping.size();
 
 	return descr;
 }
@@ -193,9 +193,9 @@ bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr)
 	SoftBody *body = descr->body;
 
 	unsigned int bytesPart = descr->nParticles * sizeof(vec3);
-	unsigned int bytesLnk = descr->nLinks * sizeof(LinkConstraint);
+	unsigned int bytesLnk  = descr->nLinks * sizeof(LinkConstraint);
 	unsigned int bytesMass = descr->nParticles * sizeof(float_t);
-	unsigned int bytesMap = descr->nParticles * sizeof(uint_t);
+	unsigned int bytesMap  = descr->nParticles * sizeof(uint_t);
 
 	err = cudaMemcpy(descr->positions, &(body->mParticles[0]), bytesPart, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) return false;
