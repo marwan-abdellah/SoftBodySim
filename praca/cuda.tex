@@ -294,8 +294,7 @@ Grupę bloków zleconą do wykonania dla CUDA nazywa się siatką
 (grid). Ogólny schemat siatki przedstawia rysunek \ref{grid}. Podobnie jak
 wątki, bloki mogą być indeksowane jedno lub dwuwymiarowo. Ich indeksy są dostępne
 w funkcji kernela pod specjalną zmienną $blockIdx$, natomiast rozmiar samego
-bloku możliwy jest do pobrania poprzez zmienną $blockDim$. Siatki w odróżnieniu od bloku nie
-wpierają indeksowania 3-wymiarowego.
+bloku możliwy jest do pobrania poprzez zmienną $blockDim$.
 
 \begin{figure}[ht]
 \centering
@@ -395,39 +394,6 @@ mają dostęp podsumowuje rysunek \ref{hier}.
 
 \section{GPU}
 
-Procesory graficzne od początku swojej historii projektowane były z myślą o
-wykonywaniu współbieżnym dużej ilości obliczeń na liczbach zmiennoprzecinkowych. 
-Wykorzystywane były głównie do akceleracji grafiki 3D, jednak wraz ze wzrostem mocy obliczeniowej
-pojawiło się zapotrzebowanie na wykorzystanie ich w bardziej
-generycznych rozwiązaniach. Aby to było możliwe procesory graficzne musiały
-zostać zmodyfikowane, aby sprostać postawionym przed nimi nowym zadaniom.
-Pierwsza modyfikacja obejmowała wprowadzenie standardu IEEE 754-2008 dla
-operacji zmiennoprzecinkowych. Następne to wprowadzenie liczb
-zmiennoprzecinkowych podwójnej precyzji w serii Nvidii Tesla, zwiększenie ilości
-pamięci podręcznej L1 dla multiprocesorów czy większa liczba instrukcji
-możliwych do wykonania w każdym wątku.
-
-Procesor graficzny mimo swojej coraz to bardziej zaawansowanej budowy nadal
-znacznie różni się od architektury CPU. Przedstawia to rysunek \ref{cpugpu}, na
-którym widać podział użytych tranzystorów pomiędzy logiczne moduły procesora.
-Wynika z niego, że procesory graficzne nadal posiadają mniejszą ilość pamięci cache oraz
-mniej skomplikowane sterowanie przepływem instrukcji niż ich Intelowi
-odpowiednicy. Wyróżniają się natomiast ilością jednostek arytmetyczno-logicznych
-(ALU) dostępnych na układzie scalonym. Taka różnica sprawia że procesory te są wyspecjalizowane w rozwiązywaniu
-problemów wymagających dużej intensywności obliczeniowej mierzonej jako stosunek
-operacji arytmetycznych do operacji na pamięci. Przykładem takich zdań jest nie tylko 
-renderowanie grafiki 3D, lecz również przetwarzanie obrazów, kodowanie i
-dekodowanie video, stereo wizja, rozpoznawanie wzorców czy przetwarzanie sygnałów.
-
-Współbieżne wykonywanie dużej ilości zadań jednoczśnie możliwe jest dzięki 
-zastosowaniu architektury SIMT (Single Intruction Multiple Thread), która
-przypomina architekturę SIMD używaną w współczesnych procesorach. W
-odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
-opracji na wektorze danych, SIMT umożliwia też równoległe wykonywanie wielu
-niezależnych wątków. Zaletą wykonywania wątków, zamiast elementarnych operacji jest większa
-elastyczność w sterowaniu przepływem programu. Każdy wykonywany wątek
-na procesorze graficznym posiada własny licznik programu, dzięki czemu możliwe
-jest wykonanie innych zestawów instrukcji procesora (tzw. branching).
 
 \begin{figure}[ht]
 \centering
@@ -438,34 +404,66 @@ jest wykonanie innych zestawów instrukcji procesora (tzw. branching).
 
 \subsection{Architektura procesorów graficznych}
 
+Procesor graficzny mimo swojej coraz to bardziej zaawansowanej budowy nadal
+znacząco różni się od architektury CPU. Przedstawia to rysunek \ref{cpugpu}, na
+którym pokazany jest podział użytych tranzystorów pomiędzy logiczne moduły procesora.
+Wynika z niego, że procesory graficzne posiadają mniejszą ilość pamięci cache oraz
+mniej skomplikowane sterowanie przepływem instrukcji niż procesory firmy
+Intel czy AMD. Wyróżniają się natomiast większą ilością jednostek arytmetyczno-logicznych
+(ALU) dostępnych na układzie scalonym. Sprawia to, że procesory te są wyspecjalizowane w rozwiązywaniu
+problemów wymagających dużej intensywności obliczeniowej mierzonej jako stosunek
+operacji arytmetycznych do operacji na pamięci.
+
+Współbieżne wykonywanie dużej ilości zadań możliwe jest dzięki implementacji
+w procesorach graficznych architektury SIMT (Single Intruction Multiple Thread), która
+przypomina architekturę SIMD używaną w współczesnych procesorach. W
+odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
+operacji na wektorze danych, SIMT umożliwia też równoległe wykonywanie wielu
+niezależnych wątków. Zaletą wykonywania wątków, zamiast elementarnych operacji jest większa
+elastyczność w sterowaniu przepływem programu. Każdy wykonywany wątek
+na procesorze graficznym posiada własny licznik programu, dzięki czemu możliwe
+jest wykonanie innych zestawów instrukcji procesora (tzw. branching).
+
+W modelu CUDA zakłada się, że wszystkie wątki w ramach jednego bloku wykonywane
+są równolegle. W rzeczywistości procesor graficzny potrafi współbieżnie wykonywać
+instrukcje jedynie dla podzbioru wątków zwanych w nomenklaturze CUDA - warpem. 
+Liczba wątków wchodzących w skład jednego warpa jest stała dla wszystkich stworzonych
+do dziś architektur procesorów graficznych NVIDIA i wynosi 32. Z punktu
+widzenia programisty fakt wykonywania tylko części wątków na raz może być
+całkowicie pominięty, jednak jest niezbędny w przypadku dokonywania
+optymalizacji na stworzonym kodzie CUDA\cite{kepler}.
+
+W czasie wykonywania programu CUDA, każdy blok zostaje wpierw podzielony na odpowiednią
+liczbę warpów, a następnie zlecony do wykonania przez jednostkę procesora zwaną warp
+schedulerem. Wątki wchodzące w skład warpu mogą występować w jednym z dwóch stanów
+- aktywnym, w którym to następna instrukcja wątku zostanie wykonana w następnym
+cyklu zegara, oraz nieaktywnym - którego egzekucja zostaje w następnym cyklu
+zawieszona. Warp scheduler jest w stanie wykonać serię instrukcji
+procesora dla wszystkich wątków jednocześnie, a w przypadku gdy dla wątku
+nastąpił conditional branching, oznaczany jest on jako nieaktywny i
+zawiesza się wykonanie instrukcji programu dla jego danych. Jeżeli program CUDA
+zawiera wyrażenie \texttt{if X {...} else {...}}, oznacza to, że najpierw zostaną
+wykonane na 32 wątkach instrukcje programu pierwszej części wyrażenia,
+		 z oznaczeniem jako nieaktywne tych wątków dla których wartość X jest
+		 nieprawdziwa. Następnie druga strona wyrażenia zostanie wykonana na 32
+		 wątkach w analogiczny sposób. Ważną implikacją działania warp
+		 schedulera jest fakt, że dopiero po wykonaniu obu stron rozgałęzienia
+		 programu następne instrukcje mogą być wykonane.
+
+
+Procesor graficzny, zwany też multiprocesorem może być logicznie
+podzielony na następujące elementy:
+\begin{itemize}
+\item rdzenie CUDA
+\item 
+\end{itemize}
+
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=0.4]{images/memory-hierarchy2.png}
 \caption{Hierarchia pamięci w architekturze Kepler: \cite{kepler}}
 \label{hierarchiaKepler}
 \end{figure}
-
-
-W rozdziale tym omówiona zostanie architektura procesora graficznego
-w kontekście 
-Multiprocesor to według ogólnej definicji systemem, który zawiera więcej niż
-jeden procesor\cite{multi}. Każdy multiprocesor składa się z procesorów
-przeznaczonych do obliczeń, pamięci cache
-
-Multiprocesor - z czego się składa 
-
-Warpy - podstawowa jednostka
-
-Branching - konsekwencje
-
-W architekturze GPU jak w każdej zaawansowanej architekturze komputerowej
-występują pamięci różnych poziomów. Różnią się one między sobą szybkością oraz
-pojemnością. Zasadą jest, że pamięci szybsze są droższe, dlatego też występują w systemie
-w ograniczonej ilości. Pamięcią najtańszą w GPU jest tzw. pamięć globalna i w
-zależności od rodzaju karty graficznej jej ilość potrafi sięgać nawet do 4GB.
-Pamięci typu L2 są w GPU przeznaczony do 
-Oprócz pamięci globalnej identyfikuje się również pamięć cache L1 oraz rejestry
-procesora graficznego. 
 
 \begin{figure}[ht]
 \centering
