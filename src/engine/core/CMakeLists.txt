@@ -9,6 +9,7 @@ find_package(CUDA REQUIRED)
 
 list(APPEND CUDA_NVCC_FLAGS "-g")
 list(APPEND CUDA_NVCC_FLAGS "-G")
+list(APPEND CUDA_NVCC_FLAGS "-arch sm_30")
 
 include_directories(.)
 include(FindCUDA)

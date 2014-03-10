@@ -435,15 +435,18 @@ void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 				it->projections, it->velocities, it->forces, it->massesInv, dt,
 				it->nParticles);
 
+		threadsPerBlock = MAX_LINKS;
 		blockCount = it->nLinks / threadsPerBlock + 1;
 
 		for (int i = 0; i < 10; i++)
 			solveConstraints<<<blockCount, threadsPerBlock>>>(1, it->links,
 					it->projections, it->massesInv, it->nLinks);
 
+		threadsPerBlock = 128;
 		blockCount = it->nParticles / threadsPerBlock + 1;
 		integrateMotionKernel<<<blockCount, threadsPerBlock>>>(dt, it->positions, it->projections,
 				it->velocities, it->nParticles);
+//		ERR("Cuda err: %s", cudaGetErrorString(cudaGetLastError()));
 	}
 }
 

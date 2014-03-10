@@ -1,6 +1,8 @@
 #include "glm/glm.hpp"
 #include "SoftBody.h"
 
+#define MAX_LINKS 128
+
 __global__ void cudaUpdateVelocitiesKernel(
 	glm::vec3 gravity,
 	glm::vec3 *positions,

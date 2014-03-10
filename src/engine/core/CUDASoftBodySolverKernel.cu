@@ -4,6 +4,11 @@
 
 using namespace glm;
 
+__device__ uint_t hash(uint_t id)
+{
+	return 1193 * id;
+}
+
 __global__ void cudaUpdateVelocitiesKernel(
 		vec3 gravity,
 		vec3 *positions,
@@ -49,35 +54,61 @@ __global__ void solveConstraints(
 		glm::float_t *masses_inv,
 		glm::uint_t max_idx)
 {
+	__shared__ vec3   ACCUM[2 * MAX_LINKS];
+	__shared__ uint_t COUNTER[2 * MAX_LINKS];
+
 	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (link_idx < max_idx) {
-		for (int i = 0; i < max_steps; i++) {
-			LinkConstraint lnk = links[link_idx];
 
-			glm::float_t restLen = lnk.restLength;
-			glm::float_t k = lnk.stiffness;
+		LinkConstraint lnk = links[link_idx];
+		glm::vec3 pos0 = projections[lnk.index[0]];
+		glm::vec3 pos1 = projections[lnk.index[1]];
+		glm::float_t mass_inv0 = masses_inv[lnk.index[0]];
+		glm::float_t mass_inv1 = masses_inv[lnk.index[1]];
 
-			glm::vec3 pos0 = projections[lnk.index[0]];
-			glm::vec3 pos1 = projections[lnk.index[1]];
+		// assume that will be no colliosions; MAX_LINS = 2^x, X in N
+		uint_t id0 = hash(lnk.index[0]) & (2 * MAX_LINKS - 1);
+		uint_t id1 = hash(lnk.index[1]) & (2 * MAX_LINKS - 1);
 
-			glm::float_t mass_inv0 = masses_inv[lnk.index[0]];
-			glm::float_t mass_inv1 = masses_inv[lnk.index[1]];
+		ACCUM[id0] = pos0;
+		ACCUM[id1] = pos1;
+		COUNTER[id0] = 1;
+		COUNTER[id1] = 1;
 
-			glm::vec3 diff = pos0 - pos1;
-			glm::float_t len = length(diff);
+		__syncthreads();
 
-			float_t m0 = mass_inv0 / (mass_inv0 + mass_inv1) * (len - restLen) /
-				len;
-			float_t m1 = mass_inv1 / (mass_inv0 + mass_inv1) * (len - restLen) /
-				len;
+		glm::float_t restLen = lnk.restLength;
+		glm::float_t k = lnk.stiffness;
 
-			pos0 -= k * m0 * diff;
-			pos1 += k * m1 * diff;
+		glm::vec3 diff = pos0 - pos1;
+		glm::float_t len = length(diff);
 
-			projections[lnk.index[0]] = pos0;
-			projections[lnk.index[1]] = pos1;
-		}
+		float_t m0 = mass_inv0 / (mass_inv0 + mass_inv1) * (len - restLen) /
+			len;
+		float_t m1 = mass_inv1 / (mass_inv0 + mass_inv1) * (len - restLen) /
+			len;
+
+		pos0 -= k * m0 * diff;
+		pos1 += k * m1 * diff;
+
+		atomicAdd(&ACCUM[id0][0], pos0[0]);
+		atomicAdd(&ACCUM[id0][1], pos0[1]);
+		atomicAdd(&ACCUM[id0][2], pos0[2]);
+		atomicAdd(&ACCUM[id1][0], pos1[0]);
+		atomicAdd(&ACCUM[id1][1], pos1[1]);
+		atomicAdd(&ACCUM[id1][2], pos1[2]);
+
+		atomicInc(&COUNTER[id0], MAX_LINKS);
+		atomicInc(&COUNTER[id1], MAX_LINKS);
+
+		__syncthreads();
+
+		pos0 = ACCUM[id0] * (1.0f / (float_t)COUNTER[id0]);
+		pos1 = ACCUM[id1] * (1.0f / (float_t)COUNTER[id1]);
+
+		projections[lnk.index[0]] = pos0;
+		projections[lnk.index[1]] = pos1;
 	}
 }
 

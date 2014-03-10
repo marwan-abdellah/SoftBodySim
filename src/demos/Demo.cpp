@@ -104,7 +104,7 @@ Demo::Demo(int argc, char **argv) :
     FACE_ADD(facesA, faces, 30, 3);
     FACE_ADD(facesA, faces, 33, 3);
     
-    SoftBody *b = new SoftBody(0.1f, 0.99f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);
@@ -150,7 +150,7 @@ void Demo::onDisplay(void)
 
 	simTime += diff;
 
-//#define EN_DEBUG 0
+//#define EN_DEBUG
 #ifndef EN_DEBUG
 	while (simTime > ENGINE_TIME_STEP) {
 		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
