@@ -40,11 +40,11 @@ struct VolumeConstraint {
     glm::float_t        restLength;
 };
 
-struct CollisionConstraint {
-    glm::uint_t			vertId;
-	glm::vec3			collNormal;
-	glm::vec3			entryPoint;
+struct CollisionPointTriangleConstraint {
+	glm::uint_t pointIdx;
+	glm::uvec3  triangleIdxs;
 };
+
 
 typedef std::vector<glm::vec3>              vec3Array_t;
 typedef std::vector<glm::vec2>              vec2Array_t;

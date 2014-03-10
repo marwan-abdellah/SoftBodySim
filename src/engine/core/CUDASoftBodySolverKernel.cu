@@ -43,7 +43,6 @@ __global__ void cudaUpdateVelocitiesKernel(
 	}
 }
 
-
 /**
   step 4. solving links constraints.
   */
@@ -112,89 +111,48 @@ __global__ void solveConstraints(
 	}
 }
 
-//struct {
-//	enum Type {
-//		TRIANGLE,
-//	} type;
-//	union {
-//		struct {
-//			glm::uvec3 idx;
-//		} triangle;
-//	} data;
-//	bool fixed;
-//} CollisionBodyData;
-//
-///**
-//  step 5. solving collision constraints.
-//  */
-//__global__ void solveCollisions(
-//		glm::uvec2 *collisions,
-//		CollisionBody *collisions_bodies_data,
-//		glm::vec3 *projections,
-//		glm::vec3 *positions,
-//		glm::vec3 *velocities,
-//		glm::vec3 *masses_inv,
-//		glm::vec3 *forces,
-//		glm::uint max_idx
-//	)
-//{
-//	int coll_idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//	if (coll_idx < max_idx) {
-//		uvec2 *coll_data = collisions[coll_idx];
-//
-//		/**
-//		  * coll_data[0] keeps id of colliding particle
-//		  * coll_data[1] keeps id of colliding body
-//		  */
-//		glm::vec3 position = positions[coll_data[0]];
-//		glm::vec3 projection = positions[coll_data[0]];
-//		glm::float_t mass = masses_inv[coll_data[0]];
-//		glm::vec3 force = forces[coll_data[0]];
-//		glm::vec3 velocity = velocities[coll_data[0]];
-//
-//		CollisionBodyData body = collisions_bodies_data[coll_data[1]];
-//
-//		if (body.type == CollisionBody.TRIANGLE) {
-//			glm::vec3 tri0 = positions[body.data.triangle.idx[0]];
-//			glm::vec3 tri1 = positions[body.data.triangle.idx[1]];
-//			glm::vec3 tri2 = positions[body.data.triangle.idx[2]];
-//
-//			// for barycentric coord test
-//			glm::vec3 a = tri1 - tri0;
-//			glm::vec3 b = tri2 - tri0;
-//
-//			glm::vec3 norm = glm::cross(a, b);
-//			glm::vec3 diff = projection - position;
-//			glm::float_t k = dot(norm, diff);
-//			if (k < 0.0001f)
-//				return;
-//
-//			k = dot(norm, (tri1 - position)) / k;
-//			projection = position + k * diff;
-//
-//			// barycentric coord test
-//			glm::vec3 c = projection - tri0;
-//
-//			glm::float_t dot00 = dot(a, a);
-//			glm::float_t dot01 = dot(a, b);
-//			glm::float_t dot02 = dot(a, c);
-//			glm::float_t dot11 = dot(b, b);
-//			glm::float_t dot12 = dot(b, c);
-//
-//			glm::float_t den = 1 / (dot00 * dot11 - dot01 * dot01);
-//			glm::float_t u = (dot11 * dot02 - dot01 * dot12) * den;
-//			glm::float_t v = (dot00 * dot12 - dot01 * dot02) * den;
-//
-//			if (u < 0 || v < 0 || u + v >= 1)
-//				return;
-//		}
-//
-//		projections[coll_data[0]] = projection;
-//		velocities[coll_data[0]] = velocity;
-//		forces[coll_data[0]] = force;
-//	}
-//}
+
+/**
+  step 5. solving collision constraints.
+  */
+__global__ void solvePointTriangleCollisionsKernel(
+		CollisionPointTriangleConstraint2 *collisions_data,
+		uint_t max_idx
+	)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < max_idx) {
+		CollisionPointTriangleConstraint2 cd = collisions_data[idx];
+
+		vec3 position = cd.positions[cd.pointIdx];
+		vec3 projection = cd.projections[cd.pointIdx];
+
+		vec3 tri0 = cd.trianglePositions[cd.triangleIdxs[0]];
+		vec3 tri1 = cd.trianglePositions[cd.triangleIdxs[1]];
+		vec3 tri2 = cd.trianglePositions[cd.triangleIdxs[2]];
+
+		vec3 a = tri1 - tri0;
+		vec3 b = tri2 - tri0;
+
+		vec3 norm = cross(a, b);
+		vec3 diff = projection - position;
+		float_t k = dot(norm, diff);
+		if (k < 0.0001f)
+			return;
+
+		// calculate plane intersection point
+		k = dot(norm, (tri1 - position)) / k;
+		vec3 q = k * (position + diff);
+		
+		k = dot(norm, projection - q);
+		if (k > 0.01f)
+			return;
+
+		cd.projections[cd.pointIdx] = q;
+	}
+}
+
 //
 ///**
 //  */

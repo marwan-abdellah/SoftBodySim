@@ -21,6 +21,7 @@ struct CUDASoftBodySolver::CollisionBodyInfoDescriptor {
 struct CUDASoftBodySolver::SoftBodyDescriptor {
 	SoftBody             *body;
 	cudaGraphicsResource *graphics;
+
 	vec3                 *positions;
 	vec3                 *projections;
 	vec3                 *velocities;
@@ -41,11 +42,14 @@ struct CUDASoftBodySolver::SolverPrivate {
 	cudaStream_t	stream;
 	int             solverSteps;
 
-	descriptorArray_t descriptors;
+	descriptorArray_t             descriptors;
 	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
 
-	collisionBodyDescriptorArray_t collBodyDescrHost;
-	CollisionBodyInfoDescriptor *collBodyDescrDevice;
+	collisionBodyDescriptorArray_t  collBodyDescrHost;
+	CollisionBodyInfoDescriptor     *collBodyDescrDevice;
+
+	CollisionPointTriangleConstraint2  *collisions;
+	unsigned int                        nCollisions;
 };
 
 CUDASoftBodySolver::CUDASoftBodySolver(SimulationType type)

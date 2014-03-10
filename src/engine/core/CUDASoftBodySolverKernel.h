@@ -3,6 +3,15 @@
 
 #define MAX_LINKS 128
 
+struct CollisionPointTriangleConstraint2 {
+	glm::vec3   *positions;
+	glm::vec3   *projections;
+	glm::uint_t pointIdx;
+	glm::uvec3  triangleIdxs;
+	glm::vec3   *trianglePositions;
+	glm::vec3   *triangelProjections;
+};
+
 __global__ void cudaUpdateVelocitiesKernel(
 	glm::vec3 gravity,
 	glm::vec3 *positions,
@@ -37,4 +46,8 @@ __global__ void solveConstraints(
 __global__ void calculateLinkStiffness(
 		unsigned int solver_steps,
 		LinkConstraint *links,
+		glm::uint_t max_idx);
+
+__global__ void solvePointTriangleCollisionsKernel(
+		CollisionPointTriangleConstraint2 *collisions_data,
 		glm::uint_t max_idx);
