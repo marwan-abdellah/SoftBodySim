@@ -8,10 +8,15 @@
 
 typedef std::vector<SoftBody*>	 softbodyArray_t; 
 
+enum SimulationType {
+	SIM_TYPE_FORCE_BASED,
+	SIM_TYPE_POSITION_BASED
+};
+
 class CUDASoftBodySolver {
 	public:
 
-		CUDASoftBodySolver(void);
+		CUDASoftBodySolver(SimulationType type);
 		~CUDASoftBodySolver(void);
 
 		bool initialize(softbodyArray_t *bodies);
@@ -23,6 +28,8 @@ class CUDASoftBodySolver {
 		void updateVertexBuffersAsync(void);
 
 	private:
+		SimulationType mType;
+
 		struct SolverPrivate;
 		struct SoftBodyDescriptor;
 		struct CollisionBodyInfoDescriptor;

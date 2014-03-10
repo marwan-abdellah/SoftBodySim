@@ -47,11 +47,12 @@ struct CUDASoftBodySolver::SolverPrivate {
 	CollisionBodyInfoDescriptor *collBodyDescrDevice;
 };
 
-CUDASoftBodySolver::CUDASoftBodySolver(void)
+CUDASoftBodySolver::CUDASoftBodySolver(SimulationType type)
 	:
 		mCuda(0),
 		mInitialized(false),
-		mGravity(0, -10.0f, 0)
+		mGravity(0, -10.0f, 0),
+		mType(type)
 {
 }
 

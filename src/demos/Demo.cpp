@@ -80,7 +80,8 @@ private:
 
 Demo::Demo(int argc, char **argv) :
     GLUTApplication(argc, argv, "DemoApp", width, height),
-    mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0))
+    mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
+	mSolver(SIM_TYPE_FORCE_BASED)
 {
     initialize();
 
