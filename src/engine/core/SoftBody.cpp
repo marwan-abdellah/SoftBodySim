@@ -55,6 +55,7 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
 	mass /= 1.0;
 	FOREACH(it, &mMassInv)
 		*it = mass;
+	mMassInv[mMassInv.size() - 1] = 0.0f;
     mVelocities.resize(mParticles.size());
     mForces.resize(mParticles.size());
     mLinks.resize(links->size());
@@ -63,7 +64,7 @@ SoftBody::SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damp
         LinkConstraint lnk;
         lnk.index = links->at(i);
         lnk.restLength = length(mParticles[lnk.index[0]] - mParticles[lnk.index[1]]);
-		lnk.stiffness = 0.1;
+		lnk.stiffness = springness;
         mLinks[i] = lnk;
     }
     // FIXME add volume constraint

@@ -28,18 +28,18 @@ const vec3 particles[] = {
 };
 
 const uvec2 links[] = {
-    uvec2(0,5),
-    uvec2(5,1),
-    uvec2(1,0),
-    uvec2(0,3),
-    uvec2(3,7),
-    uvec2(7,0),
-    uvec2(2,6),
-    uvec2(3,7),
+    uvec2(0,1),
+    uvec2(1,2),
+    uvec2(2,3),
+    uvec2(3,0),
     uvec2(4,5),
     uvec2(5,6),
     uvec2(6,7),
     uvec2(7,4),
+    uvec2(0,4),
+    uvec2(1,5),
+    uvec2(2,6),
+    uvec2(3,7),
 };
 
 const uvec2 faces[] = {
@@ -81,7 +81,7 @@ private:
 Demo::Demo(int argc, char **argv) :
     GLUTApplication(argc, argv, "DemoApp", width, height),
     mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
-	mSolver(SIM_TYPE_FORCE_BASED)
+	mSolver(SIM_TYPE_POSITION_BASED)
 {
     initialize();
 
@@ -104,7 +104,7 @@ Demo::Demo(int argc, char **argv) :
     FACE_ADD(facesA, faces, 30, 3);
     FACE_ADD(facesA, faces, 33, 3);
     
-    SoftBody *b = new SoftBody(10.0f, 1.0f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    SoftBody *b = new SoftBody(0.1f, 0.99f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);
@@ -150,7 +150,8 @@ void Demo::onDisplay(void)
 
 	simTime += diff;
 
-#if 0
+//#define EN_DEBUG 0
+#ifndef EN_DEBUG
 	while (simTime > ENGINE_TIME_STEP) {
 		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
 		engine_iter++;
@@ -162,7 +163,7 @@ void Demo::onDisplay(void)
 
 	mSolver.updateVertexBuffers();
 
-#if 0
+#ifndef EN_DEBUG
 	if (tm - time > 1000) {
 		ERR("Display: %lf fps, engine: %f it/s", (double)frames * 1000 / (tm - time),
 				(double)engine_iter * 1000 / (tm - time));
