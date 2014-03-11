@@ -1,8 +1,8 @@
 #include <string>
 #include <vector>
 
-#ifndef _GLUT_APP__H
-#define _GLUT_APP__H
+#ifndef SB_GLUT_APP_H
+#define SB_GLUT_APP_H
 
 class GLUTApplication
 {

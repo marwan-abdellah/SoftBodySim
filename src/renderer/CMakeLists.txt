@@ -6,7 +6,7 @@ set (SRCS
 
 include_directories(.)
 include_directories(include)
-include_directories(${CMAKE_SOURCE_DIR}/src/engine/include/)
+include_directories(${CMAKE_SOURCE_DIR}/src/)
 
 find_library(OPENGL_LIBRARY GL)
 

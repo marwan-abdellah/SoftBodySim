@@ -1,26 +1,34 @@
-#ifndef __CUDA_SOLVER_H
-#define __CUDA_SOLVER_H
+#ifndef CUDA_SOLVER_H
+#define CUDA_SOLVER_H
 
 #include "SoftBody.h"
 #include "VertexBuffer.h"
 
-#include <map>
+#include <list>
 
-typedef std::vector<SoftBody*>	 softbodyArray_t; 
-
-enum SimulationType {
-	SIM_TYPE_FORCE_BASED,
-	SIM_TYPE_POSITION_BASED
-};
+typedef std::list<SoftBody*>	 softbodyList_t; 
 
 class CUDASoftBodySolver {
 	public:
 
-		CUDASoftBodySolver(SimulationType type);
+		CUDASoftBodySolver(void);
 		~CUDASoftBodySolver(void);
 
-		bool initialize(softbodyArray_t *bodies);
+		struct SoftBodyWorldParameters {
+			glm::vec3   gravity;
+			float_t     groundLevel;
+		};
+
+		bool initialize(void);
 		void shutdown(void);
+
+		void setWorldParameters(SoftBodyWorldParameters *params);
+
+		void addSoftBodies(softbodyList_t &bodies);
+		void removeBodies(softbodyList_t *bodies);
+
+		void addSoftBody(SoftBody *body);
+		void removeSoftBody(SoftBody *body);
 
 		void projectSystem(glm::float_t dt);
 
@@ -28,8 +36,6 @@ class CUDASoftBodySolver {
 		void updateVertexBuffersAsync(void);
 
 	private:
-		SimulationType mType;
-
 		struct SolverPrivate;
 		struct SoftBodyDescriptor;
 		struct CollisionBodyInfoDescriptor;
@@ -43,7 +49,7 @@ class CUDASoftBodySolver {
 		void solveLinks(glm::float_t dt);
 		void integrateSystem(glm::float_t dt);
 
-		SolverPrivate *cudaContextCreate(softbodyArray_t*);
+		SolverPrivate *cudaContextCreate(softbodyList_t*);
 		void cudaContextShutdown(SolverPrivate*);
 
 		bool cudaInitializeDevice(SolverPrivate*);
@@ -62,8 +68,9 @@ class CUDASoftBodySolver {
 		void projectSystem(SolverPrivate *cuda, float_t dt);
 
 		SolverPrivate   *mCuda;
+		softbodyList_t   mBodies;
 		bool			 mInitialized;
-		glm::vec3		 mGravity;
+		SoftBodyWorldParameters mWorldParams;
 };
 
 

@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "Shader.h"
-#include "SoftBody.h"
+#include "engine/SoftBody.h"
 
 #include <list>
 

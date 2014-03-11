@@ -164,7 +164,7 @@ void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
     vec3 color(255,1,1);
     const GLVertexBuffer *buff;
     const GLElementBuffer *ebuff;
-    const Mesh_t *mesh;
+    const Mesh *mesh;
 
     if (!obj || !camMat)
         return;
@@ -179,11 +179,11 @@ void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
 
     switch (mMethod) {
         case SB_RENDER_PARTICLES:
-            ebuff = static_cast<const GLElementBuffer*>(mesh->edges);
-        break;
+            ebuff = static_cast<const GLElementBuffer*>(obj->getEdgesBuffer());
+			break;
     case SB_RENDER_FACES:
             ebuff = static_cast<const GLElementBuffer*>(mesh->faces);
-        break;
+			break;
     }
     ebuff->draw();
     buff->unbind();

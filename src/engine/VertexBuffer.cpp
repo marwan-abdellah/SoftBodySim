@@ -128,3 +128,15 @@ GLElementBuffer::~GLElementBuffer(void)
 {
     glDeleteBuffers(1, &mBuffer);
 }
+
+GLElementBuffer::GLElementBuffer(index2Array_t &array)
+	:GLElementBuffer(array.size(), ElementBuffer::EDGES)
+{
+	setIndexes2(&array[0]);
+}
+
+GLElementBuffer::GLElementBuffer(index3Array_t &array)
+	:GLElementBuffer(array.size(), ElementBuffer::TRIANGLES)
+{
+	setIndexes3(&array[0]);
+}

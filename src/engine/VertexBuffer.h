@@ -1,7 +1,7 @@
-#ifndef __VERTEX_BUFFER_H
-#define __VERTEX_BUFFER_H
+#ifndef VERTEX_BUFFER_H
+#define VERTEX_BUFFER_H
 
-#include <glm/glm.hpp>
+#include "utils/geometry/Arrays.h"
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
@@ -79,11 +79,15 @@ protected:
 class GLElementBuffer : public ElementBuffer {
 public:
     GLElementBuffer(unsigned int size, ElementDataType d);
+	GLElementBuffer(index2Array_t &array);
+	GLElementBuffer(index3Array_t &array);
+
     ~GLElementBuffer(void);
     void draw(void) const;
+
+private:
     void setIndexes2(glm::uvec2 *idx);
     void setIndexes3(glm::uvec3 *idx);
-private:
     GLuint mBuffer;
 };
 

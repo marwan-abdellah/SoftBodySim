@@ -1,17 +1,17 @@
-#include "GLUTApplication.h"
-#include "Renderer.h"
-#include "SoftBody.h"
-#include "CUDASoftBodySolver.h"
+#include "common.h"
+#include "utils/glut/GLUTApplication.h"
+#include "renderer/Renderer.h"
+#include "renderer/Camera.h"
+#include "engine/SoftBody.h"
+#include "engine/CUDASoftBodySolver.h"
+
 #include <iostream>
 #include <glm/glm.hpp>
-#include "Camera.h"
-#include "common.h"
 
 using namespace std;
 using namespace glm;
 
 #define SIZE(x) (sizeof(x)/sizeof(x[0]))
-
 
 const int width = 800;
 const int height = 600;
@@ -74,7 +74,7 @@ public:
     void onDisplay(void);
 private:
     SoftBodyRenderer    renderer;
-    softbodyArray_t     mSoftBodies;
+    softbodyList_t     mSoftBodies;
     int mMouseLastX;
     int mMouseLastY;
     bool mMousePressed;
@@ -86,7 +86,7 @@ private:
 Demo::Demo(int argc, char **argv) :
     GLUTApplication(argc, argv, "DemoApp", width, height),
     mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
-	mSolver(SIM_TYPE_POSITION_BASED)
+	mSolver()
 {
     initialize();
 
@@ -115,7 +115,8 @@ Demo::Demo(int argc, char **argv) :
     renderer.initialize(width, height);
     renderer.setRenderMethod(SB_RENDER_PARTICLES);
 
-    mSolver.initialize(&mSoftBodies);
+	mSolver.addSoftBodies(mSoftBodies);
+    mSolver.initialize();
 
     int id1 = addMenu("Main");
     addMenuEntry(id1, "Hello1");
@@ -155,7 +156,7 @@ void Demo::onDisplay(void)
 
 	simTime += diff;
 
-//#define EN_DEBUG
+#define EN_DEBUG
 #ifndef EN_DEBUG
 	while (simTime > ENGINE_TIME_STEP) {
 		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
@@ -165,7 +166,6 @@ void Demo::onDisplay(void)
 #endif
 
 	mEnginUpdateTime = tm;
-
 	mSolver.updateVertexBuffers();
 
 #ifndef EN_DEBUG

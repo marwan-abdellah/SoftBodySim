@@ -13,11 +13,6 @@ using namespace glm;
 
 #define DEFAULT_SOLVER_STEPS 10
 
-struct CUDASoftBodySolver::CollisionBodyInfoDescriptor {
-	vec3              *positions;
-	CollisionBodyInfo collInfo;
-};
-
 struct CUDASoftBodySolver::SoftBodyDescriptor {
 	SoftBody             *body;
 	cudaGraphicsResource *graphics;
@@ -37,28 +32,26 @@ struct CUDASoftBodySolver::SoftBodyDescriptor {
 };
 
 struct CUDASoftBodySolver::SolverPrivate {
-	int             deviceId;
-	cudaDeviceProp  devProp;
-	cudaStream_t	stream;
-	int             solverSteps;
+	int                                deviceId;
+	cudaDeviceProp                     devProp;
+	cudaStream_t	                   stream;
+	int                                solverSteps;
 
-	descriptorArray_t             descriptors;
-	vector<cudaGraphicsResource*> resArray; /* helper array to map all resources in one call */
-
-	collisionBodyDescriptorArray_t  collBodyDescrHost;
-	CollisionBodyInfoDescriptor     *collBodyDescrDevice;
+	descriptorArray_t                  descriptors;
+	vector<cudaGraphicsResource*>      resArray; /* helper array to map all resources 
+												  in one call */
 
 	CollisionPointTriangleConstraint2  *collisions;
-	unsigned int                        nCollisions;
+	unsigned int                       nCollisions;
 };
 
-CUDASoftBodySolver::CUDASoftBodySolver(SimulationType type)
+CUDASoftBodySolver::CUDASoftBodySolver(void)
 	:
 		mCuda(0),
-		mInitialized(false),
-		mGravity(0, -10.0f, 0),
-		mType(type)
+		mInitialized(false)
 {
+	mWorldParams.gravity = vec3(0, -10.0f, 0);
+	mWorldParams.groundLevel = -2.0f;
 }
 
 CUDASoftBodySolver::~CUDASoftBodySolver(void)
@@ -88,12 +81,6 @@ bool CUDASoftBodySolver::cudaInitializeDevice(SolverPrivate *cuda)
 	if (err != cudaSuccess) return false;
 
 	DBG("Choosen CUDA Device: %s", cuda->devProp.name);
-	DBG("Multiprocessor count: %d", cuda->devProp.multiProcessorCount);
-	DBG("Compute capability: %d.%d", cuda->devProp.major, cuda->devProp.minor);
-	DBG("Total global mem: %d", cuda->devProp.totalGlobalMem);
-	DBG("Shared mem per block: %d", cuda->devProp.sharedMemPerBlock);
-	DBG("Warp size: %d", cuda->devProp.warpSize);
-	DBG("Concurrent kenels: %d", cuda->devProp.concurrentKernels);
 
 	return true;
 }
@@ -134,10 +121,10 @@ long CUDASoftBodySolver::cudaAllocateDeviceBuffers(SoftBodyDescriptor *descr)
 {
 	int bytesArray = 0, bytesMass = 0, bytesMapping = 0, bytesLinks = 0;
 
-	bytesArray = descr->nParticles * sizeof(vec3);
-	bytesMass = descr->nParticles * sizeof(float_t);
+	bytesArray   = descr->nParticles * sizeof(vec3);
+	bytesMass    = descr->nParticles * sizeof(float_t);
 	bytesMapping = descr->nMapping * sizeof(uint_t);
-	bytesLinks = descr->nLinks * sizeof(LinkConstraint);
+	bytesLinks   = descr->nLinks * sizeof(LinkConstraint);
 
 	descr->positions = (vec3*)allocateCUDABuffer(bytesArray);
 	if (!descr->positions) goto on_fail;
@@ -235,7 +222,7 @@ cudaGraphicsResource *cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb)
 
 bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr)
 {
-	const Mesh_t *mesh;
+	const Mesh *mesh;
 
 	if (!descr->body) {
 		ERR("No SoftBody reference in descriptor!");
@@ -264,26 +251,6 @@ bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr)
 	return true;
 }
 
-bool CUDASoftBodySolver::cudaInitCollisionDescriptors(SolverPrivate *cuda)
-{
-	cudaError_t err;
-	size_t bytes;
-
-	if (!cuda->collBodyDescrHost.size()) return true;
-
-	bytes = cuda->collBodyDescrHost.size() * sizeof(CollisionBodyInfoDescriptor);
-	cuda->collBodyDescrDevice = (CollisionBodyInfoDescriptor*)allocateCUDABuffer(bytes);
-	if (!cuda->collBodyDescrDevice) return false;
-
-	err = cudaMemcpy(cuda->collBodyDescrDevice, &cuda->collBodyDescrHost[0], bytes, cudaMemcpyHostToDevice);
-	if (err != cudaSuccess) {
-		cudaFree(cuda->collBodyDescrDevice);
-		cuda->collBodyDescrDevice = NULL;
-		return false;
-	}
-	return true;
-}
-
 void CUDASoftBodySolver::cudaUpdateConstraintStiffness(SoftBodyDescriptor
 		*descr, int solverSteps)
 {
@@ -291,18 +258,7 @@ void CUDASoftBodySolver::cudaUpdateConstraintStiffness(SoftBodyDescriptor
 	calculateLinkStiffness<<<blocks, 128>>>(solverSteps, descr->links, descr->nLinks);
 }
 
-void CUDASoftBodySolver::cudaAppendCollsionDescriptors(collisionBodyDescriptorArray_t *arr, SoftBodyDescriptor *descr)
-{
-	FOREACH(it, &descr->body->mCollisionBodies) {
-		CollisionBodyInfoDescriptor cb;
-		cb.positions = descr->positions;
-		cb.collInfo = *it;
-
-		arr->push_back(cb);
-	}
-}
-
-CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbodyArray_t *bodies)
+CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbodyList_t *bodies)
 {
 	SolverPrivate *cuda;
 	long total_alloc = 0;
@@ -348,15 +304,9 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 		cudaUpdateConstraintStiffness(&descr, cuda->solverSteps);
 
 		cuda->descriptors.push_back(descr);
-		cudaAppendCollsionDescriptors(&cuda->collBodyDescrHost, &descr);
 		cuda->resArray.push_back(descr.graphics);
 
 		total_alloc += mem;
-	}
-	if (!cudaInitCollisionDescriptors(cuda)) {
-		ERR("Error on allocatin collision object data.");
-		cudaContextShutdown(cuda);
-		return NULL;
 	}
 	DBG("Allocated %ld bytes on device", total_alloc);
 
@@ -367,23 +317,23 @@ void CUDASoftBodySolver::cudaContextShutdown(SolverPrivate *cuda)
 {
 	FOREACH(it, &cuda->descriptors)
 		cudaDeallocateDeviceBuffers(&(*it));
-	if (cuda->collBodyDescrDevice) cudaFree(cuda->collBodyDescrDevice);
 	cudaShutdownDevice(cuda);
 	delete cuda;
 }
 
-bool CUDASoftBodySolver::initialize(softbodyArray_t *bodies)
+bool CUDASoftBodySolver::initialize(void)
 {
 	SolverPrivate *cuda;
 
 	if (mInitialized) return true;
 
-	cuda = cudaContextCreate(bodies);
+	cuda = cudaContextCreate(&mBodies);
 		if (!cuda) {
 		ERR("Unable to create CUDA context.");
 		return false;
 	}
 
+	mBodies.clear();
 	mInitialized = true;
 	mCuda = cuda;
 	return true;
@@ -447,7 +397,8 @@ void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 	FOREACH(it, &cuda->descriptors) {
 		int blockCount = it->nParticles / threadsPerBlock + 1;
 
-		cudaUpdateVelocitiesKernel<<<blockCount, threadsPerBlock>>>(mGravity, it->positions,
+		cudaUpdateVelocitiesKernel<<<blockCount,
+			threadsPerBlock>>>(mWorldParams.gravity, it->positions,
 				it->projections, it->velocities, it->forces, it->massesInv, dt,
 				it->nParticles);
 
@@ -470,4 +421,29 @@ void CUDASoftBodySolver::projectSystem(float_t dt)
 {
 	if (mInitialized)
 		projectSystem(mCuda, dt);
+}
+
+void CUDASoftBodySolver::setWorldParameters(SoftBodyWorldParameters *params)
+{
+	mWorldParams = *params;
+}
+
+void CUDASoftBodySolver::addSoftBodies(softbodyList_t &bodies)
+{
+	FOREACH_R(it, bodies)
+		mBodies.push_back(*it);
+}
+
+void CUDASoftBodySolver::removeBodies(softbodyList_t *bodies)
+{
+}
+
+void CUDASoftBodySolver::addSoftBody(SoftBody *body)
+{
+	mBodies.push_back(body);
+}
+
+void CUDASoftBodySolver::removeSoftBody(SoftBody *body)
+{
+	mBodies.remove(body);
 }
