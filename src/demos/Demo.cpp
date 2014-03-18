@@ -1,5 +1,6 @@
 #include "common.h"
 #include "utils/glut/GLUTApplication.h"
+#include "engine/MeshGenerator.h"
 #include "renderer/Renderer.h"
 #include "renderer/Camera.h"
 #include "engine/SoftBody.h"
@@ -90,6 +91,17 @@ Demo::Demo(int argc, char **argv) :
 {
     initialize();
 
+	Cube cub(vec3(0,0,0), vec3(1, 1, -1));
+	MeshData *md = MeshGenerator::generateFromCube(cub, 3, 3, 3);
+
+	WRN("count: %d", md->vertexes.size());
+	FOREACH_R(it, md->vertexes)
+		WRN("%f, %f, %f", it->position[0], it->position[1], it->position[2]);
+
+	WRN("count: %d", md->faces.size());
+	FOREACH_R(it, md->faces)
+		WRN("[%u, %u, %u]", (*it)[0], (*it)[1], (*it)[2]);
+
     vec3Array_t particlesA(particles, particles + SIZE(particles));
     index2Array_t linksA(links, links + SIZE(links));
 
@@ -156,7 +168,7 @@ void Demo::onDisplay(void)
 
 	simTime += diff;
 
-#define EN_DEBUG
+//#define EN_DEBUG
 #ifndef EN_DEBUG
 	while (simTime > ENGINE_TIME_STEP) {
 		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
