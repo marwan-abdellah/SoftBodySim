@@ -1,7 +1,7 @@
 #ifndef VERTEX_BUFFER_H
 #define VERTEX_BUFFER_H
 
-#include "utils/geometry/Arrays.h"
+#include "geometry/Arrays.h"
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>

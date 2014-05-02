@@ -5,7 +5,7 @@
 #define GLM_PRECISION_MEDIUMP_FLOAT
 #define GLM_PRECISION_MEDIUMP_UINT
 
-#include "utils/geometry/Arrays.h"
+#include "geometry/Arrays.h"
 #include "Constraints.h"
 #include "VertexBuffer.h"
 #include "Body.h"

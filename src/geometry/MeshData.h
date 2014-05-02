@@ -1,9 +1,9 @@
 #ifndef SB_MESH_DATA_H
 #define SB_MESH_DATA_H
 
-#include "utils/geometry/Arrays.h"
-#include "utils/geometry/Plane.h"
-#include "utils/geometry/Cube.h"
+#include "geometry/Arrays.h"
+#include "geometry/Plane.h"
+#include "geometry/Cube.h"
 
 #include <vector>
 

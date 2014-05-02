@@ -1,7 +1,7 @@
 #ifndef SB_BODY_H
 #define SB_BODY_H
 
-#include "utils/geometry/Sphere.h"
+#include "geometry/Sphere.h"
 
 /**
  * @struct Mesh

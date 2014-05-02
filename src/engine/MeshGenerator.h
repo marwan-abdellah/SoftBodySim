@@ -1,7 +1,7 @@
 #ifndef SB_MESH_GENERATOR_H
 #define SB_MESH_GENERATOR_H
 
-#include "utils/geometry/MeshData.h"
+#include "geometry/MeshData.h"
 
 class MeshGenerator
 {
