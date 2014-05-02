@@ -15,6 +15,9 @@ struct Mesh {
 	ElementBuffer                *faces;
 };
 
+/**
+ * @class Abstract class 
+ */
 class Body {
 public:
 	virtual const Mesh *getMesh(void) = 0;

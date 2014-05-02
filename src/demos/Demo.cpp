@@ -1,5 +1,5 @@
 #include "common.h"
-#include "utils/glut/GLUTApplication.h"
+#include "GLFWApplication.h"
 #include "engine/MeshGenerator.h"
 #include "renderer/Renderer.h"
 #include "renderer/Camera.h"
@@ -63,16 +63,16 @@ const uvec2 faces[] = {
     uvec2(1, 0), uvec2(3, 0), uvec2(4, 0),
 };
 
-class Demo : public GLUTApplication
+class Demo : public GLFWApplication
 {
 public:
     Demo(int argc, char **argv);
     ~Demo(void);
-    void onKeyboard(unsigned char k, int x, int y);
-    void onMouseClick(ButtonType type, ButtonState state, int x, int y);
-    void onMouseMove(int x, int y);
-    void onMenuSelected(string &s);
-    void onDisplay(void);
+    void OnKeyboard(int k);
+    void OnMouseClick(GLFWApplication::ButtonType type, GLFWApplication::ButtonState state, int x, int y);
+    void OnMouseMove(int x, int y);
+    void OnRender(void);
+    void OnUpdate(double dt);
 private:
     SoftBodyRenderer    renderer;
     softbodyList_t     mSoftBodies;
@@ -85,12 +85,10 @@ private:
 };
 
 Demo::Demo(int argc, char **argv) :
-    GLUTApplication(argc, argv, "DemoApp", width, height),
+    GLFWApplication("DemoApp", width, height),
     mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
 	mSolver()
 {
-    initialize();
-
 	Cube cub(vec3(0,0,0), vec3(1, 1, -1));
 	MeshData *md = MeshGenerator::generateFromCube(cub, 3, 3, 3);
 
@@ -129,17 +127,6 @@ Demo::Demo(int argc, char **argv) :
 
 	mSolver.addSoftBodies(mSoftBodies);
     mSolver.initialize();
-
-    int id1 = addMenu("Main");
-    addMenuEntry(id1, "Hello1");
-    addMenuEntry(id1, "Hello2");
-
-    int id2 = addMenu("SubMenu", id1);
-    addMenuEntry(id2, "Hello3");
-    addMenuEntry(id2, "Hello4");
-
-    attachMenu(id1, RIGHT_BUTTON);
-	mEnginUpdateTime = getElapsedTime();
 }
 
 Demo::~Demo(void)
@@ -151,51 +138,21 @@ Demo::~Demo(void)
 #define ENGINE_TIME_STEP 15
 #define DIFF_MAX 200
 
-void Demo::onDisplay(void)
+void Demo::OnUpdate(double dt)
 {
-	static int time;
-	static int frames;
-	static int engine_iter;
-	static int simTime;
+	mSolver.projectSystem(dt);
+}
 
-	frames++;
-
-	int tm = getElapsedTime();
-
-	int diff = tm - mEnginUpdateTime;
-	if (diff > DIFF_MAX)
-		diff = DIFF_MAX;
-
-	simTime += diff;
-
-//#define EN_DEBUG
-#ifndef EN_DEBUG
-	while (simTime > ENGINE_TIME_STEP) {
-		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
-		engine_iter++;
-		simTime -= ENGINE_TIME_STEP;
-	}
-#endif
-
-	mEnginUpdateTime = tm;
+void Demo::OnRender(void)
+{
 	mSolver.updateVertexBuffers();
 
-#ifndef EN_DEBUG
-	if (tm - time > 1000) {
-		ERR("Display: %lf fps, engine: %f it/s", (double)frames * 1000 / (tm - time),
-				(double)engine_iter * 1000 / (tm - time));
-		time = tm;
-		frames = 0;
-		engine_iter = 0;
-	}
-#endif
 	renderer.clearScreen();
 	FOREACH(b, &mSoftBodies)
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
-	syncScreen();
 }
 
-void Demo::onKeyboard(unsigned char key, int x, int y)
+void Demo::OnKeyboard(int key)
 {
     float angle = 2.0f;
     float delta = 0.1f;
@@ -227,7 +184,7 @@ void Demo::onKeyboard(unsigned char key, int x, int y)
         mCamera.moveLeft(angle);
 }
 
-void Demo::onMouseClick(ButtonType type, ButtonState state, int x, int y)
+void Demo::OnMouseClick(ButtonType type, ButtonState state, int x, int y)
 {
     if (type != LEFT_BUTTON)
         return;
@@ -241,7 +198,7 @@ void Demo::onMouseClick(ButtonType type, ButtonState state, int x, int y)
         mMousePressed = false;
 }
 
-void Demo::onMouseMove(int x, int y)
+void Demo::OnMouseMove(int x, int y)
 {
     if (!mMousePressed)
         return;
@@ -264,13 +221,8 @@ void Demo::onMouseMove(int x, int y)
     mMouseLastY = y;
 }
 
-void Demo::onMenuSelected(string &s)
-{
-    cout << s << endl;
-}
-
 int main(int argc, char **argv)
 {
     Demo demo(argc, argv);
-    demo.run();
+    demo.MainLoop(0.5);
 }
