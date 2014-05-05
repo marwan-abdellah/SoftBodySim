@@ -69,20 +69,24 @@ bool CUDASoftBodySolver::cudaInitializeDevice(SolverPrivate *cuda)
 
 	// choose device for us. Prefer with compute capabilities ~ 3.5
 	err = cudaChooseDevice(&cuda->deviceId, &prop);
-	if (err != cudaSuccess) return false;
+	if (err != cudaSuccess) goto on_error;
 
 	err = cudaSetDevice(cuda->deviceId);
-	if (err != cudaSuccess) return false;
+	if (err != cudaSuccess) goto on_error;
 
 	err = cudaGetDeviceProperties(&cuda->devProp, cuda->deviceId);
-	if (err != cudaSuccess) return false;
+	if (err != cudaSuccess) goto on_error;
 	
 	err = cudaStreamCreate(&cuda->stream);
-	if (err != cudaSuccess) return false;
+	if (err != cudaSuccess) goto on_error;
 
 	DBG("Choosen CUDA Device: %s", cuda->devProp.name);
 
 	return true;
+
+on_error:
+	ERR("Device initialization error: %s", cudaGetErrorString(cudaGetLastError()));
+    return false;
 }
 
 bool CUDASoftBodySolver::cudaShutdownDevice(SolverPrivate *cuda)
@@ -271,7 +275,6 @@ CUDASoftBodySolver::SolverPrivate *CUDASoftBodySolver::cudaContextCreate(softbod
 
 	if (!cudaInitializeDevice(cuda)) {
 		ERR("CUDA Device initialization failed!");
-		ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
 		delete cuda;
 		return NULL;
 	}
