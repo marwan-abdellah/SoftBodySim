@@ -1,6 +1,6 @@
 #include "common.h"
 #include "GLFWApplication.h"
-#include "engine/MeshGenerator.h"
+#include "engine/MeshData.h"
 #include "renderer/Renderer.h"
 #include "renderer/Camera.h"
 #include "engine/SoftBody.h"
@@ -89,15 +89,15 @@ Demo::Demo(int argc, char **argv) :
     mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
 	mSolver()
 {
-	Cube cub(vec3(0,0,0), vec3(1, 1, -1));
-	MeshData *md = MeshGenerator::generateFromCube(cub, 3, 3, 3);
+	Box box(vec3(0,0,0), vec3(1, 1, -1));
+	MeshData md = MeshData::CreateCube(box, 3, 3, 3);
 
-	WRN("count: %d", md->vertexes.size());
-	FOREACH_R(it, md->vertexes)
+	WRN("count: %d", md.vertexes.size());
+	FOREACH_R(it, md.vertexes)
 		WRN("%f, %f, %f", it->position[0], it->position[1], it->position[2]);
 
-	WRN("count: %d", md->faces.size());
-	FOREACH_R(it, md->faces)
+	WRN("count: %d", md.faces.size());
+	FOREACH_R(it, md.faces)
 		WRN("[%u, %u, %u]", (*it)[0], (*it)[1], (*it)[2]);
 
     vec3Array_t particlesA(particles, particles + SIZE(particles));

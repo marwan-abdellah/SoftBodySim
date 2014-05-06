@@ -3,7 +3,7 @@ set (SRCS
 		CUDASoftBodySolver.cu
 		CUDASoftBodySolverKernel.cu
 		VertexBuffer.cpp
-		MeshGenerator.cpp
+		MeshData.cpp
 	)
 
 find_package(CUDA REQUIRED)

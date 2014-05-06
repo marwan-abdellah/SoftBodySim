@@ -1,18 +1,18 @@
-#ifndef SB_CUBE_H
-#define SB_CUBE_H
+#ifndef SB_BOX_H
+#define SB_BOX_H
 
 #include <glm/glm.hpp>
 
 /*
- * Creates an cube aligned with x, y, z axis
+ * Creates an Box aligned with x, y, z axis
  */
-struct Cube {
-	Cube(glm::vec3 bl, glm::vec3 ur) :
+struct Box {
+	Box(glm::vec3 bl, glm::vec3 ur) :
 		m_bottomLeft(bl), m_upperRight(ur)
 	{}
-	Cube(const Cube &p)
+	Box(const Box &p)
 		: m_bottomLeft(p.m_bottomLeft), m_upperRight(p.m_upperRight) {}
-	~Cube(void) {}
+	~Box(void) {}
 	glm::vec3 m_bottomLeft;
 	glm::vec3 m_upperRight;
 };

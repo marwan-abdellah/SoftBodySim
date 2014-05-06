@@ -1,5 +1,6 @@
-#include "MeshGenerator.h"
+#include "MeshData.h"
 #include "common.h"
+
 #include <map>
 
 using namespace glm;
@@ -13,16 +14,13 @@ private:
 	size_t m_y, m_z;
 };
 
-MeshData *MeshGenerator::generateFromCube(const Cube &c, size_t nx, size_t ny, size_t nz)
+MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 {
+	MeshData ret;
+
 	if (nx < 2 || ny < 2 || nz < 2) {
 		ERR("Invalid dimension");
-		return NULL;
-	}
-	MeshData *ret = new MeshData;
-	if (!ret) {
-		ERR("new failed at %ld bytes", sizeof(MeshData));
-		return NULL;
+		return ret;
 	}
 
 	index3Array_t grid;
@@ -57,7 +55,7 @@ MeshData *MeshGenerator::generateFromCube(const Cube &c, size_t nx, size_t ny, s
 	unsigned int d1 = std::distance(vertexMap.begin(), it1); \
 	unsigned int d2 = std::distance(vertexMap.begin(), it2); \
 	unsigned int d3 = std::distance(vertexMap.begin(), it3); \
-	ret->faces.push_back(glm::uvec3(d1, d2, d3));\
+	ret.faces.push_back(glm::uvec3(d1, d2, d3));\
 }\
 	
 #define ADD_FACES(w, h) \
@@ -96,7 +94,7 @@ MeshData *MeshGenerator::generateFromCube(const Cube &c, size_t nx, size_t ny, s
 
 	FOREACH_R(it, vertexMap) {
 		Vertex v(it->second, vec2(0,0), vec3(0,0,0));
-		ret->vertexes.push_back(v);
+		ret.vertexes.push_back(v);
 	}
 	return ret;
 }
