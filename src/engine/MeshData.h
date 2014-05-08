@@ -28,8 +28,7 @@ public:
 	 */
 	MeshData(const MeshData &m) :
 		vertexes(m.vertexes),
-		faces(m.faces),
-		links(m.links) {}
+		faces(m.faces) {}
 
 	/**
 	 * @brief Creates plane mesh aligned to xy axis.
@@ -52,9 +51,9 @@ public:
 	static MeshData CreateCube(const Box &box, size_t nx, size_t ny, size_t nz);
 
 	/**
-	 * @brief Creates mesh form 'obj' text format description.
+	 * @brief Creates mesh form Wavefron 'obj' text format.
 	 *
-	 * @param[in] path Wavefromt File path.
+	 * @param[in] path Wavefront file path.
 	 */
 	static MeshData CreateFromObj(const char *path);
 
@@ -72,7 +71,6 @@ public:
 
 	vertexArray_t  vertexes;
 	index3Array_t  faces;
-	index2Array_t  links;
 };
 
 /**

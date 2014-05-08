@@ -4,6 +4,7 @@
 #include <map>
 
 using namespace glm;
+using namespace std;
 
 class uindx3Comp {
 public:
@@ -16,46 +17,43 @@ private:
 
 MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 {
-	MeshData ret;
+	SB_ASSERT(((nx > 1) && (ny > 1) && (ny > 1)));
 
-	if (nx < 2 || ny < 2 || nz < 2) {
-		ERR("Invalid dimension");
-		return ret;
-	}
+	MeshData ret;
 
 	index3Array_t grid;
 	uindx3Comp comp(ny, nz);
-	std::map<glm::uvec3, glm::vec3, uindx3Comp> vertexMap(comp);
+	map<uvec3, vec3, uindx3Comp> vertexMap(comp);
 
-	glm::vec3 diff = c.m_upperRight - c.m_bottomLeft;
+	vec3 diff = c.m_upperRight - c.m_bottomLeft;
 
-	glm::vec3 xdiff = 1.0f / (nx - 1) * glm::vec3(diff[0], 0, 0);
-	glm::vec3 ydiff = 1.0f / (ny - 1) * glm::vec3(0, diff[1], 0);
-	glm::vec3 zdiff = 1.0f / (nz - 1) * glm::vec3(0, 0, diff[2]);
+	vec3 xdiff = 1.0f / (nx - 1) * vec3(diff[0], 0, 0);
+	vec3 ydiff = 1.0f / (ny - 1) * vec3(0, diff[1], 0);
+	vec3 zdiff = 1.0f / (nz - 1) * vec3(0, 0, diff[2]);
 
 #define ADD_FACE_VERTEXES(xs, xe, ys, ye, zs, ze) \
 	grid.clear(); \
 	for (unsigned int x = xs; x < xe; x++) \
 		for (unsigned int y = ys; y < ye; y++) \
 			for (unsigned int z = zs; z < ze; z++) {\
-				glm::uvec3 ids(x, y, z);\
-				glm::vec3 v = (float_t)x * xdiff + (float_t)y * ydiff + (float_t)z * zdiff;\
+				uvec3 ids(x, y, z);\
+				vec3 v = (float_t)x * xdiff + (float_t)y * ydiff + (float_t)z * zdiff;\
 				v += c.m_bottomLeft; \
 				vertexMap.insert( std::pair<glm::uvec3, glm::vec3>(ids, v) ); \
 				grid.push_back(ids); \
 			}\
 
 #define ADD_FACE(a, b, c) {\
-	glm::uvec3 vid1 = grid[a];\
-	glm::uvec3 vid2 = grid[b];\
-	glm::uvec3 vid3 = grid[c];\
-	std::map<glm::uvec3, glm::vec3>::iterator it1 = vertexMap.find(vid1); \
-	std::map<glm::uvec3, glm::vec3>::iterator it2 = vertexMap.find(vid2); \
-	std::map<glm::uvec3, glm::vec3>::iterator it3 = vertexMap.find(vid3); \
+	uvec3 vid1 = grid[a];\
+	uvec3 vid2 = grid[b];\
+	uvec3 vid3 = grid[c];\
+	map<uvec3, vec3>::iterator it1 = vertexMap.find(vid1); \
+	map<uvec3, vec3>::iterator it2 = vertexMap.find(vid2); \
+	map<uvec3, vec3>::iterator it3 = vertexMap.find(vid3); \
 	unsigned int d1 = std::distance(vertexMap.begin(), it1); \
 	unsigned int d2 = std::distance(vertexMap.begin(), it2); \
 	unsigned int d3 = std::distance(vertexMap.begin(), it3); \
-	ret.faces.push_back(glm::uvec3(d1, d2, d3));\
+	ret.faces.push_back(uvec3(d1, d2, d3));\
 }\
 	
 #define ADD_FACES(w, h) \
@@ -96,5 +94,43 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 		Vertex v(it->second, vec2(0,0), vec3(0,0,0));
 		ret.vertexes.push_back(v);
 	}
+	return ret; // by value - assume RVO
+}
+
+MeshData MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
+{
+	SB_ASSERT((nx > 1) && (ny > 1) && (width > 0.0) && (height > 0.0));
+	MeshData ret;
+
+	const float xstep = width / (nx - 1);
+	const float ystep = height / (ny - 1);
+
+	vec3 shift(width / 2.0, height / 2.0, 0.0);
+
+	for (int i = 0; i < nx; i++) {
+		for (int j = 0; j < ny; j++) {
+			vec3 pos(i * xstep, j * ystep, 0.0);
+			pos = pos - shift;
+			vec3 norm(0.0, 0.0, 1.0);
+			Vertex v(pos, vec2(), norm);
+			ret.vertexes.push_back(v);
+		}
+	}
+
+	for (int i = 0; i < nx - 1; i++) {
+		for (int j = 0; j < ny - 1; j++) {
+			uvec3 idx;
+
+			idx[0] = j + ny * i;
+			idx[1] = j + (ny + 1) * i;
+			idx[2] = j + (ny + 1) * i + 1;
+			ret.faces.push_back(idx);
+
+			idx[1] = idx[2];
+			idx[2] = idx[0] + 1;
+			ret.faces.push_back(idx);
+		}
+	}
+
 	return ret;
 }
