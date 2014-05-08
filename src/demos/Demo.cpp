@@ -92,11 +92,19 @@ Demo::Demo(int argc, char **argv) :
 	Box box(vec3(0,0,0), vec3(1, 1, -1));
 	MeshData md = MeshData::CreateCube(box, 3, 3, 3);
 
-	WRN("count: %d", md.vertexes.size());
+	WRN("vertex count: %d", md.vertexes.size());
 	FOREACH_R(it, md.vertexes)
-		WRN("%f, %f, %f", it->position[0], it->position[1], it->position[2]);
+		WRN("%f, %f, %f, [%d]", it->position[0], it->position[1], it->position[2], it->nodeId);
 
-	WRN("count: %d", md.faces.size());
+	WRN("nodes count: %d", md.nodes.size());
+	FOREACH_R(it, md.nodes)
+		WRN("[%f, %f, %f]", (*it)[0], (*it)[1], (*it)[2]);
+
+	WRN("nodes links count: %d", md.nodesLinks.size());
+	FOREACH_R(it, md.nodesLinks)
+		WRN("[%u, %u]", (*it)[0], (*it)[1]);
+
+	WRN("faces count: %d", md.faces.size());
 	FOREACH_R(it, md.faces)
 		WRN("[%u, %u, %u]", (*it)[0], (*it)[1], (*it)[2]);
 

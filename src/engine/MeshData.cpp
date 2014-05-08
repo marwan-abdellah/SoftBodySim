@@ -1,19 +1,43 @@
 #include "MeshData.h"
 #include "common.h"
 
-#include <map>
+#include <unordered_map>
+#include <unordered_set>
 
 using namespace glm;
 using namespace std;
 
-class uindx3Comp {
+#define BUCKET_MAX (1 << 20)
+
+class Index3Hasher {
 public:
-	uindx3Comp(size_t y, size_t z) : m_y(y), m_z(z) {}
-	uindx3Comp(const uindx3Comp &c) : m_y(c.m_y), m_z(c.m_z) {}
-	bool operator()(const glm::uvec3 &a, const glm::uvec3 &b) { return a[0] * m_y * m_z + a[1] * m_z + a[2] > b[0] * m_y * m_z + b[1] * m_z + b[2] ; }
-private:
-	size_t m_y, m_z;
+	size_t operator() (uvec3 const &v) const {
+		return (v[0] + 1759 * v[1] + 43517 * v[2]) & (BUCKET_MAX - 1);
+	}
 };
+
+class Index2Hasher {
+public:
+	size_t operator() (uvec2 const &v) const {
+		return (v[0] + 1759 * v[1]) & (BUCKET_MAX - 1);
+	}
+};
+
+typedef unordered_map<uvec3, unsigned int, Index3Hasher> vertexMap_t;
+typedef unordered_set<uvec2, Index2Hasher> linksSet_t;
+
+
+static inline unsigned int
+_ivertex_insert(vertexMap_t &map, vec3Array_t &nods, uvec3 &id, vec3 &p)
+{
+	vertexMap_t::iterator it = map.find(id);
+	if (it == map.end()) {
+		pair<vertexMap_t::iterator, bool> res = map.insert(make_pair(id, nods.size()));
+		nods.push_back(p);
+		it = res.first;
+	}
+	return it->second;
+}
 
 MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 {
@@ -21,80 +45,143 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 
 	MeshData ret;
 
-	index3Array_t grid;
-	uindx3Comp comp(ny, nz);
-	map<uvec3, vec3, uindx3Comp> vertexMap(comp);
-
 	vec3 diff = c.m_upperRight - c.m_bottomLeft;
+	diff[0] *= 1.0f / (nx - 1);
+	diff[1] *= 1.0f / (ny - 1);
+	diff[2] *= 1.0f / (nz - 1);
 
-	vec3 xdiff = 1.0f / (nx - 1) * vec3(diff[0], 0, 0);
-	vec3 ydiff = 1.0f / (ny - 1) * vec3(0, diff[1], 0);
-	vec3 zdiff = 1.0f / (nz - 1) * vec3(0, 0, diff[2]);
+	unsigned int base = 0;
+	vertexMap_t map;
+	uvec3 id;
 
-#define ADD_FACE_VERTEXES(xs, xe, ys, ye, zs, ze) \
-	grid.clear(); \
-	for (unsigned int x = xs; x < xe; x++) \
-		for (unsigned int y = ys; y < ye; y++) \
-			for (unsigned int z = zs; z < ze; z++) {\
-				uvec3 ids(x, y, z);\
-				vec3 v = (float_t)x * xdiff + (float_t)y * ydiff + (float_t)z * zdiff;\
-				v += c.m_bottomLeft; \
-				vertexMap.insert( std::pair<glm::uvec3, glm::vec3>(ids, v) ); \
-				grid.push_back(ids); \
-			}\
-
-#define ADD_FACE(a, b, c) {\
-	uvec3 vid1 = grid[a];\
-	uvec3 vid2 = grid[b];\
-	uvec3 vid3 = grid[c];\
-	map<uvec3, vec3>::iterator it1 = vertexMap.find(vid1); \
-	map<uvec3, vec3>::iterator it2 = vertexMap.find(vid2); \
-	map<uvec3, vec3>::iterator it3 = vertexMap.find(vid3); \
-	unsigned int d1 = std::distance(vertexMap.begin(), it1); \
-	unsigned int d2 = std::distance(vertexMap.begin(), it2); \
-	unsigned int d3 = std::distance(vertexMap.begin(), it3); \
-	ret.faces.push_back(uvec3(d1, d2, d3));\
-}\
-	
-#define ADD_FACES(w, h) \
-	for (unsigned int x = 0; x < (w); x++) \
-		for (unsigned int y = 0; y < (h); y++) { \
-			int idx = y + (h) * x; \
-			if ((x < (w) - 1) && (y < (h) - 1)) { \
-				ADD_FACE(idx, idx + h + 1, idx + 1); \
-				ADD_FACE(idx, idx + h, idx + h + 1); \
-			}\
+	// left plane
+	for (unsigned int y = 0; y < ny; y++)
+		for (unsigned int z = 0; z < nz; z++) {
+			uvec3 id(0, y, z);
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
+			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(-1, 0, 0), d));
 		}
 
-	// back
-	ADD_FACE_VERTEXES(0, nx, 0, ny, 0, 1);
-	ADD_FACES(nx, ny);
+	for (unsigned int y = 0; y < ny - 1; y++)
+		for (unsigned int z = 0; z < nz - 1; z++) {
+			unsigned int d1 = z + y * nz;
+			unsigned int d2 = z + (y + 1) * nz;
+			unsigned int d3 = z + (y + 1) * nz + 1;
+			unsigned int d4 = z + y * nz + 1;
 
-	// front
-	ADD_FACE_VERTEXES(0, nx, 0, ny, nz - 1, nz);
-	ADD_FACES(nx, ny);
+			ret.faces.push_back(uvec3(d1, d2, d3));
+			ret.faces.push_back(uvec3(d1, d3, d4));
+		}
+	base = ret.vertexes.size();
 
-	// top
-	ADD_FACE_VERTEXES(0, nx, ny - 1, ny, 0, nz);
-	ADD_FACES(nx, nz);
+	// right plane
+	for (unsigned int y = 0; y < ny; y++)
+		for (unsigned int z = 0; z < nz; z++) {
+			uvec3 id(nx - 1, y, z);
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
+			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(1, 0, 0), d));
+		}
 
-	// bottom
-	ADD_FACE_VERTEXES(0, nx, 0, 1, 0, nz);
-	ADD_FACES(nx, nz);
+	for (unsigned int y = 0; y < ny - 1; y++)
+		for (unsigned int z = 0; z < nz - 1; z++) {
+			unsigned int d1 = z + y * nz + base;
+			unsigned int d2 = z + (y + 1) * nz + base;
+			unsigned int d3 = z + (y + 1) * nz + 1 + base;
+			unsigned int d4 = z + y * nz + 1 + base;
 
-	// left
-	ADD_FACE_VERTEXES(0, 1, 0, ny, 0, nz);
-	ADD_FACES(ny, nz);
+			ret.faces.push_back(uvec3(d1, d3, d2));
+			ret.faces.push_back(uvec3(d1, d4, d3));
+		}
+	base = ret.vertexes.size();
 
-	// right
-	ADD_FACE_VERTEXES(nx - 1, nx, 0, ny, 0, nz);
-	ADD_FACES(ny, nz);
+	// bottom plane
+	for (unsigned int x = 0; x < nx; x++)
+		for (unsigned int z = 0; z < nz; z++) {
+			uvec3 id(x, 0, z);
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
+			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, -1, 0), d));
+		}
 
-	FOREACH_R(it, vertexMap) {
-		Vertex v(it->second, vec2(0,0), vec3(0,0,0));
-		ret.vertexes.push_back(v);
-	}
-	return ret; // by value - assume RVO
+	for (unsigned int x = 0; x < nx - 1; x++)
+		for (unsigned int z = 0; z < nz - 1; z++) {
+			unsigned int d1 = z + x * nz + base;
+			unsigned int d2 = z + (x + 1) * nz + base;
+			unsigned int d3 = z + (x + 1) * nz + 1 + base;
+			unsigned int d4 = z + x * nz + 1 + base;
+
+			ret.faces.push_back(uvec3(d3, d2, d1));
+			ret.faces.push_back(uvec3(d3, d4, d1));
+		}
+	base = ret.vertexes.size();
+
+	// top plane
+	for (unsigned int x = 0; x < nx; x++)
+		for (unsigned int z = 0; z < nz; z++) {
+			uvec3 id(x, ny - 1, z);
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
+			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 1, 0), d));
+		}
+
+	for (unsigned int x = 0; x < nx - 1; x++)
+		for (unsigned int z = 0; z < nz - 1; z++) {
+			unsigned int d1 = z + x * nz + base;
+			unsigned int d2 = z + (x + 1) * nz + base;
+			unsigned int d3 = z + (x + 1) * nz + 1 + base;
+			unsigned int d4 = z + x * nz + 1 + base;
+
+			ret.faces.push_back(uvec3(d1, d2, d3));
+			ret.faces.push_back(uvec3(d1, d3, d4));
+		}
+	base = ret.vertexes.size();
+
+	// front plane
+	for (unsigned int x = 0; x < nx; x++)
+		for (unsigned int y = 0; y < ny; y++) {
+			uvec3 id(x, y, 0);
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
+			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, 1), d));
+		}
+
+	for (unsigned int x = 0; x < nx - 1; x++)
+		for (unsigned int y = 0; y < ny - 1; y++) {
+			unsigned int d1 = y + x * ny + base;
+			unsigned int d2 = y + (x + 1) * ny + base;
+			unsigned int d3 = y + (x + 1) * ny + 1 + base;
+			unsigned int d4 = y + x * ny + 1 + base;
+
+			ret.faces.push_back(uvec3(d1, d2, d3));
+			ret.faces.push_back(uvec3(d1, d3, d4));
+		}
+	base = ret.vertexes.size();
+
+	// back plane
+	for (unsigned int x = 0; x < nx; x++)
+		for (unsigned int y = 0; y < ny; y++) {
+			uvec3 id(x, y, nz - 1);
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
+			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, -1), d));
+		}
+
+	for (unsigned int x = 0; x < nx - 1; x++)
+		for (unsigned int y = 0; y < ny - 1; y++) {
+			unsigned int d1 = y + x * ny + base;
+			unsigned int d2 = y + (x + 1) * ny + base;
+			unsigned int d3 = y + (x + 1) * ny + 1 + base;
+			unsigned int d4 = y + x * ny + 1 + base;
+
+			ret.faces.push_back(uvec3(d3, d2, d1));
+			ret.faces.push_back(uvec3(d4, d3, d1));
+		}
+
+	ret.GenerateLinks();
+
+	return ret; // by value - assume compiler RVO
 }
 
 MeshData MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
@@ -107,9 +194,9 @@ MeshData MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 
 	vec3 shift(width / 2.0, height / 2.0, 0.0);
 
-	for (int i = 0; i < nx; i++) {
-		for (int j = 0; j < ny; j++) {
-			vec3 pos(i * xstep, j * ystep, 0.0);
+	for (unsigned int x = 0; x < nx; x++) {
+		for (unsigned int y = 0; y < ny; y++) {
+			vec3 pos(x * xstep, y * ystep, 0.0);
 			pos = pos - shift;
 			vec3 norm(0.0, 0.0, 1.0);
 			Vertex v(pos, vec2(), norm);
@@ -117,13 +204,13 @@ MeshData MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 		}
 	}
 
-	for (int i = 0; i < nx - 1; i++) {
-		for (int j = 0; j < ny - 1; j++) {
+	for (unsigned int x = 0; x < nx - 1; x++) {
+		for (unsigned int y = 0; y < ny - 1; y++) {
 			uvec3 idx;
 
-			idx[0] = j + ny * i;
-			idx[1] = j + (ny + 1) * i;
-			idx[2] = j + (ny + 1) * i + 1;
+			idx[0] = y + ny * x;
+			idx[1] = y + (ny + 1) * x;
+			idx[2] = y + (ny + 1) * x + 1;
 			ret.faces.push_back(idx);
 
 			idx[1] = idx[2];
@@ -132,5 +219,30 @@ MeshData MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 		}
 	}
 
+	ret.GenerateLinks();
+
 	return ret;
+}
+
+void MeshData::GenerateLinks(void)
+{
+	nodesLinks.clear();
+	linksSet_t set;
+
+	for (index3Array_t::iterator it = faces.begin(); it != faces.end(); it++) {
+		unsigned int id1 = vertexes[(*it)[0]].nodeId;
+		unsigned int id2 = vertexes[(*it)[1]].nodeId;
+		unsigned int id3 = vertexes[(*it)[2]].nodeId;
+
+		uvec2 ed1((id1 < id2 ? id1 : id2), (id2 > id1 ? id2 : id1));
+		uvec2 ed2((id2 < id3 ? id2 : id3), (id3 > id2 ? id3 : id2));
+		uvec2 ed3((id3 < id1 ? id3 : id1), (id1 > id3 ? id1 : id3));
+
+		set.insert(ed1);
+		set.insert(ed2);
+		set.insert(ed3);
+	}
+
+	for (linksSet_t::iterator it = set.begin(); it != set.end(); it++)
+		nodesLinks.push_back(*it);
 }

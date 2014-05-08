@@ -10,13 +10,14 @@
 /**
  * @brief MeshData class 
  *
- * @brief Structure containing information about vertexes, normals, texture
- * coordinates of model mesh.
+ * @brief Class containing information about model mesh: vertexes, normals,
+ * texture and indexes creating faces.
  */
 class MeshData {
 public:
 	struct Vertex;
 	typedef std::vector<Vertex> vertexArray_t;
+	typedef std::vector<glm::vec3> vec3Array_t;
 
 	/**
 	 * @brief Constructor
@@ -28,7 +29,9 @@ public:
 	 */
 	MeshData(const MeshData &m) :
 		vertexes(m.vertexes),
-		faces(m.faces) {}
+		faces(m.faces),
+		nodes(m.nodes),
+		nodesLinks(m.nodesLinks) {}
 
 	/**
 	 * @brief Creates plane mesh aligned to xy axis.
@@ -60,6 +63,11 @@ public:
 	~MeshData(void) {}
 
 	/**
+	 * @brief Generates nodesLinks data from faces.
+	 */
+	void GenerateLinks(void);
+
+	/**
 	 * @brief Type of primitives to draw from vertexes.
 	 */
 	enum MeshType
@@ -71,6 +79,18 @@ public:
 
 	vertexArray_t  vertexes;
 	index3Array_t  faces;
+
+	/**
+	 * @brief Nodes of 3D model mesh. Each node can map to multiple 
+	 * vertexes depending on normal and texture coordinates attached to
+	 * vertex.
+	 */
+	vec3Array_t nodes;
+
+	/**
+	 * @brief Connections between nodes.
+	 */
+	index2Array_t nodesLinks;
 };
 
 /**
@@ -84,10 +104,11 @@ struct MeshData::Vertex {
 	 * @param[in] t texture coordinate of vertex.
 	 * @param[in] n normal asociated with surface.
 	 */
-	Vertex(const glm::vec3 &v, const glm::vec2 &t, const glm::vec3 &n) :
+	Vertex(const glm::vec3 &v, const glm::vec2 &t, const glm::vec3 &n, unsigned int id = -1) :
 		position(v),
 		texture(t),
-		normal(n) {}
+		normal(n),
+		nodeId(id) {}
 
 	/**
 	 * @brief Copy constructor
@@ -95,13 +116,15 @@ struct MeshData::Vertex {
 	Vertex(const Vertex &v) :
 		position(v.position),
 		texture(v.texture),
-		normal(v.normal) {}
+		normal(v.normal),
+		nodeId(v.nodeId) {}
 
 	~Vertex(void) {}
 
 	glm::vec3 position;
 	glm::vec2 texture;
 	glm::vec3 normal;
+	unsigned int nodeId;
 };
 
 #endif
