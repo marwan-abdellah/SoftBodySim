@@ -224,5 +224,5 @@ void Demo::OnMouseMove(int x, int y)
 int main(int argc, char **argv)
 {
     Demo demo(argc, argv);
-    demo.MainLoop(0.05);
+    demo.MainLoop(0.02);
 }

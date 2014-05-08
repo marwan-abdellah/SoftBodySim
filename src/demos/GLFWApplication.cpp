@@ -83,6 +83,7 @@ GLFWApplication::~GLFWApplication()
 void GLFWApplication::MainLoop(double delta)
 {
 	double accumulator = 0.0;
+	m_currentTime = glfwGetTime();
 
 	app = this;
 
@@ -93,6 +94,7 @@ void GLFWApplication::MainLoop(double delta)
 		if (frameTime > 0.5)
 			frameTime = 0.5;
 
+		accumulator += frameTime;
 		m_currentTime = newTime;
 
 		while (accumulator >= delta) {
