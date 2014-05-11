@@ -191,7 +191,7 @@ bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr)
 	unsigned int bytesPart = descr->nParticles * sizeof(vec3);
 	unsigned int bytesLnk  = descr->nLinks * sizeof(LinkConstraint);
 	unsigned int bytesMass = descr->nParticles * sizeof(float_t);
-	unsigned int bytesMap  = descr->nParticles * sizeof(uint_t);
+	unsigned int bytesMap  = descr->nMapping * sizeof(uint_t);
 
 	err = cudaMemcpy(descr->positions, &(body->mParticles[0]), bytesPart, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) return false;
@@ -211,11 +211,11 @@ bool CUDASoftBodySolver::cudaCopyBodyToDeviceBuffers(SoftBodyDescriptor *descr)
 	return true;
 }
 
-cudaGraphicsResource *cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb)
+cudaGraphicsResource *cudaRegisterGLGraphicsResource(const VertexBuffer *vb)
 {
 	cudaError_t err;
 	cudaGraphicsResource *ret = NULL;
-	GLuint id = vb->getVBO(GLVertexBuffer::VERTEX_ATTR_POSITION);
+	GLuint id = vb->GetVBO();
 	err = cudaGraphicsGLRegisterBuffer(&ret, id, cudaGraphicsRegisterFlagsNone);
 	if (err != cudaSuccess) {
 		ERR("Unable to register GL buffer object %d", id);
@@ -226,31 +226,14 @@ cudaGraphicsResource *cudaRegisterGLGraphicsResource(const GLVertexBuffer *vb)
 
 bool CUDASoftBodySolver::cudaRegisterVertexBuffers(SoftBodyDescriptor *descr)
 {
-	const Mesh *mesh;
-
 	if (!descr->body) {
 		ERR("No SoftBody reference in descriptor!");
 		return false;
 	}
 
-	mesh = descr->body->getMesh();
-	if (!mesh) {
-		ERR("No mesh data");
-		return false;
-	}
-
-	const VertexBuffer *buf = mesh->vertexes;
-	if (buf) {
-		switch (buf->getType()) {
-			case VertexBuffer::OPENGL_BUFFER:
-				descr->graphics = cudaRegisterGLGraphicsResource(static_cast<const GLVertexBuffer*>(buf));
-				if (!descr->graphics)
-					return false;
-				break;
-			default:
-				break;
-		}
-	}
+	const VertexBuffer *buf = descr->body->GetVertexes();
+	if (buf)
+		descr->graphics = cudaRegisterGLGraphicsResource(buf);
 
 	return true;
 }
@@ -356,7 +339,7 @@ void CUDASoftBodySolver::shutdown(void)
 void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 {
 	cudaError_t err;
-	vec3 *ptr;
+	Vertex *ptr;
 	int threadsPerBlock = 128;
 
 	// map all in one call
@@ -370,13 +353,9 @@ void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 			ERR("Unable to map VBO pointer");
 			return;
 		}
-		if (size != it->nParticles * sizeof(vec3)) {
-			ERR("Invalid size!");
-			return;
-		}
-		int blockCount = it->nParticles / threadsPerBlock + 1;
-		cudaUpdateVertexBufferKernel<<<blockCount, threadsPerBlock >>>(ptr,
-				it->positions, it->mapping, it->nParticles);
+		int blockCount = it->nMapping / threadsPerBlock + 1;
+		cudaUpdateVertexBufferKernel<<<blockCount, threadsPerBlock >>>(
+				ptr, it->positions, it->mapping, it->nMapping);
 	}
 
 	cudaGraphicsUnmapResources(cuda->resArray.size(), &cuda->resArray[0]);

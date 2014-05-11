@@ -17,51 +17,6 @@ using namespace glm;
 const int width = 800;
 const int height = 600;
 
-const vec3 particles[] = {
-    vec3(1.000000, -1.000000, -1.000000),
-    vec3(1.000000, -1.000000, 1.000000),
-    vec3(-1.000000, -1.000000, 1.000000),
-    vec3(-1.000000, -1.000000, -1.000000),
-    vec3(1.000000, 1.000000, -0.999999),
-    vec3(0.999999, 1.000000, 1.000001),
-    vec3(-1.000000, 1.000000, 1.000000),
-    vec3(-1.000000, 1.000000, -1.000000)
-};
-
-const uvec2 links[] = {
-    uvec2(0,1),
-    uvec2(1,2),
-    uvec2(2,3),
-    uvec2(3,0),
-    uvec2(4,5),
-    uvec2(5,6),
-    uvec2(6,7),
-    uvec2(7,4),
-    uvec2(0,4),
-    uvec2(1,5),
-    uvec2(2,6),
-    uvec2(3,7),
-
-    uvec2(0,6),
-    uvec2(1,7),
-    uvec2(2,4),
-    uvec2(3,5),
-};
-
-const uvec2 faces[] = {
-    uvec2(1, 0), uvec2(6, 0), uvec2(2, 0),
-    uvec2(1, 0), uvec2(4, 0), uvec2(8, 0),
-    uvec2(1, 0), uvec2(8, 0), uvec2(5, 0),
-    uvec2(1, 0), uvec2(5, 0), uvec2(6, 0),
-    uvec2(2, 0), uvec2(6, 0), uvec2(3, 0),
-    uvec2(3, 0), uvec2(8, 0), uvec2(4, 0),
-    uvec2(3, 0), uvec2(6, 0), uvec2(7, 0),
-    uvec2(3, 0), uvec2(7, 0), uvec2(8, 0),
-    uvec2(6, 0), uvec2(8, 0), uvec2(7, 0),
-    uvec2(5, 0), uvec2(8, 0), uvec2(6, 0),
-    uvec2(1, 0), uvec2(2, 0), uvec2(3, 0),
-    uvec2(1, 0), uvec2(3, 0), uvec2(4, 0),
-};
 
 class Demo : public GLFWApplication
 {
@@ -89,45 +44,9 @@ Demo::Demo(int argc, char **argv) :
     mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
 	mSolver()
 {
-	Box box(vec3(0,0,0), vec3(1, 1, -1));
-	MeshData md = MeshData::CreateCube(box, 3, 3, 3);
-
-	WRN("vertex count: %d", md.vertexes.size());
-	FOREACH_R(it, md.vertexes)
-		WRN("%f, %f, %f, [%d]", it->position[0], it->position[1], it->position[2], it->nodeId);
-
-	WRN("nodes count: %d", md.nodes.size());
-	FOREACH_R(it, md.nodes)
-		WRN("[%f, %f, %f]", (*it)[0], (*it)[1], (*it)[2]);
-
-	WRN("nodes links count: %d", md.nodesLinks.size());
-	FOREACH_R(it, md.nodesLinks)
-		WRN("[%u, %u]", (*it)[0], (*it)[1]);
-
-	WRN("faces count: %d", md.faces.size());
-	FOREACH_R(it, md.faces)
-		WRN("[%u, %u, %u]", (*it)[0], (*it)[1], (*it)[2]);
-
-    vec3Array_t particlesA(particles, particles + SIZE(particles));
-    index2Array_t linksA(links, links + SIZE(links));
-
-    facesArray_t facesA;
-#define FACE_ADD(x, arr, s, e) x.push_back(vector<uvec2>(&arr[s], &arr[s] + e ))
-
-    FACE_ADD(facesA, faces, 0, 3);
-    FACE_ADD(facesA, faces, 3, 3);
-    FACE_ADD(facesA, faces, 6, 3);
-    FACE_ADD(facesA, faces, 9, 3);
-    FACE_ADD(facesA, faces, 12, 3);
-    FACE_ADD(facesA, faces, 15, 3);
-    FACE_ADD(facesA, faces, 18, 3);
-    FACE_ADD(facesA, faces, 21, 3);
-    FACE_ADD(facesA, faces, 24, 3);
-    FACE_ADD(facesA, faces, 27, 3);
-    FACE_ADD(facesA, faces, 30, 3);
-    FACE_ADD(facesA, faces, 33, 3);
+	MeshData md = MeshData::CreateCube(vec3(-1,-1, 1), vec3(1, 1, -1), 3, 3, 3);
     
-    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, &particlesA, &linksA, NULL, NULL, &facesA, VertexBuffer::OPENGL_BUFFER);
+    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);

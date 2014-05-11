@@ -28,7 +28,7 @@ typedef unordered_set<uvec2, Index2Hasher> linksSet_t;
 
 
 static inline unsigned int
-_ivertex_insert(vertexMap_t &map, vec3Array_t &nods, uvec3 &id, vec3 &p)
+_node_insert(vertexMap_t &map, vec3Array_t &nods, uvec3 &id, vec3 &p)
 {
 	vertexMap_t::iterator it = map.find(id);
 	if (it == map.end()) {
@@ -39,13 +39,13 @@ _ivertex_insert(vertexMap_t &map, vec3Array_t &nods, uvec3 &id, vec3 &p)
 	return it->second;
 }
 
-MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
+MeshData MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t nx, size_t ny, size_t nz)
 {
 	SB_ASSERT(((nx > 1) && (ny > 1) && (ny > 1)));
 
 	MeshData ret;
 
-	vec3 diff = c.m_upperRight - c.m_bottomLeft;
+	vec3 diff = upperRightBack - bottomLeftFront;
 	diff[0] *= 1.0f / (nx - 1);
 	diff[1] *= 1.0f / (ny - 1);
 	diff[2] *= 1.0f / (nz - 1);
@@ -58,9 +58,10 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 	for (unsigned int y = 0; y < ny; y++)
 		for (unsigned int z = 0; z < nz; z++) {
 			uvec3 id(0, y, z);
-			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
-			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
-			ret.vertexes.push_back(Vertex(p, vec2(), vec3(-1, 0, 0), d));
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
+			unsigned int d = _node_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(-1, 0, 0)));
+			ret.vertexesNodes.push_back(d);
 		}
 
 	for (unsigned int y = 0; y < ny - 1; y++)
@@ -79,9 +80,10 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 	for (unsigned int y = 0; y < ny; y++)
 		for (unsigned int z = 0; z < nz; z++) {
 			uvec3 id(nx - 1, y, z);
-			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
-			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
-			ret.vertexes.push_back(Vertex(p, vec2(), vec3(1, 0, 0), d));
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
+			unsigned int d = _node_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(1, 0, 0)));
+			ret.vertexesNodes.push_back(d);
 		}
 
 	for (unsigned int y = 0; y < ny - 1; y++)
@@ -100,9 +102,10 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 	for (unsigned int x = 0; x < nx; x++)
 		for (unsigned int z = 0; z < nz; z++) {
 			uvec3 id(x, 0, z);
-			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
-			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
-			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, -1, 0), d));
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
+			unsigned int d = _node_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, -1, 0)));
+			ret.vertexesNodes.push_back(d);
 		}
 
 	for (unsigned int x = 0; x < nx - 1; x++)
@@ -113,7 +116,7 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 			unsigned int d4 = z + x * nz + 1 + base;
 
 			ret.faces.push_back(uvec3(d3, d2, d1));
-			ret.faces.push_back(uvec3(d3, d4, d1));
+			ret.faces.push_back(uvec3(d4, d3, d1));
 		}
 	base = ret.vertexes.size();
 
@@ -121,9 +124,10 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 	for (unsigned int x = 0; x < nx; x++)
 		for (unsigned int z = 0; z < nz; z++) {
 			uvec3 id(x, ny - 1, z);
-			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
-			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
-			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 1, 0), d));
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
+			unsigned int d = _node_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 1, 0)));
+			ret.vertexesNodes.push_back(d);
 		}
 
 	for (unsigned int x = 0; x < nx - 1; x++)
@@ -142,9 +146,10 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 	for (unsigned int x = 0; x < nx; x++)
 		for (unsigned int y = 0; y < ny; y++) {
 			uvec3 id(x, y, 0);
-			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
-			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
-			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, 1), d));
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
+			unsigned int d = _node_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, 1)));
+			ret.vertexesNodes.push_back(d);
 		}
 
 	for (unsigned int x = 0; x < nx - 1; x++)
@@ -163,9 +168,10 @@ MeshData MeshData::CreateCube(const Box &c, size_t nx, size_t ny, size_t nz)
 	for (unsigned int x = 0; x < nx; x++)
 		for (unsigned int y = 0; y < ny; y++) {
 			uvec3 id(x, y, nz - 1);
-			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]);
-			unsigned int d = _ivertex_insert(map, ret.nodes, id, p);
-			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, -1), d));
+			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
+			unsigned int d = _node_insert(map, ret.nodes, id, p);
+			ret.vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, -1)));
+			ret.vertexesNodes.push_back(d);
 		}
 
 	for (unsigned int x = 0; x < nx - 1; x++)
@@ -230,9 +236,9 @@ void MeshData::GenerateLinks(void)
 	linksSet_t set;
 
 	for (index3Array_t::iterator it = faces.begin(); it != faces.end(); it++) {
-		unsigned int id1 = vertexes[(*it)[0]].nodeId;
-		unsigned int id2 = vertexes[(*it)[1]].nodeId;
-		unsigned int id3 = vertexes[(*it)[2]].nodeId;
+		unsigned int id1 = vertexesNodes[(*it)[0]];
+		unsigned int id2 = vertexesNodes[(*it)[1]];
+		unsigned int id3 = vertexesNodes[(*it)[2]];
 
 		uvec2 ed1((id1 < id2 ? id1 : id2), (id2 > id1 ? id2 : id1));
 		uvec2 ed2((id2 < id3 ? id2 : id3), (id3 > id2 ? id3 : id2));
@@ -241,6 +247,10 @@ void MeshData::GenerateLinks(void)
 		set.insert(ed1);
 		set.insert(ed2);
 		set.insert(ed3);
+
+		edges.push_back(uvec2((*it)[0], (*it)[1]));
+		edges.push_back(uvec2((*it)[1], (*it)[2]));
+		edges.push_back(uvec2((*it)[2], (*it)[0]));
 	}
 
 	for (linksSet_t::iterator it = set.begin(); it != set.end(); it++)

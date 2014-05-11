@@ -4,17 +4,31 @@
 #include <glm/glm.hpp>
 
 /*
- * Creates an Box aligned with x, y, z axis
+ * @brief Creates an Box aligned with x, y, z axis
  */
 struct Box {
+	/**
+	 * @brief Constructor
+	 *
+	 * @param[in] bl Bottom left front corner of box in RHS coords
+	 * @param[in] ur Upper right back corner of box in RHS coords.
+	 *
+	 * @remark RHS (Right Hand Screen coordinates) assumets Z-axis
+	 * pointing out of screen.
+	 */
 	Box(glm::vec3 bl, glm::vec3 ur) :
-		m_bottomLeft(bl), m_upperRight(ur)
+		bottomLeftFront(bl), upperRightBack(ur)
 	{}
+
+	/**
+	 * Copy constructor
+	 */
 	Box(const Box &p)
-		: m_bottomLeft(p.m_bottomLeft), m_upperRight(p.m_upperRight) {}
+		: bottomLeftFront(p.bottomLeftFront), upperRightBack(p.upperRightBack) {}
 	~Box(void) {}
-	glm::vec3 m_bottomLeft;
-	glm::vec3 m_upperRight;
+
+	glm::vec3 bottomLeftFront;
+	glm::vec3 upperRightBack;
 };
 
 #endif
