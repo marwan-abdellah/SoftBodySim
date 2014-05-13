@@ -1,6 +1,6 @@
 #include "common.h"
 #include "GLFWApplication.h"
-#include "engine/MeshData.h"
+#include "engine/model/MeshData.h"
 #include "renderer/Renderer.h"
 #include "renderer/Camera.h"
 #include "engine/SoftBody.h"
@@ -45,6 +45,7 @@ Demo::Demo(int argc, char **argv) :
 	mSolver()
 {
 	MeshData md = MeshData::CreateCube(vec3(-1,-1, 1), vec3(1, 1, -1), 3, 3, 3);
+	//MeshData md = MeshData::CreateFromObj("src/demos/cube.obj");
     
     SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
     mSoftBodies.push_back(b);

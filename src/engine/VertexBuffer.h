@@ -2,7 +2,6 @@
 #define VERTEX_BUFFER_H
 
 #include "geometry/Arrays.h"
-#include "MeshData.h"
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>

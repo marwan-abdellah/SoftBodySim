@@ -1,6 +1,8 @@
 #include "MeshData.h"
+#include "OBJLexer.h"
 #include "common.h"
 
+#include <fstream>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -255,4 +257,38 @@ void MeshData::GenerateLinks(void)
 
 	for (linksSet_t::iterator it = set.begin(); it != set.end(); it++)
 		nodesLinks.push_back(*it);
+}
+
+MeshData MeshData::CreateFromObj(const char *path)
+{
+	MeshData ret;
+	OBJLexer lexer(path);
+	const char *err;
+
+	while (lexer.ProcessNext()) {
+		OBJLexer::Token tok = lexer.GetToken();
+		switch (tok) {
+			case OBJLexer::TOK_EOL:
+				ERR("TOK_EOL");
+				break;
+			case OBJLexer::TOK_STRING:
+				ERR("TOK_STRING: %s", lexer.GetString().c_str());
+				break;
+			case OBJLexer::TOK_SLASH:
+				ERR("TOK_SLASH");
+				break;
+			case OBJLexer::TOK_NUMBER:
+				ERR("TOK_NUMBER: %f", lexer.GetValue());
+				break;
+		}
+	}
+
+	if ((err = lexer.GetError()) != NULL) {
+		ERR("%s", err);
+		SB_ASSERT(1);
+	}
+
+	ret.GenerateLinks();
+
+	return ret;
 }

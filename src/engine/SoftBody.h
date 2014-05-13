@@ -9,7 +9,7 @@
 #include "Constraints.h"
 #include "VertexBuffer.h"
 #include "Body.h"
-#include "MeshData.h"
+#include "model/MeshData.h"
 
 class SoftBody;
 class CUDASoftBodySolver;
