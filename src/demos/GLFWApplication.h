@@ -7,17 +7,6 @@
 class GLFWApplication
 {
 public:
-    enum ButtonType {
-        RIGHT_BUTTON,
-        MIDDLE_BUTTON,
-        LEFT_BUTTON
-    };
-
-    enum ButtonState {
-        PRESSED,
-        RELEASED
-    };
-
 	GLFWApplication(const char *title, unsigned int width, unsigned int height);
 	virtual ~GLFWApplication();
 
@@ -25,8 +14,8 @@ public:
 	virtual void OnRender(void) = 0;
 
 	virtual void OnMouseMove(int x, int y) {}
-    virtual void OnMouseClick(ButtonType btn, ButtonState state, int x, int y) {}
-	virtual void OnKeyboard(int key) {}
+    virtual void OnMouseClick(int btn, int state, int x, int y) {}
+	virtual void OnKeyboard(int key, int action) {}
 
 	void MainLoop(double timeDelta);
 	void QuitMain(void);

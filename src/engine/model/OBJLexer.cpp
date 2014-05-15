@@ -6,7 +6,7 @@ using namespace std;
 
 OBJLexer::OBJLexer(const char *path) :
 	m_token(TOK_EOL),
-	m_line(0),
+	m_line(1),
 	m_value(0),
 	m_error(false)
 {
@@ -39,7 +39,6 @@ void OBJLexer::SkipWS(void)
 			continue;
 		if (c == '#') {
 			m_file.ignore(numeric_limits<streamsize>::max(), '\n');
-			continue;
 		}
 		m_file.unget();
 		break;
@@ -52,16 +51,20 @@ bool OBJLexer::ProcessNext(void)
 	string tmp;
 
 	if (m_error) return false;
-	if (m_file.eof())
+	if (m_file.eof()) {
+		m_token = TOK_EOF;
 		return false;
+	}
 
 	// skip whitespaces and comments
 	SkipWS();
 
 	c = m_file.get();
 
-	if (c == EOF)
+	if (c == EOF) {
+		m_token = TOK_EOF;
 		return false;
+	}
 
 	if (c == '\n') {
 		m_line++;
@@ -88,6 +91,7 @@ bool OBJLexer::ProcessNext(void)
 	m_str.reserve(40);
 	snprintf((char*)m_str.data(), m_str.capacity(), "Unrecognized char: '%c' [dec: %d], line %d", c, c, m_line);
 	m_error = true;
+	m_token = TOK_ERROR;
 	return false;
 }
 

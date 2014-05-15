@@ -12,7 +12,7 @@ static void errorCb(int error, const char *descr)
 void keyCb(GLFWwindow *m_window, int key, int scancode, int action, int mds)
 {
 	if (!app) return;
-	app->OnKeyboard(key);
+	app->OnKeyboard(key, action);
 }
 
 void mouseMoveCb(GLFWwindow *m_window, double x, double y)
@@ -24,32 +24,9 @@ void mouseMoveCb(GLFWwindow *m_window, double x, double y)
 void mouseCb(GLFWwindow *m_window, int button, int action,
 		int mods)
 {
-	GLFWApplication::ButtonType type;
-	GLFWApplication::ButtonState state;
 	double x, y;
-	if (!app) return;
-	switch (button) {
-		case GLFW_MOUSE_BUTTON_1:
-			type = GLFWApplication::LEFT_BUTTON;
-			break;
-		case GLFW_MOUSE_BUTTON_2:
-			type = GLFWApplication::RIGHT_BUTTON;
-			break;
-		default:
-			return;
-	}
-	switch (action) {
-		case GLFW_PRESS:
-			state = GLFWApplication::PRESSED;
-			break;
-		case GLFW_RELEASE:
-			state = GLFWApplication::RELEASED;
-			break;
-		default:
-			return;
-	}
 	glfwGetCursorPos(app->m_window, &x, &y);
-	app->OnMouseClick(type, state, x, y);
+	app->OnMouseClick(button, action, x, y);
 }
 
 GLFWApplication::GLFWApplication(const char *title, unsigned int width, unsigned int height) :

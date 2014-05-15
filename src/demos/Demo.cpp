@@ -23,8 +23,8 @@ class Demo : public GLFWApplication
 public:
     Demo(int argc, char **argv);
     ~Demo(void);
-    void OnKeyboard(int k);
-    void OnMouseClick(GLFWApplication::ButtonType type, GLFWApplication::ButtonState state, int x, int y);
+    void OnKeyboard(int k, int action);
+    void OnMouseClick(int type, int state, int x, int y);
     void OnMouseMove(int x, int y);
     void OnRender(void);
     void OnUpdate(double dt);
@@ -44,10 +44,9 @@ Demo::Demo(int argc, char **argv) :
     mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
 	mSolver()
 {
-	MeshData md = MeshData::CreateCube(vec3(-1,-1, 1), vec3(1, 1, -1), 3, 3, 3);
-	//MeshData md = MeshData::CreateFromObj("src/demos/cube.obj");
-    
-    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
+	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
+
+    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, *md);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);
@@ -55,6 +54,8 @@ Demo::Demo(int argc, char **argv) :
 
 	mSolver.addSoftBodies(mSoftBodies);
     mSolver.initialize();
+
+	delete md;
 }
 
 Demo::~Demo(void)
@@ -80,22 +81,22 @@ void Demo::OnRender(void)
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
 }
 
-void Demo::OnKeyboard(int key)
+void Demo::OnKeyboard(int key, int action)
 {
     float angle = 2.0f;
     float delta = 0.1f;
 
-    if (key == 'i')
-		mSolver.projectSystem((float)ENGINE_TIME_STEP / 1000.0f);
-    if (key == 'w')
+	if (action == GLFW_RELEASE) return;
+
+    if (key == GLFW_KEY_W)
         mCamera.moveUp(angle);
-    if (key == 's')
+    if (key == GLFW_KEY_D)
         mCamera.moveDown(angle);
-    if (key == 'e')
+    if (key == GLFW_KEY_Z)
         mCamera.moveIn(delta);
-    if (key == 'q')
+    if (key == GLFW_KEY_X)
         mCamera.moveOut(delta);
-    if (key == 'm')
+    if (key == GLFW_KEY_M)
     {
         switch (renderer.getRenderMethod()) {
             case SB_RENDER_PARTICLES:
@@ -106,23 +107,23 @@ void Demo::OnKeyboard(int key)
                 break;
         }
     }
-    if (key == 'd')
+    if (key == GLFW_KEY_A)
         mCamera.moveRight(angle);
-    else if (key == 'a')
+    else if (key == GLFW_KEY_D)
         mCamera.moveLeft(angle);
 }
 
-void Demo::OnMouseClick(ButtonType type, ButtonState state, int x, int y)
+void Demo::OnMouseClick(int type, int state, int x, int y)
 {
-    if (type != LEFT_BUTTON)
+    if (type != GLFW_MOUSE_BUTTON_1)
         return;
 
-    if (state == PRESSED) {
+    if (state == GLFW_PRESS) {
         mMouseLastX = x;
         mMouseLastY = y;
         mMousePressed = true;
     }
-    else if (state == RELEASED)
+    else if (state == GLFW_RELEASE)
         mMousePressed = false;
 }
 

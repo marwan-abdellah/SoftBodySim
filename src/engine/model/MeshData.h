@@ -37,7 +37,7 @@ public:
 	 * @param[in] nx number of vertexes along x axis
 	 * @param[in] ny number of vertexes along y axis
 	 */
-	static MeshData CreatePlane(float width, float height, size_t nx, size_t ny);
+	static MeshData *CreatePlane(float width, float height, size_t nx, size_t ny);
 
 	/**
 	 * @brief Creates cube mesh alighend to xyz axis.
@@ -48,14 +48,14 @@ public:
 	 * @param[in] ny number of vertexes along y axis
 	 * @param[in] nz number of vertexes along z axis
 	 */
-	static MeshData CreateCube(glm::vec3 leftLowerFront, glm::vec3 rightUpperBack, size_t nx, size_t ny, size_t nz);
+	static MeshData *CreateCube(glm::vec3 leftLowerFront, glm::vec3 rightUpperBack, size_t nx, size_t ny, size_t nz);
 
 	/**
 	 * @brief Creates mesh form Wavefron 'obj' text format.
 	 *
 	 * @param[in] path Wavefront file path.
 	 */
-	static MeshData CreateFromObj(const char *path);
+	static MeshData *CreateFromObj(const char *path);
 
 	~MeshData(void) {}
 
@@ -91,6 +91,7 @@ public:
 
 	index3Array_t  faces;
 	index2Array_t  edges;
+private:
 };
 
 

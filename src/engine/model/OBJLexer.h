@@ -15,10 +15,12 @@ public:
 	 * OBJ file format tokens identificators.
 	 */
 	enum Token {
+		TOK_EOF,
 		TOK_EOL,
 		TOK_STRING,
 		TOK_SLASH,
 		TOK_NUMBER,
+		TOK_ERROR
 	};
 
 	/**
@@ -48,6 +50,11 @@ public:
 	 * reached or error has occured. (Check error status with GetError)
 	 */
 	bool ProcessNext(void);
+
+	/**
+	 * @brief ProcessNext() and gets obtained token
+	 */
+	Token GetNextToken(void) { ProcessNext(); return m_token; }
 
 	/**
 	 * @brief Returns a character content of parsed token
