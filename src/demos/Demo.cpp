@@ -45,8 +45,9 @@ Demo::Demo(int argc, char **argv) :
 	mSolver()
 {
 	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
+	MeshData *md2 = MeshData::CreatePlane(3.0, 3.0, 3, 3);
 
-    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, *md);
+    SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
     mSoftBodies.push_back(b);
 
     renderer.initialize(width, height);

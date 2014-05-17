@@ -1,6 +1,8 @@
 #ifndef SB_SPHERE_H
 #define SB_SPHERE_H
 
+#include <glm/glm.hpp>
+
 struct Sphere {
 	Sphere(void) {}
 	Sphere(const Sphere &s)

@@ -1,4 +1,5 @@
 set (SRCS
+		Body.cpp
 		SoftBody.cpp
 		CUDASoftBodySolver.cu
 		CUDASoftBodySolverKernel.cu

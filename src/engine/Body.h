@@ -2,6 +2,8 @@
 #define SB_BODY_H
 
 #include "geometry/Sphere.h"
+#include "model/MeshData.h"
+#include "VertexBuffer.h"
 
 
 /**
@@ -9,7 +11,9 @@
  */
 class Body {
 public:
-	Body(void) : mVertexes(NULL), mEdges(NULL), mFaces(NULL) {}
+	Body(MeshData *md);
+	virtual ~Body();
+
 	virtual const Sphere *getBoundingVolume(void) = 0;
 
     const VertexBuffer *GetVertexes(void) { return mVertexes; }

@@ -7,7 +7,6 @@
 
 #include "geometry/Arrays.h"
 #include "Constraints.h"
-#include "VertexBuffer.h"
 #include "Body.h"
 #include "model/MeshData.h"
 
@@ -18,16 +17,12 @@ class CUDASoftBodySolver;
 class SoftBody : public Body {
 public:
     SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
-             MeshData &mesh);
-    virtual ~SoftBody(void);
+             MeshData *mesh);
+    ~SoftBody(void) {}
 
 	const Sphere *getBoundingVolume(void) { return &mCollisionSphere; }
 
 private:
-	VertexBuffer *createGLVertexBuffer(vec3Array_t *vertexes, vec2Array_t *texCoords);
-	ElementBuffer *createGLEdgeElementBuffer(index2Array_t *edges);
-	ElementBuffer *createGLFacesElementBuffer(index3Array_t *faces);
-
     vec3Array_t                 mParticles;
     vec3Array_t                 mVelocities;
     vec3Array_t                 mForces;
