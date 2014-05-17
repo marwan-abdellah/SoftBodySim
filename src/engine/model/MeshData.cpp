@@ -191,7 +191,7 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 
 	ret->GenerateLinks();
 
-	return ret; // by value - assume compiler RVO
+	return ret;
 }
 
 MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
