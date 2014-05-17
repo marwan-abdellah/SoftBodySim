@@ -15,15 +15,11 @@ class SoftBody;
 class CUDASoftBodySolver;
 
 
-class SoftBody : Body {
+class SoftBody : public Body {
 public:
     SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
              MeshData &mesh);
     virtual ~SoftBody(void);
-
-    const VertexBuffer *GetVertexes(void) { return mVertexes; }
-	const ElementBuffer *getEdges(void) { return mEdges; }
-	const ElementBuffer *getFaces(void) { return mFaces; }
 
 	const Sphere *getBoundingVolume(void) { return &mCollisionSphere; }
 
@@ -49,9 +45,6 @@ private:
 	Sphere                      mCollisionSphere;
 
     // drawing data
-	VertexBuffer				*mVertexes;
-    ElementBuffer               *mEdges;
-    ElementBuffer               *mFaces;
     indexArray_t                mMeshVertexParticleMapping; /* Needed for updating mesh
 															   vertex buffer */
 

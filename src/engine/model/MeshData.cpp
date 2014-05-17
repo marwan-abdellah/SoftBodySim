@@ -211,6 +211,8 @@ MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 			vec3 norm(0.0, 0.0, 1.0);
 			Vertex v(pos, vec2(), norm);
 			ret->vertexes.push_back(v);
+			ret->vertexesNodes.push_back(ret->nodes.size());
+			ret->nodes.push_back(v.position);
 		}
 	}
 

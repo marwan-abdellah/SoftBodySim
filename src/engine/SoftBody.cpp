@@ -8,9 +8,7 @@ using namespace std;
 
 SoftBody::SoftBody(float_t mass, float_t springness, float_t damping, 
 				   MeshData &mesh) :
-	mEdges(0),
-	mVertexes(0),
-	mFaces(0)
+	Body()
 {
 	mSpringiness = springness;
 	mDamping = damping;

@@ -159,7 +159,7 @@ void SoftBodyRenderer::clearScreen(void)
 //    border->draw();
 //}
 
-void SoftBodyRenderer::renderBody(SoftBody *obj, const glm::mat4 *camMat)
+void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 *camMat)
 {
     vec3 color(255,1,1);
     const VertexBuffer *buff;

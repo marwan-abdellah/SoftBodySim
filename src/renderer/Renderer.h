@@ -24,7 +24,7 @@ class SoftBodyRenderer {
         void                            shutdown(void);
         void                            setRenderMethod(SoftBodyRenderMethod_e);
         SoftBodyRenderMethod_e          getRenderMethod(void);
-        void                            renderBody(SoftBody *s, const glm::mat4 *view);
+        void                            renderBody(Body *s, const glm::mat4 *view);
         void                            clearScreen(void);
         void                            setLightSource(glm::vec3);
 
