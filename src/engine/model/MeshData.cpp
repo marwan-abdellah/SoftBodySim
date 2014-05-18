@@ -221,8 +221,8 @@ MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 			uvec3 idx;
 
 			idx[0] = y + ny * x;
-			idx[1] = y + (ny + 1) * x;
-			idx[2] = y + (ny + 1) * x + 1;
+			idx[1] = y + ny * (x + 1);
+			idx[2] = y + ny * (x + 1) + 1;
 			ret->faces.push_back(idx);
 
 			idx[1] = idx[2];
