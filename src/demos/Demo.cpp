@@ -29,6 +29,7 @@ public:
     void OnRender(void);
     void OnUpdate(double dt);
 private:
+	Body *floor;
     SoftBodyRenderer    renderer;
     softbodyList_t     mSoftBodies;
     int mMouseLastX;
@@ -45,10 +46,12 @@ Demo::Demo(int argc, char **argv) :
 	mSolver()
 {
 	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
-	MeshData *md2 = MeshData::CreatePlane(3.0, 3.0, 3, 3);
+	MeshData *md2 = MeshData::CreatePlane(3.0, 3.0, 2, 2);
 
     SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
     mSoftBodies.push_back(b);
+
+	floor = new Body(md2);
 
     renderer.initialize(width, height);
     renderer.setRenderMethod(SB_RENDER_PARTICLES);
@@ -57,12 +60,14 @@ Demo::Demo(int argc, char **argv) :
     mSolver.initialize();
 
 	delete md;
+	delete md2;
 }
 
 Demo::~Demo(void)
 {
     FOREACH(b, &mSoftBodies)
         delete *b;
+	delete floor;
 }
 
 #define ENGINE_TIME_STEP 15
@@ -80,6 +85,8 @@ void Demo::OnRender(void)
 	renderer.clearScreen();
 	FOREACH(b, &mSoftBodies)
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
+
+	renderer.renderBody(floor, mCamera.getCameraMatrix());
 }
 
 void Demo::OnKeyboard(int key, int action)

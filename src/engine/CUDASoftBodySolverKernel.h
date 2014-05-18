@@ -31,7 +31,7 @@ __global__ void integrateMotionKernel(
 		);
 
 __global__ void cudaUpdateVertexBufferKernel(
-		Vertex *vboPtr,
+		MeshData::Vertex *vboPtr,
 		glm::vec3 *positions,
 		glm::uint *mapping,
 		glm::uint max_idx);

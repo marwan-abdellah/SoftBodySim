@@ -179,7 +179,7 @@ __global__ void integrateMotionKernel(
 	}
 }
 
-__global__ void cudaUpdateVertexBufferKernel(Vertex *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
+__global__ void cudaUpdateVertexBufferKernel(MeshData::Vertex *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 

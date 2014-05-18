@@ -414,7 +414,7 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 					txt = textures.size() == 0 ? vec2(0,0) : textures[vertId[i][1]-1];
 				if (vertId[i][2])
 					nrm = normals.size() == 0 ? vec3(0,0,0) : normals[vertId[i][2]-1];
-				Vertex v(md->nodes[vertId[i][0]-1], txt, nrm);
+				MeshData::Vertex v(md->nodes[vertId[i][0]-1], txt, nrm);
 				faceId[i] = md->vertexes.size();
 				md->vertexes.push_back(v);
 				md->vertexesNodes.push_back(vertId[i][0] - 1);

@@ -339,7 +339,7 @@ void CUDASoftBodySolver::shutdown(void)
 void CUDASoftBodySolver::updateVertexBuffers(SolverPrivate *cuda, bool async)
 {
 	cudaError_t err;
-	Vertex *ptr;
+	MeshData::Vertex *ptr;
 	int threadsPerBlock = 128;
 
 	// map all in one call

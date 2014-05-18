@@ -14,8 +14,6 @@ public:
 	Body(MeshData *md);
 	virtual ~Body();
 
-	virtual const Sphere *getBoundingVolume(void) = 0;
-
     const VertexBuffer *GetVertexes(void) { return mVertexes; }
 	const ElementBuffer *getEdges(void) { return mEdges; }
 	const ElementBuffer *getFaces(void) { return mFaces; }

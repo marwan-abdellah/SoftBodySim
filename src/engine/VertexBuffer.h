@@ -2,6 +2,7 @@
 #define VERTEX_BUFFER_H
 
 #include "geometry/Arrays.h"
+#include "model/MeshData.h"
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
@@ -25,10 +26,10 @@ public:
         VERTEX_ATTR_NORMAL,
         VERTEX_ATTR_COLOR,
     };
-    VertexBuffer(vertexArray_t &vertexes);
+    VertexBuffer(MeshData::vertexArray_t &vertexes);
     ~VertexBuffer(void);
 
-	void SetData(vertexArray_t &vertexes);
+	void SetData(MeshData::vertexArray_t &vertexes);
     GLint GetVBO() const { return mVBO; }
 
 	size_t GetVertexCount(void) const { return mVertexCount; }

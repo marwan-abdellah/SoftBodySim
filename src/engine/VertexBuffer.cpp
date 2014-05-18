@@ -6,7 +6,7 @@
 using namespace glm;
 
 
-VertexBuffer::VertexBuffer(vertexArray_t &vertexes)
+VertexBuffer::VertexBuffer(MeshData::vertexArray_t &vertexes)
 {
 	glGenVertexArrays(1, &mVAO);
 	glBindVertexArray(mVAO);
@@ -14,11 +14,11 @@ VertexBuffer::VertexBuffer(vertexArray_t &vertexes)
 	SetData(vertexes);
 
 	glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-	glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+	glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(MeshData::Vertex), NULL);
 	glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-	glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
+	glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(MeshData::Vertex), (void*)(offsetof(MeshData::Vertex, normal)));
 	glEnableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
-	glVertexAttribPointer(VERTEX_ATTR_TEX_COORDS, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texture)));
+	glVertexAttribPointer(VERTEX_ATTR_TEX_COORDS, 2, GL_FLOAT, GL_FALSE, sizeof(MeshData::Vertex), (void*)(offsetof(MeshData::Vertex, texture)));
 
 	glBindVertexArray(0);
 }
@@ -29,11 +29,11 @@ VertexBuffer::~VertexBuffer(void)
     glDeleteBuffers(1, &mVBO);
 }
 
-void VertexBuffer::SetData(vertexArray_t &vertexes)
+void VertexBuffer::SetData(MeshData::vertexArray_t &vertexes)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	mVertexCount = vertexes.size();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * mVertexCount, &vertexes[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(MeshData::Vertex) * mVertexCount, &vertexes[0], GL_STATIC_DRAW);
 }
 
 void VertexBuffer::Draw(DrawType t) const

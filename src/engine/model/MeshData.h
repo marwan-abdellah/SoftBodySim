@@ -14,6 +14,11 @@
  */
 class MeshData {
 public:
+	struct Vertex;
+	typedef std::vector<Vertex>                 vertexArray_t;
+	typedef std::vector<Vertex>::iterator       vertexArrayIterator_t;
+	typedef std::vector<Vertex>::const_iterator vertexArrayConstIterator_t;
+
 	/**
 	 * @brief Constructor
 	 */
@@ -92,6 +97,39 @@ public:
 	index3Array_t  faces;
 	index2Array_t  edges;
 private:
+};
+
+/**
+ * @brief Single vertex in mesh having its position, texture coords and normal.
+ */
+struct MeshData::Vertex {
+	/**
+	 * @brief Constructor
+	 *
+	 * @param[in] v position of vertex in 3d space.
+	 * @param[in] t texture coordinate of vertex.
+	 * @param[in] n normal asociated with surface.
+	 */
+	Vertex(const glm::vec3 &v, const glm::vec2 &t, const glm::vec3 &n) :
+		position(v),
+		texture(t),
+		normal(n)
+		{}
+
+	/**
+	 * @brief Copy constructor
+	 */
+	Vertex(const Vertex &v) :
+		position(v.position),
+		texture(v.texture),
+		normal(v.normal)
+		{}
+
+	~Vertex(void) {}
+
+	glm::vec3 position;
+	glm::vec2 texture;
+	glm::vec3 normal;
 };
 
 
