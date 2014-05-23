@@ -405,9 +405,9 @@ void CUDASoftBodySolver::projectSystem(float_t dt)
 		projectSystem(mCuda, dt);
 }
 
-void CUDASoftBodySolver::setWorldParameters(SoftBodyWorldParameters *params)
+void CUDASoftBodySolver::setWorldParameters(SoftBodyWorldParameters &params)
 {
-	mWorldParams = *params;
+	mWorldParams = params;
 }
 
 void CUDASoftBodySolver::addSoftBodies(softbodyList_t &bodies)

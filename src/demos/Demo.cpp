@@ -56,7 +56,12 @@ Demo::Demo(int argc, char **argv) :
 	renderer.initialize(width, height);
 	renderer.setRenderMethod(SB_RENDER_PARTICLES);
 
+	CUDASoftBodySolver::SoftBodyWorldParameters worldParams;
+	worldParams.gravity = vec3(0, -10.0, 0);
+	worldParams.groundLevel = -2.0f;
+
 	mSolver.addSoftBodies(mSoftBodies);
+	mSolver.setWorldParameters(worldParams);
 	mSolver.initialize();
 
 	delete md;

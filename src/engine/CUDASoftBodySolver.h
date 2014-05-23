@@ -22,7 +22,7 @@ class CUDASoftBodySolver {
 		bool initialize(void);
 		void shutdown(void);
 
-		void setWorldParameters(SoftBodyWorldParameters *params);
+		void setWorldParameters(SoftBodyWorldParameters &params);
 
 		void addSoftBodies(softbodyList_t &bodies);
 		void removeBodies(softbodyList_t *bodies);
