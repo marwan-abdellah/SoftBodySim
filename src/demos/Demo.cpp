@@ -38,6 +38,7 @@ private:
 	Camera mCamera;
 	CUDASoftBodySolver mSolver;
 	int	mEnginUpdateTime;
+	mat4 mFloorTransform;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -46,12 +47,16 @@ Demo::Demo(int argc, char **argv) :
 	mSolver()
 {
 	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
-	MeshData *md2 = MeshData::CreatePlane(3.0, 3.0, 2, 2);
+	MeshData *md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 
 	SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
+	vec3 color(0.0, 0.0, 1.0f);
+	b->SetColor(color);
 	mSoftBodies.push_back(b);
 
 	floor = new Body(md2);
+	mFloorTransform = translate(0.0f, -2.0f, 0.0f);
+	mFloorTransform = rotate(mFloorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 
 	renderer.initialize(width, height);
 	renderer.setRenderMethod(SB_RENDER_PARTICLES);
@@ -88,7 +93,7 @@ void Demo::OnRender(void)
 	FOREACH(b, &mSoftBodies)
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
 
-	renderer.renderBody(floor, mCamera.getCameraMatrix());
+	renderer.renderBody(floor, mCamera.getCameraMatrix() * mFloorTransform);
 }
 
 void Demo::OnKeyboard(int key, int action)

@@ -17,11 +17,14 @@ public:
     const VertexBuffer *GetVertexes(void) { return mVertexes; }
 	const ElementBuffer *getEdges(void) { return mEdges; }
 	const ElementBuffer *getFaces(void) { return mFaces; }
+	void SetColor(glm::vec3 &color) { mColor = color; }
+	const glm::vec3 GetColor(void) { return mColor; }
 
 protected:
 	VertexBuffer				*mVertexes;
     ElementBuffer               *mEdges;
     ElementBuffer               *mFaces;
+	glm::vec3					mColor;
 };
 
 #endif

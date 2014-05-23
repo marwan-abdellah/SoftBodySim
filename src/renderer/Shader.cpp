@@ -130,7 +130,7 @@ void Shader::useShader(void)
         ERR("Program failed to compile and link.");
 }
 
-void Shader::setUniform(const char *name, const glm::vec3 *v)
+void Shader::setUniform(const char *name, const glm::vec3 &v)
 {
     if (!iProgram)
         return;
@@ -139,10 +139,10 @@ void Shader::setUniform(const char *name, const glm::vec3 *v)
         ERR("Invalid uniform name: %s", name);
         return;
     }
-    glUniform3fv(k, 1, glm::value_ptr(*v));
+    glUniform3fv(k, 1, glm::value_ptr(v));
 }
 
-void Shader::setUniform(const char *name, const glm::mat4 *v)
+void Shader::setUniform(const char *name, const glm::mat4 &v)
 {
     if (!iProgram)
         return;
@@ -151,5 +151,5 @@ void Shader::setUniform(const char *name, const glm::mat4 *v)
         ERR("Invalid uniform name: %s", name);
         return;
     }
-    glUniformMatrix4fv(k, 1, false, glm::value_ptr(*v));
+    glUniformMatrix4fv(k, 1, false, glm::value_ptr(v));
 }

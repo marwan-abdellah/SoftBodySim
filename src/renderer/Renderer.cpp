@@ -124,15 +124,15 @@ void SoftBodyRenderer::initialize(int width, int height)
     mPointLine.setShaderSource(GL_FRAGMENT_SHADER, fragment_source);
     mPointLine.compileAndLink();
     mPointLine.useShader();
-    mPointLine.setUniform("projMatrix", &mProjectionMat);
+    mPointLine.setUniform("projMatrix", mProjectionMat);
 
     mLighting.setShaderSource(GL_VERTEX_SHADER, vertex_source2);
     mLighting.setShaderSource(GL_FRAGMENT_SHADER, fragment_source2);
     mLighting.setShaderSource(GL_GEOMETRY_SHADER, geometry_shader2);
     mLighting.compileAndLink();
     mLighting.useShader();
-    mLighting.setUniform("lightSrc", &lightSrc);
-    mLighting.setUniform("projMatrix", &mProjectionMat);
+    mLighting.setUniform("lightSrc", lightSrc);
+    mLighting.setUniform("projMatrix", mProjectionMat);
 
     mCurrent = &mLighting;
 }
@@ -159,17 +159,18 @@ void SoftBodyRenderer::clearScreen(void)
 //    border->draw();
 //}
 
-void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 *camMat)
+void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
 {
-    vec3 color(255,1,1);
     const VertexBuffer *buff;
     const ElementBuffer *ebuff;
 
-    if (!obj || !camMat)
+    if (!obj)
         return;
 
+    const vec3 &color = obj->GetColor();
+
     mCurrent->setUniform("cameraMatrix", camMat);
-    mCurrent->setUniform("color", &color);
+    mCurrent->setUniform("color", color);
 
     buff = obj->GetVertexes();
     if (!buff) return;

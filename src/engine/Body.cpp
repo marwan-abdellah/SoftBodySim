@@ -1,6 +1,7 @@
 #include "Body.h"
 
-Body::Body(MeshData *mesh)
+Body::Body(MeshData *mesh) :
+	mColor(glm::vec3(1,1,1))
 {
 	mVertexes = new VertexBuffer(mesh->vertexes);
 	mFaces = new ElementBuffer(mesh->faces);

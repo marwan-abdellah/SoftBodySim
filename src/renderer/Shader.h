@@ -13,8 +13,8 @@ public:
 	void setShaderSource(GLenum type, const char *src);
 	bool compileAndLink(void);
 	void useShader(void);
-	void setUniform(const char *name, const glm::vec3 *v);
-	void setUniform(const char *name, const glm::mat4 *v);
+	void setUniform(const char *name, const glm::vec3 &v);
+	void setUniform(const char *name, const glm::mat4 &v);
 private:
 	GLuint createShader(GLenum, const char *src);
 	const char *pVertexSrc;

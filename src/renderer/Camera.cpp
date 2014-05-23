@@ -51,9 +51,9 @@ void Camera::moveOut(float_t out)
 	_position += (_position - _lookAtPoint) * out;
 }
 
-const glm::mat4 *Camera::getCameraMatrix(void)
+const glm::mat4 &Camera::getCameraMatrix(void)
 {
 	_matrix = lookAt(_position, _lookAtPoint, _up);
-	return &_matrix;
+	return _matrix;
 }
 
