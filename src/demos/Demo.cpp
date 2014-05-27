@@ -62,7 +62,7 @@ Demo::Demo(int argc, char **argv) :
 	mFloorTransform = rotate(mFloorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 
 	renderer.initialize(width, height);
-	renderer.setRenderMethod(SB_RENDER_PARTICLES);
+	renderer.setRenderMethod(SB_RENDER_FACES);
 
 	CUDASoftBodySolver::SoftBodyWorldParameters worldParams;
 	worldParams.gravity = vec3(0, -10.0, 0);
