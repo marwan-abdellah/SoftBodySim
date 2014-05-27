@@ -18,6 +18,7 @@ public:
 	const ElementBuffer *getEdges(void) { return mEdges; }
 	const ElementBuffer *getFaces(void) { return mFaces; }
 	void SetColor(glm::vec3 &color) { mColor = color; }
+	void SetColor(glm::vec3 color) { mColor = color; }
 	const glm::vec3 GetColor(void) { return mColor; }
 
 protected:

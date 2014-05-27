@@ -45,16 +45,20 @@ private:
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
 	mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
-	mPaused(false),
-	mSolver()
+	mSolver(),
+	mPaused(false)
 {
 	const float_t groundLevel = -2.0;
 	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
+	MeshData *md1 = MeshData::CreateFromObj("src/demos/star.sbj");
 	MeshData *md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 
 	SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
-	vec3 color(0.0, 0.0, 1.0f);
-	b->SetColor(color);
+	b->SetColor(vec3(0.0, 0.0, 1.0f));
+	mSoftBodies.push_back(b);
+
+	b = new SoftBody(1.0f, 0.1f, 1.0f, md1);
+	b->SetColor(vec3(1.0, 1.0, 0.0f));
 	mSoftBodies.push_back(b);
 
 	floor = new Body(md2);
@@ -73,6 +77,7 @@ Demo::Demo(int argc, char **argv) :
 	mSolver.initialize();
 
 	delete md;
+	delete md1;
 	delete md2;
 }
 
