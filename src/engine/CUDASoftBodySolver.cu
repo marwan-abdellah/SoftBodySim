@@ -378,6 +378,7 @@ void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 	int threadsPerBlock = 128;
 	FOREACH(it, &cuda->descriptors) {
 		int blockCount = it->nParticles / threadsPerBlock + 1;
+		int linkBlockCount = it->nLinks / threadsPerBlock + 1;
 
 		cudaUpdateVelocitiesKernel<<<blockCount,
 			threadsPerBlock>>>(mWorldParams.gravity, it->positions,
@@ -387,9 +388,13 @@ void CUDASoftBodySolver::projectSystem(SolverPrivate *cuda, float_t dt)
 		threadsPerBlock = MAX_LINKS;
 		blockCount = it->nLinks / threadsPerBlock + 1;
 
-		for (int i = 0; i < cuda->solverSteps; i++)
-			solveConstraints<<<blockCount, threadsPerBlock>>>(1, it->links,
-					it->projections, it->massesInv, it->nLinks);
+		for (int i = 0; i < cuda->solverSteps; i++) {
+			solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
+					1, it->links, it->projections, it->massesInv, it->nLinks);
+			solveCollisionConstraints<<<blockCount, threadsPerBlock>>>(
+					it->projections, it->massesInv,
+					mWorldParams.groundLevel, it->nParticles);
+		}
 
 		threadsPerBlock = 128;
 		blockCount = it->nParticles / threadsPerBlock + 1;

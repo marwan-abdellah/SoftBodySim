@@ -36,7 +36,7 @@ __global__ void cudaUpdateVertexBufferKernel(
 		glm::uint *mapping,
 		glm::uint max_idx);
 
-__global__ void solveConstraints(
+__global__ void solveLinksConstraints(
 		unsigned int steps,
 		LinkConstraint *links,
 		glm::vec3 *projections,
@@ -50,4 +50,10 @@ __global__ void calculateLinkStiffness(
 
 __global__ void solvePointTriangleCollisionsKernel(
 		CollisionPointTriangleConstraint2 *collisions_data,
+		glm::uint_t max_idx);
+
+__global__ void solveCollisionConstraints(
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
+		glm::float_t ground_level,
 		glm::uint_t max_idx);

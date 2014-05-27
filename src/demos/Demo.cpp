@@ -46,6 +46,7 @@ Demo::Demo(int argc, char **argv) :
 	mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
 	mSolver()
 {
+	const float_t groundLevel = -2.0;
 	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
 	MeshData *md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 
@@ -55,7 +56,7 @@ Demo::Demo(int argc, char **argv) :
 	mSoftBodies.push_back(b);
 
 	floor = new Body(md2);
-	mFloorTransform = translate(0.0f, -2.0f, 0.0f);
+	mFloorTransform = translate(0.0f, groundLevel, 0.0f);
 	mFloorTransform = rotate(mFloorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 
 	renderer.initialize(width, height);
@@ -63,7 +64,7 @@ Demo::Demo(int argc, char **argv) :
 
 	CUDASoftBodySolver::SoftBodyWorldParameters worldParams;
 	worldParams.gravity = vec3(0, -10.0, 0);
-	worldParams.groundLevel = -2.0f;
+	worldParams.groundLevel = groundLevel;
 
 	mSolver.addSoftBodies(mSoftBodies);
 	mSolver.setWorldParameters(worldParams);

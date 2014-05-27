@@ -46,7 +46,7 @@ __global__ void cudaUpdateVelocitiesKernel(
 /**
   step 4. solving links constraints.
   */
-__global__ void solveConstraints(
+__global__ void solveLinksConstraints(
 		unsigned int max_steps,
 		LinkConstraint *links,
 		glm::vec3 *projections,
@@ -111,6 +111,23 @@ __global__ void solveConstraints(
 	}
 }
 
+__global__ void solveCollisionConstraints(
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
+		glm::float_t ground_level,
+		glm::uint_t max_idx)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < max_idx) {
+		glm::vec3 pos = projections[idx];
+
+		if (pos[1] < ground_level)
+			pos[1] = ground_level + 0.001; // delta to avoid z-fighting
+
+		projections[idx] = pos;
+	}
+}
 
 /**
   step 5. solving collision constraints.
