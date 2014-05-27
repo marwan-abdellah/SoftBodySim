@@ -39,11 +39,13 @@ private:
 	CUDASoftBodySolver mSolver;
 	int	mEnginUpdateTime;
 	mat4 mFloorTransform;
+	bool mPaused;
 };
 
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
 	mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
+	mPaused(false),
 	mSolver()
 {
 	const float_t groundLevel = -2.0;
@@ -83,6 +85,7 @@ Demo::~Demo(void)
 
 void Demo::OnUpdate(double dt)
 {
+	if (mPaused) return;
 	mSolver.projectSystem(dt);
 }
 
@@ -112,6 +115,8 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveIn(delta);
 	if (key == GLFW_KEY_X)
 		mCamera.moveOut(delta);
+	if (key == GLFW_KEY_P)
+		mPaused = !mPaused;
 	if (key == GLFW_KEY_M)
 	{
 		switch (renderer.getRenderMethod()) {
