@@ -133,40 +133,67 @@ __global__ void solveCollisionConstraints(
   step 5. solving collision constraints.
   */
 __global__ void solvePointTriangleCollisionsKernel(
-		CollisionPointTriangleConstraint2 *collisions_data,
+		SoftBodyDescriptor *descriptors,
+		PointTriangleConstraint *collisions_data,
 		uint_t max_idx
 	)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
-		CollisionPointTriangleConstraint2 cd = collisions_data[idx];
+		PointTriangleConstraint cd = collisions_data[idx];
 
-		vec3 position = cd.positions[cd.pointIdx];
-		vec3 projection = cd.projections[cd.pointIdx];
+		vec3 position = descriptors[cd.pointObjectId].positions[cd.pointIdx];
+		vec3 projection = descriptors[cd.pointObjectId].projections[cd.pointIdx];
 
-		vec3 tri0 = cd.trianglePositions[cd.triangleIdxs[0]];
-		vec3 tri1 = cd.trianglePositions[cd.triangleIdxs[1]];
-		vec3 tri2 = cd.trianglePositions[cd.triangleIdxs[2]];
+		uvec3 triIds = descriptors[cd.triangleObjectId].triangles[cd.triangleId];
+		vec3 tri0 = descriptors[cd.triangleObjectId].projections[triIds[0]];
+		vec3 tri1 = descriptors[cd.triangleObjectId].projections[triIds[1]];
+		vec3 tri2 = descriptors[cd.triangleObjectId].projections[triIds[2]];
 
 		vec3 a = tri1 - tri0;
 		vec3 b = tri2 - tri0;
 
 		vec3 norm = cross(a, b);
-		vec3 diff = projection - position;
-		float_t k = dot(norm, diff);
-		if (k < 0.0001f)
+
+		// check if projection and position are on the same side
+		// of triangle plane
+		if (dot(position, norm) * dot(projection, norm) > 0)
 			return;
 
-		// calculate plane intersection point
+		vec3 ray = projection - position;
+		float_t k = dot(ray, norm);
+
+		// if dot(ray, norm) < 0 then it implies that ray eners from
+		// 'incorrect' side of tiangle. Should it be handled?
+		if (k > 0.0001f)
+			return;
+
+		// calculate triangle plane intersection with ray
 		k = dot(norm, (tri1 - position)) / k;
-		vec3 q = k * (position + diff);
+		projection = position + k * ray;
 		
-		k = dot(norm, projection - q);
-		if (k > 0.01f)
-			return;
+		//barycentric coord test
+		vec3 c = projection - tri0;
 
-		cd.projections[cd.pointIdx] = q;
+		float_t dot00 = dot(a, a);
+		float_t dot01 = dot(a, b);
+		float_t dot02 = dot(a, c);
+		float_t dot11 = dot(b, b);
+		float_t dot12 = dot(b, c);
+
+		float_t den = 1 / (dot00 * dot11 - dot01 * dot01);
+		float_t u = (dot11 * dot02 - dot01 * dot12) * den;
+		float_t v = (dot00 * dot12 - dot01 * dot02) * den;
+		
+		if (u < 0.1 || v < 0.1 || (u + v) < 0.1) return;
+
+		//k = dot(norm, projection - q);
+		//if (k > 0.01f)
+		//	return;
+
+
+		descriptors[cd.pointObjectId].projections[cd.pointIdx] = projection;
 	}
 }
 

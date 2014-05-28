@@ -39,6 +39,7 @@ public:
 	cudaGraphicsResource *RegisterGLGraphicsResource(const VertexBuffer *vb);
 	bool InitCellIDS();
 	bool InitBodyDescriptors();
+	bool InitDymmyBodyCollisionConstraint();
 private:
 	int                                mDeviceId;
 	cudaDeviceProp                     mDevProp;
@@ -180,6 +181,7 @@ void CUDAContext::DeallocateDeviceBuffers(SoftBodyDescriptor *descr)
 	if (descr->links)       cudaFree(descr->links);
 	if (descr->mapping)     cudaFree(descr->mapping);
 	if (descr->triangles)   cudaFree(descr->triangles);
+	if (descr->collisions)  cudaFree(descr->collisions);
 }
 
 SoftBodyDescriptor CUDAContext::CreateDescriptor(SoftBody *body)
@@ -263,6 +265,48 @@ void CUDAContext::UpdateConstraintStiffness(SoftBodyDescriptor
 	calculateLinkStiffness<<<blocks, 128>>>(mSolverSteps, descr->links, descr->nLinks);
 }
 
+bool CUDAContext::InitDymmyBodyCollisionConstraint()
+{
+	vector<PointTriangleConstraint> constraints;
+	PointTriangleConstraint con;
+
+	// constant collision handling
+	// create m * x collsion constraints - to be optimized later.
+	FOREACH(it, &mDescriptors) {
+		constraints.clear();
+		FOREACH(vx, &it->body->mParticles) {
+			int idx = std::distance(it->body->mParticles.begin(), vx);
+			con.pointObjectId = std::distance(mDescriptors.begin(), it);
+			con.pointIdx = idx;
+			FOREACH(tr, &it->body->mTriangles) {
+				if (idx == (*tr)[0] ||
+					idx == (*tr)[1] ||
+					idx == (*tr)[2]) continue;
+				con.triangleObjectId = std::distance(mDescriptors.begin(), it);
+				con.triangleId = std::distance(it->body->mTriangles.begin(), tr);
+				constraints.push_back(con);
+			}
+			FOREACH(it2, &mDescriptors) {
+				if (it == it2) continue;
+				FOREACH(tr, &it->body->mTriangles) {
+					con.triangleObjectId = std::distance(
+							mDescriptors.begin(), it2);
+					con.triangleId = std::distance(it->body->mTriangles.begin(),
+							tr);
+					constraints.push_back(con);
+				}
+			}
+		}
+		if (it->collisions) cudaFree(it->collisions);
+		it->collisions = (PointTriangleConstraint*)allocateCUDABuffer(sizeof(PointTriangleConstraint) * constraints.size());
+		it->nCollisions = constraints.size();
+		cudaMemcpy(it->collisions, &constraints[0],
+				sizeof(PointTriangleConstraint) * constraints.size(),
+				cudaMemcpyHostToDevice);
+	}
+	return true;
+}
+
 bool CUDAContext::InitBodyDescriptors()
 {
 	cudaError_t err;
@@ -271,7 +315,7 @@ bool CUDAContext::InitBodyDescriptors()
 	mDescriptorsDev = (SoftBodyDescriptor*)allocateCUDABuffer(bytes);
 	if (!mDescriptorsDev) return false;
 
-	err = cudaMemcpy(mDescriptorsDev, &mDescriptorsDev[0], bytes, cudaMemcpyHostToDevice);
+	err = cudaMemcpy(mDescriptorsDev, &mDescriptors[0], bytes, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) return false;
 
 	return true;
@@ -340,6 +384,12 @@ CUDAContext::CUDAContext(softbodyList_t *bodies)
 
 	if (!InitBodyDescriptors()) {
 		ERR("Unable to allocate body descriptors on device!");
+		ShutdownDevice();
+		return;
+	}
+
+	if (!InitDymmyBodyCollisionConstraint()) {
+		ERR("Unable to allocate collision constraints on device!");
 		ShutdownDevice();
 		return;
 	}
@@ -438,7 +488,7 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 {
 	int threadsPerBlock = 128;
 	int blockCount;
-	int linkBlockCount;
+	int linkBlockCount, collBlockCount;
 	int idx = 0;
 
 	// predict motion
@@ -452,6 +502,7 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 	}
 
 	// collision detection
+#if 0
 	FOREACH(it, &mDescriptors) {
 		blockCount = it->nTriangles / threadsPerBlock + 1;
 		calculateSpatialHash<<<blockCount, threadsPerBlock>>>(
@@ -459,13 +510,18 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 				DEFAULT_CELL_SIZE, mCellIDS.devPtr, it->nTriangles);
 		idx++;
 	}
+#endif
 
 	// solver
-	FOREACH(it, &mDescriptors) {
-		linkBlockCount = it->nLinks / MAX_LINKS + 1;
-		blockCount = it->nParticles / threadsPerBlock + 1;
+	for (int i = 0; i < mSolverSteps; i++) {
+		FOREACH(it, &mDescriptors) {
+			linkBlockCount = it->nLinks / MAX_LINKS + 1;
+			blockCount = it->nParticles / threadsPerBlock + 1;
+			collBlockCount = it->nCollisions / threadsPerBlock + 1;
 
-		for (int i = 0; i < mSolverSteps; i++) {
+			solvePointTriangleCollisionsKernel<<<collBlockCount,
+				threadsPerBlock>>>(mDescriptorsDev, it->collisions,
+						it->nCollisions);
 			solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
 					1, it->links, it->projections, it->massesInv, it->nLinks);
 			solveCollisionConstraints<<<blockCount, threadsPerBlock>>>(

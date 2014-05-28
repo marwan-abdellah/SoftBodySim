@@ -49,13 +49,13 @@ Demo::Demo(int argc, char **argv) :
 	mPaused(false)
 {
 	const float_t groundLevel = -2.0;
-	MeshData *md = MeshData::CreateFromObj("src/demos/cube.obj");
+	MeshData *md = MeshData::CreateFromObj("src/demos/cube_small.obj");
 	MeshData *md1 = MeshData::CreateFromObj("src/demos/star.sbj");
 	MeshData *md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 
 	SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
 	b->SetColor(vec3(0.0, 0.0, 1.0f));
-	mSoftBodies.push_back(b);
+	//mSoftBodies.push_back(b);
 
 	b = new SoftBody(1.0f, 0.1f, 1.0f, md1);
 	b->SetColor(vec3(1.0, 1.0, 0.0f));

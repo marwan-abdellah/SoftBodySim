@@ -3,13 +3,11 @@
 
 #define MAX_LINKS 128
 
-struct CollisionPointTriangleConstraint2 {
-	glm::vec3   *positions;
-	glm::vec3   *projections;
+struct PointTriangleConstraint {
+	glm::uint_t pointObjectId;
 	glm::uint_t pointIdx;
-	glm::uvec3  triangleIdxs;
-	glm::vec3   *trianglePositions;
-	glm::vec3   *triangelProjections;
+	glm::uint_t triangleObjectId;
+	glm::uint_t triangleId;
 };
 
 enum CellIDType {
@@ -43,6 +41,8 @@ struct SoftBodyDescriptor {
 	unsigned int              baseIdx;
 	glm::uvec3                *triangles;
 	int                       nTriangles;
+	PointTriangleConstraint   *collisions;
+	int                       nCollisions;
 };
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(
@@ -82,7 +82,8 @@ __global__ void calculateLinkStiffness(
 		glm::uint_t max_idx);
 
 __global__ void solvePointTriangleCollisionsKernel(
-		CollisionPointTriangleConstraint2 *collisions_data,
+		SoftBodyDescriptor *descriptors,
+		PointTriangleConstraint *collisions_data,
 		glm::uint_t max_idx);
 
 __global__ void solveCollisionConstraints(
