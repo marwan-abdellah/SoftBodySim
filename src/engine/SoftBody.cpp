@@ -13,6 +13,7 @@ SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
 	mSpringiness = springness;
 	mDamping = damping;
 	mParticles = mesh->nodes;
+	mTriangles = mesh->nodesTriangles;
 	mMeshVertexParticleMapping = mesh->vertexesNodes;
 
 	mMassInv.resize(mParticles.size());

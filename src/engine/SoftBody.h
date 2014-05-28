@@ -12,6 +12,7 @@
 
 class SoftBody;
 class CUDASoftBodySolver;
+class CUDACOntext;
 
 
 class SoftBody : public Body {
@@ -34,6 +35,7 @@ private:
 
     // constraints in soft body
     linksArray_t                mLinks;
+	index3Array_t               mTriangles;
     volumeArray_t               mVolumes;
 
 	//collision
@@ -44,6 +46,7 @@ private:
 															   vertex buffer */
 
 friend class CUDASoftBodySolver;
+friend class CUDAContext;
 };
 
 #endif
