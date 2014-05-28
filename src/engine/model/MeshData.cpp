@@ -28,6 +28,7 @@ public:
 typedef unordered_map<uvec3, unsigned int, Index3Hasher> vertex3Map_t;
 typedef unordered_map<uvec2, unsigned int, Index2Hasher> vertex2Map_t;
 typedef unordered_set<uvec2, Index2Hasher> linksSet_t;
+typedef unordered_set<uvec3, Index3Hasher> trianglesSet_t;
 
 
 static inline unsigned int
@@ -190,6 +191,7 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 		}
 
 	ret->GenerateLinks();
+	ret->GenerateTriangles();
 
 	return ret;
 }
@@ -232,6 +234,7 @@ MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 	}
 
 	ret->GenerateLinks();
+	ret->GenerateTriangles();
 
 	return ret;
 }
@@ -261,6 +264,22 @@ void MeshData::GenerateLinks(void)
 
 	for (linksSet_t::iterator it = set.begin(); it != set.end(); it++)
 		nodesLinks.push_back(*it);
+}
+
+void MeshData::GenerateTriangles(void)
+{
+	trianglesSet_t set;
+
+	for (index3Array_t::iterator it = faces.begin(); it != faces.end(); it++) {
+		unsigned int id1 = vertexesNodes[(*it)[0]];
+		unsigned int id2 = vertexesNodes[(*it)[1]];
+		unsigned int id3 = vertexesNodes[(*it)[2]];
+
+		set.insert(uvec3(id1, id2, id3));
+	}
+
+	for (trianglesSet_t::iterator it = set.begin(); it != set.end(); it++)
+		nodesTriangles.push_back(*it);
 }
 
 static bool ProcessVertex(OBJLexer &lexer, vec3Array_t &vert)
@@ -489,6 +508,7 @@ MeshData *MeshData::CreateFromObj(const char *path)
 	}
 
 	ret->GenerateLinks();
+	ret->GenerateTriangles();
 
 	return ret;
 }

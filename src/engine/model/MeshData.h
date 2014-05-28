@@ -91,12 +91,24 @@ public:
 	 */
 	index2Array_t nodesLinks;
 
+	/**
+	 * @brief Indexes of nodes creating a mesh triangle.
+	 *
+	 * Might differ from faces array when vertexes and nodes differ.
+	 * FIXME can be sharead accross meshes of same type
+	 */
+	index3Array_t nodesTriangles;
+
 	vertexArray_t  vertexes;
 	indexArray_t   vertexesNodes;
 
 	index3Array_t  faces;
 	index2Array_t  edges;
 private:
+	/**
+	 * @brief Generates nodesTriangles data from faces.
+	 */
+	void GenerateTriangles(void);
 };
 
 /**
