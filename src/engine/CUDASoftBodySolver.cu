@@ -23,7 +23,7 @@ public:
 	//void cudaContextShutdown(SolverPrivate*);
 	~CUDAContext(void);
 
-	bool InitializeDevice();
+	bool InitDevice();
 	bool ShutdownDevice();
 
 	SoftBodyDescriptor CreateDescriptor(SoftBody *body);
@@ -37,6 +37,7 @@ public:
 			&parms);
 	cudaGraphicsResource *RegisterGLGraphicsResource(const VertexBuffer *vb);
 	bool InitCellIDS();
+	bool InitBodyDescriptors();
 private:
 	int                                mDeviceId;
 	cudaDeviceProp                     mDevProp;
@@ -44,6 +45,7 @@ private:
 	int                                mSolverSteps;
 
 	descriptorArray_t                  mDescriptors;
+	SoftBodyDescriptor				   *mDescriptorsDev;
 
 	vector<cudaGraphicsResource*>      mResArray; /* helper array to map all resources 
 												  in one call */
@@ -55,7 +57,7 @@ private:
 	} mCellIDS;
 };
 
-bool CUDAContext::InitializeDevice()
+bool CUDAContext::InitDevice()
 {
 	cudaError_t err;
 	cudaDeviceProp  prop;
@@ -94,6 +96,9 @@ bool CUDAContext::ShutdownDevice()
 
 	if (mCellIDS.devPtr)
 		cudaFree(mCellIDS.devPtr);
+
+	if (mDescriptorsDev)
+		cudaFree(mDescriptorsDev);
 
 	err = cudaDeviceSynchronize();
 	if (err != cudaSuccess) return false;
@@ -230,7 +235,7 @@ cudaGraphicsResource *CUDAContext::RegisterGLGraphicsResource(const VertexBuffer
 	err = cudaGraphicsGLRegisterBuffer(&ret, id, cudaGraphicsRegisterFlagsNone);
 	if (err != cudaSuccess) {
 		ERR("Unable to register GL buffer object %d", id);
-		return false;
+		return NULL;
 	}
 	return ret;
 }
@@ -256,6 +261,20 @@ void CUDAContext::UpdateConstraintStiffness(SoftBodyDescriptor
 	calculateLinkStiffness<<<blocks, 128>>>(mSolverSteps, descr->links, descr->nLinks);
 }
 
+bool CUDAContext::InitBodyDescriptors()
+{
+	cudaError_t err;
+	size_t bytes = sizeof(SoftBodyDescriptor) * mDescriptors.size();
+
+	mDescriptorsDev = (SoftBodyDescriptor*)allocateCUDABuffer(bytes);
+	if (!mDescriptorsDev) return false;
+
+	err = cudaMemcpy(mDescriptorsDev, &mDescriptorsDev[0], bytes, cudaMemcpyHostToDevice);
+	if (err != cudaSuccess) return false;
+
+	return true;
+}
+
 bool CUDAContext::InitCellIDS()
 {
 	if (!mCellIDS.count) {
@@ -266,8 +285,6 @@ bool CUDAContext::InitCellIDS()
 	mCellIDS.devPtr = (CellID*)allocateCUDABuffer(sizeof(CellID) * mCellIDS.count);
 	if (!mCellIDS.devPtr)
 		return false;
-
-	// TODO compelate
 
 	return true;
 }
@@ -280,7 +297,7 @@ CUDAContext::CUDAContext(softbodyList_t *bodies)
 	mCellIDS.count = 0;
 	mSolverSteps = DEFAULT_SOLVER_STEPS;
 
-	if (!InitializeDevice()) {
+	if (!InitDevice()) {
 		ERR("CUDA Device initialization failed!");
 		return;
 	}
@@ -317,6 +334,12 @@ CUDAContext::CUDAContext(softbodyList_t *bodies)
 
 		mCellIDS.count += descr.nTriangles;
 		total_alloc += mem;
+	}
+
+	if (!InitBodyDescriptors()) {
+		ERR("Unable to allocate body descriptors on device!");
+		ShutdownDevice();
+		return;
 	}
 	if (!InitCellIDS()) {
 		ERR("Unable to init Cell IDS!");
