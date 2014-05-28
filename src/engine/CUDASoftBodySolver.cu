@@ -437,11 +437,11 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 	int threadsPerBlock = 128;
 	int blockCount;
 	int linkBlockCount;
+	int idx = 0;
 
 	// predict motion
 	FOREACH(it, &mDescriptors) {
 		blockCount = it->nParticles / threadsPerBlock + 1;
-		linkBlockCount = it->nLinks / threadsPerBlock + 1;
 
 		cudaProjectPositionsAndVelocitiesKernel<<<blockCount,
 			threadsPerBlock>>>(world.gravity, it->positions,
@@ -449,10 +449,15 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 				it->nParticles);
 	}
 
+	// collision detection
+	FOREACH(it, &mDescriptors) {
+		idx++;
+	}
+
 	// solver
 	FOREACH(it, &mDescriptors) {
-		threadsPerBlock = MAX_LINKS;
-		blockCount = it->nLinks / threadsPerBlock + 1;
+		linkBlockCount = it->nLinks / MAX_LINKS + 1;
+		blockCount = it->nParticles / threadsPerBlock + 1;
 
 		for (int i = 0; i < mSolverSteps; i++) {
 			solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
