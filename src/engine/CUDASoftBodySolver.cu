@@ -40,7 +40,7 @@ public:
 private:
 	int                                mDeviceId;
 	cudaDeviceProp                     mDevProp;
-	cudaStream_t	                   mStream;
+	cudaStream_t                       mStream;
 	int                                mSolverSteps;
 
 	descriptorArray_t                  mDescriptors;
@@ -50,8 +50,8 @@ private:
 
 	// collision detection using spatial hashing
 	struct {
-		CellID							   *devPtr;
-		unsigned int                       count;
+		CellID                          *devPtr;
+		unsigned int                     count;
 	} mCellIDS;
 };
 
@@ -82,7 +82,7 @@ bool CUDAContext::InitializeDevice()
 
 on_error:
 	ERR("Device initialization error: %s", cudaGetErrorString(cudaGetLastError()));
-    return false;
+	return false;
 }
 
 bool CUDAContext::ShutdownDevice()
@@ -396,7 +396,6 @@ void CUDASoftBodySolver::shutdown(void)
 	}
 	mInitialized = false;
 }
-
 
 void CUDASoftBodySolver::updateVertexBuffersAsync(void)
 {
