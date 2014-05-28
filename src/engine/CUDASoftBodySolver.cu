@@ -439,7 +439,7 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 		int blockCount = it->nParticles / threadsPerBlock + 1;
 		int linkBlockCount = it->nLinks / threadsPerBlock + 1;
 
-		cudaUpdateVelocitiesKernel<<<blockCount,
+		cudaProjectPositionsAndVelocitiesKernel<<<blockCount,
 			threadsPerBlock>>>(world.gravity, it->positions,
 				it->projections, it->velocities, it->forces, it->massesInv, dt,
 				it->nParticles);

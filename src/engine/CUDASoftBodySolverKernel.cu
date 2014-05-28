@@ -9,7 +9,7 @@ __device__ uint_t hash(uint_t id)
 	return 1193 * id;
 }
 
-__global__ void cudaUpdateVelocitiesKernel(
+__global__ void cudaProjectPositionsAndVelocitiesKernel(
 		vec3 gravity,
 		vec3 *positions,
 		vec3 *projections,

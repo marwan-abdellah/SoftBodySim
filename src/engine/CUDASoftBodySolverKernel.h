@@ -44,7 +44,7 @@ struct SoftBodyDescriptor {
 	int                       nTriangles;
 };
 
-__global__ void cudaUpdateVelocitiesKernel(
+__global__ void cudaProjectPositionsAndVelocitiesKernel(
 	glm::vec3 gravity,
 	glm::vec3 *positions,
 	glm::vec3 *projections,
