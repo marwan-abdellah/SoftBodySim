@@ -62,7 +62,7 @@ Demo::Demo(int argc, char **argv) :
 	mSoftBodies.push_back(b);
 
 	floor = new Body(md2);
-	mFloorTransform = translate(0.0f, groundLevel, 0.0f);
+	mFloorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
 	mFloorTransform = rotate(mFloorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 
 	renderer.initialize(width, height);

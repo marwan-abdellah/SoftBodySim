@@ -123,7 +123,7 @@ __global__ void solveCollisionConstraints(
 		glm::vec3 pos = projections[idx];
 
 		if (pos[1] < ground_level)
-			pos[1] = ground_level + 0.001; // delta to avoid z-fighting
+			pos[1] = ground_level;
 
 		projections[idx] = pos;
 	}
