@@ -278,6 +278,7 @@ bool CUDAContext::InitDymmyBodyCollisionConstraint()
 			int idx = std::distance(it->body->mParticles.begin(), vx);
 			con.pointObjectId = std::distance(mDescriptors.begin(), it);
 			con.pointIdx = idx;
+			/*
 			FOREACH(tr, &it->body->mTriangles) {
 				if (idx == (*tr)[0] ||
 					idx == (*tr)[1] ||
@@ -286,6 +287,7 @@ bool CUDAContext::InitDymmyBodyCollisionConstraint()
 				con.triangleId = std::distance(it->body->mTriangles.begin(), tr);
 				constraints.push_back(con);
 			}
+			*/
 			FOREACH(it2, &mDescriptors) {
 				if (it == it2) continue;
 				FOREACH(tr, &it->body->mTriangles) {

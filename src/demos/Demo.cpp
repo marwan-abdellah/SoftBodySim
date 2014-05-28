@@ -55,7 +55,7 @@ Demo::Demo(int argc, char **argv) :
 
 	SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
 	b->SetColor(vec3(0.0, 0.0, 1.0f));
-	//mSoftBodies.push_back(b);
+	mSoftBodies.push_back(b);
 
 	b = new SoftBody(1.0f, 0.1f, 1.0f, md1);
 	b->SetColor(vec3(1.0, 1.0, 0.0f));

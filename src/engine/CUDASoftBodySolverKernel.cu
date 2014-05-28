@@ -129,6 +129,7 @@ __global__ void solveCollisionConstraints(
 	}
 }
 
+#define EPSILON (0.00001f)
 /**
   step 5. solving collision constraints.
   */
@@ -151,56 +152,45 @@ __global__ void solvePointTriangleCollisionsKernel(
 		vec3 tri1 = descriptors[cd.triangleObjectId].projections[triIds[1]];
 		vec3 tri2 = descriptors[cd.triangleObjectId].projections[triIds[2]];
 
-		vec3 a = tri1 - tri0;
-		vec3 b = tri2 - tri0;
+		vec3 e1 = tri1 - tri0;
+		vec3 e2 = tri2 - tri0;
+		vec3 dir = normalize(projection - position);
 
-		vec3 norm = cross(a, b);
+		vec3 p = cross(dir, e2);
+		vec3 norm = cross(e1, e2);
 
-		// check if projection and position are on the same side
-		// of triangle plane
-		if (dot(position, norm) * dot(projection, norm) > 0)
+		if (dot(projection, norm) * dot(position, norm) > 0.0f) return;
+
+		float_t det = dot(e1, p);
+		if (det > -EPSILON && det < EPSILON)
 			return;
 
-		vec3 ray = projection - position;
-		float_t k = dot(ray, norm);
+		det = 1.0 / det;
 
-		// if dot(ray, norm) < 0 then it implies that ray eners from
-		// 'incorrect' side of tiangle. Should it be handled?
-		if (k > 0.0001f)
-			return;
+		vec3 t = position - tri0;
 
-		// calculate triangle plane intersection with ray
-		k = dot(norm, (tri1 - position)) / k;
-		projection = position + k * ray;
-		
-		//barycentric coord test
-		vec3 c = projection - tri0;
+		float_t u = dot(t, p) * det;
+		if (u < 0.0f || u > 1.0f) return;
 
-		float_t dot00 = dot(a, a);
-		float_t dot01 = dot(a, b);
-		float_t dot02 = dot(a, c);
-		float_t dot11 = dot(b, b);
-		float_t dot12 = dot(b, c);
+		vec3 q = cross(t, e1);
+		float_t v = dot(dir, q) * det;
+		if (v < 0.0f || u + v > 1.0f) return;
 
-		float_t den = 1 / (dot00 * dot11 - dot01 * dot01);
-		float_t u = (dot11 * dot02 - dot01 * dot12) * den;
-		float_t v = (dot00 * dot12 - dot01 * dot02) * den;
-		
-		if (u < 0.1 || v < 0.1 || (u + v) < 0.1) return;
+		float_t w = dot(e2, q) * det;
+
+		if (w < EPSILON) return;
+		if (length(projection - position) < length(w * dir)) return;
+
+		projection = position + w * dir;
 
 		//k = dot(norm, projection - q);
 		//if (k > 0.01f)
 		//	return;
 
-
 		descriptors[cd.pointObjectId].projections[cd.pointIdx] = projection;
 	}
 }
 
-//
-///**
-//  */
-//
 /**
   step 6. Integrate motion.
   */
