@@ -221,3 +221,28 @@ __global__ void calculateLinkStiffness(
 				solver_steps);
 	}
 }
+
+__global__ void calculateSpatialHash(
+		glm::uint_t objectID,
+		glm::uint_t baseIdx,
+		glm::uvec3 *triangles,
+		glm::vec3 *projections,
+		glm::float_t cellSize,
+		CellID *cellIds,
+		glm::uint_t max_idx)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	CellID cell;
+
+	if (idx < max_idx) {
+		uvec3 ids = triangles[idx];
+		vec3 a = projections[ids[0]];
+		vec3 b = projections[ids[1]];
+		vec3 c = projections[ids[2]];
+		vec3 mid = (a + b + c) / 3.0f;
+
+		ids = uvec3(mid[0] / cellSize, mid[1] / cellSize, mid[2] / cellSize);
+
+		cellIds[baseIdx + idx] = cell;
+	}
+}

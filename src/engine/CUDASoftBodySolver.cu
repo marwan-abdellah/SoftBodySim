@@ -12,6 +12,7 @@ using namespace glm;
 #include "CUDASoftBodySolverKernel.h"
 
 #define DEFAULT_SOLVER_STEPS 10
+#define DEFAULT_CELL_SIZE 1.0
 
 class CUDAContext {
 public:
@@ -191,6 +192,7 @@ SoftBodyDescriptor CUDAContext::CreateDescriptor(SoftBody *body)
 	descr.nLinks     = body->mLinks.size();
 	descr.nMapping   = body->mMeshVertexParticleMapping.size();
 	descr.nTriangles = body->mTriangles.size();
+	descr.baseIdx    = mCellIDS.count;
 
 	return descr;
 }
@@ -451,6 +453,10 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 
 	// collision detection
 	FOREACH(it, &mDescriptors) {
+		blockCount = it->nTriangles / threadsPerBlock + 1;
+		calculateSpatialHash<<<blockCount, threadsPerBlock>>>(
+				idx, it->baseIdx, it->triangles, it->projections,
+				DEFAULT_CELL_SIZE, mCellIDS.devPtr, it->nTriangles);
 		idx++;
 	}
 

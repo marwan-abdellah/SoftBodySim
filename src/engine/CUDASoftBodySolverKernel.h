@@ -40,6 +40,7 @@ struct SoftBodyDescriptor {
 									   is VertexBuffer.
 									 Used for updating Vertex poistions */
 	unsigned int              nMapping;
+	unsigned int              baseIdx;
 	glm::uvec3                *triangles;
 	int                       nTriangles;
 };
@@ -92,6 +93,8 @@ __global__ void solveCollisionConstraints(
 
 __global__ void calculateSpatialHash(
 		glm::uint_t objectID,
+		glm::uint_t baseIdx,
+		glm::uvec3 *triangles,
 		glm::vec3 *projections,
 		glm::float_t cellSize,
 		CellID *cellIds,
