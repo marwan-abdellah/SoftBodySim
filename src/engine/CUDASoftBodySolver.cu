@@ -435,15 +435,22 @@ void CUDASoftBodySolver::updateVertexBuffers(void)
 void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldParameters &world)
 {
 	int threadsPerBlock = 128;
+	int blockCount;
+	int linkBlockCount;
+
+	// predict motion
 	FOREACH(it, &mDescriptors) {
-		int blockCount = it->nParticles / threadsPerBlock + 1;
-		int linkBlockCount = it->nLinks / threadsPerBlock + 1;
+		blockCount = it->nParticles / threadsPerBlock + 1;
+		linkBlockCount = it->nLinks / threadsPerBlock + 1;
 
 		cudaProjectPositionsAndVelocitiesKernel<<<blockCount,
 			threadsPerBlock>>>(world.gravity, it->positions,
 				it->projections, it->velocities, it->forces, it->massesInv, dt,
 				it->nParticles);
+	}
 
+	// solver
+	FOREACH(it, &mDescriptors) {
 		threadsPerBlock = MAX_LINKS;
 		blockCount = it->nLinks / threadsPerBlock + 1;
 
@@ -454,7 +461,10 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 					it->projections, it->massesInv,
 					world.groundLevel, it->nParticles);
 		}
+	}
 
+	// integrate motion
+	FOREACH(it, &mDescriptors) {
 		threadsPerBlock = 128;
 		blockCount = it->nParticles / threadsPerBlock + 1;
 		integrateMotionKernel<<<blockCount, threadsPerBlock>>>(dt, it->positions, it->projections,
