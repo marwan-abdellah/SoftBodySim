@@ -40,6 +40,7 @@ private:
 	int	mEnginUpdateTime;
 	mat4 mFloorTransform;
 	bool mPaused;
+	MeshData *md, *md1, *md2;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -49,9 +50,9 @@ Demo::Demo(int argc, char **argv) :
 	mPaused(false)
 {
 	const float_t groundLevel = -2.0;
-	MeshData *md = MeshData::CreateFromObj("src/demos/cube_small.obj");
-	MeshData *md1 = MeshData::CreateFromObj("src/demos/star.sbj");
-	MeshData *md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
+	md = MeshData::CreateFromObj("src/demos/cube_small.obj");
+	md1 = MeshData::CreateFromObj("src/demos/star.sbj");
+	md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 
 	ERR("Mesh trianges: %d", md->nodesTriangles.size());
 
@@ -69,13 +70,6 @@ Demo::Demo(int argc, char **argv) :
 		vit++;
 	}
 
-	SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
-	b->SetColor(vec3(0.0, 0.0, 1.0f));
-	mSoftBodies.push_back(b);
-
-	b = new SoftBody(1.0f, 0.1f, 1.0f, md1);
-	b->SetColor(vec3(1.0, 1.0, 0.0f));
-	mSoftBodies.push_back(b);
 
 	floor = new Body(md2);
 	mFloorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
@@ -91,10 +85,6 @@ Demo::Demo(int argc, char **argv) :
 	mSolver.addSoftBodies(mSoftBodies);
 	mSolver.setWorldParameters(worldParams);
 	mSolver.initialize();
-
-	delete md;
-	delete md1;
-	delete md2;
 }
 
 Demo::~Demo(void)
@@ -102,6 +92,9 @@ Demo::~Demo(void)
 	FOREACH(b, &mSoftBodies)
 		delete *b;
 	delete floor;
+	delete md;
+	delete md1;
+	delete md2;
 }
 
 void Demo::OnUpdate(double dt)
@@ -125,6 +118,7 @@ void Demo::OnKeyboard(int key, int action)
 {
 	float angle = 2.0f;
 	float delta = 0.1f;
+	SoftBody *b;
 
 	if (action == GLFW_RELEASE) return;
 
@@ -138,6 +132,23 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveOut(delta);
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
+	if (key == GLFW_KEY_C) {
+		mSoftBodies.clear();
+		mSolver.shutdown();
+		mSolver.initialize();
+	}
+	if (key == GLFW_KEY_T) {
+		b = new SoftBody(1,0.1,1,md1);
+		b->SetColor(vec3(1.0, 1.0, 0.0f));
+		mSolver.addSoftBody(b);
+		mSoftBodies.push_back(b);
+	}
+	if (key == GLFW_KEY_Y) {
+		b = new SoftBody(1.0f, 0.1f, 1.0f, md);
+		b->SetColor(vec3(0.0, 0.0, 1.0f));
+		mSolver.addSoftBody(b);
+		mSoftBodies.push_back(b);
+	}
 	if (key == GLFW_KEY_N)
 		mSolver.projectSystem(0.02);
 	if (key == GLFW_KEY_M)

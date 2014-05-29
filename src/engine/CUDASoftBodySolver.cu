@@ -40,6 +40,7 @@ public:
 	bool InitCellIDS();
 	bool InitBodyDescriptors();
 	bool InitDymmyBodyCollisionConstraint();
+	bool InitSoftBody(SoftBody *body);
 private:
 	int                                mDeviceId;
 	cudaDeviceProp                     mDevProp;
@@ -265,6 +266,37 @@ void CUDAContext::UpdateConstraintStiffness(SoftBodyDescriptor
 	calculateLinkStiffness<<<blocks, 128>>>(mSolverSteps, descr->links, descr->nLinks);
 }
 
+bool CUDAContext::InitSoftBody(SoftBody *body)
+{
+	SoftBodyDescriptor descr = CreateDescriptor(body);
+	bool res;
+
+	long mem = AllocateDeviceBuffers(&descr);
+	if (mem == -1) {
+		ERR("Unable to allocate memory for SoftBody");
+		return false;
+	}
+	res = CopyBodyToDeviceBuffers(&descr);
+	if (!res) {
+		ERR("Error occured while copying Soft bodies data to device!");
+		ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+		return false;
+	}
+	res = RegisterVertexBuffers(&descr);
+	if (!res) {
+		ERR("Error occured registering SoftBody vertex buffers.");
+		ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
+		return false;
+	}
+	UpdateConstraintStiffness(&descr, mSolverSteps);
+
+	mDescriptors.push_back(descr);
+	mResArray.push_back(descr.graphics);
+	mCellIDS.count += descr.nTriangles;
+
+	return true;
+}
+
 bool CUDAContext::InitDymmyBodyCollisionConstraint()
 {
 	vector<PointTriangleConstraint> constraints;
@@ -318,6 +350,9 @@ bool CUDAContext::InitBodyDescriptors()
 	cudaError_t err;
 	size_t bytes = sizeof(SoftBodyDescriptor) * mDescriptors.size();
 
+	if (!mDescriptors.size()) return true;
+	if (mDescriptorsDev) cudaFree(mDescriptorsDev);
+
 	mDescriptorsDev = (SoftBodyDescriptor*)allocateCUDABuffer(bytes);
 	if (!mDescriptorsDev) return false;
 
@@ -329,6 +364,8 @@ bool CUDAContext::InitBodyDescriptors()
 
 bool CUDAContext::InitCellIDS()
 {
+	// currently not used.
+	return true;
 	if (!mCellIDS.count) {
 		ERR("Invalid cell ids count!");
 		return false;
@@ -343,7 +380,6 @@ bool CUDAContext::InitCellIDS()
 
 CUDAContext::CUDAContext(softbodyList_t *bodies)
 {
-	long total_alloc = 0;
 	bool res;
 
 	mCellIDS.count = 0;
@@ -357,35 +393,10 @@ CUDAContext::CUDAContext(softbodyList_t *bodies)
 	FOREACH(it, bodies) {
 		if (!*it) continue;
 
-		SoftBodyDescriptor descr = CreateDescriptor(*it);
-
-		long mem = AllocateDeviceBuffers(&descr);
-		if (mem == -1) {
-			ERR("Unable to allocate memory for SoftBody");
+		if (!InitSoftBody(*it)) {
 			ShutdownDevice();
 			return;
 		}
-		res = CopyBodyToDeviceBuffers(&descr);
-		if (!res) {
-			ERR("Error occured while copying Soft bodies data to device!");
-			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-			ShutdownDevice();
-			return;
-		}
-		res = RegisterVertexBuffers(&descr);
-		if (!res) {
-			ERR("Error occured registering SoftBody vertex buffers.");
-			ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-			ShutdownDevice();
-			return;
-		}
-		UpdateConstraintStiffness(&descr, mSolverSteps);
-
-		mDescriptors.push_back(descr);
-		mResArray.push_back(descr.graphics);
-
-		mCellIDS.count += descr.nTriangles;
-		total_alloc += mem;
 	}
 
 	if (!InitBodyDescriptors()) {
@@ -404,8 +415,6 @@ CUDAContext::CUDAContext(softbodyList_t *bodies)
 		ShutdownDevice();
 		return;
 	}
-
-	DBG("Allocated %ld bytes on device", total_alloc);
 }
 
 CUDAContext::~CUDAContext()
@@ -475,6 +484,7 @@ void CUDASoftBodySolver::shutdown(void)
 		delete mContext;
 		mContext = NULL;
 	}
+	mBodies.clear();
 	mInitialized = false;
 }
 
@@ -562,13 +572,17 @@ void CUDASoftBodySolver::addSoftBodies(softbodyList_t &bodies)
 		mBodies.push_back(*it);
 }
 
-void CUDASoftBodySolver::removeBodies(softbodyList_t *bodies)
-{
-}
-
 void CUDASoftBodySolver::addSoftBody(SoftBody *body)
 {
 	mBodies.push_back(body);
+	bool res = true;
+	if (mInitialized) {
+		res &= mContext->InitSoftBody(body);
+		res &= mContext->InitBodyDescriptors();
+		res &= mContext->InitDymmyBodyCollisionConstraint();
+		if (!res)
+			ERR("Failed to add SoftBody!");
+	}
 }
 
 void CUDASoftBodySolver::removeSoftBody(SoftBody *body)
