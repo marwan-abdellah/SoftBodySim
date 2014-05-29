@@ -154,12 +154,14 @@ __global__ void solvePointTriangleCollisionsKernel(
 		vec3 e0 = tri2 - tri0;
 		vec3 e1 = tri1 - tri0;
 
-		// calculate triangle's plane normal
-		vec3 norm = cross(e0, e1);
+		// check if projection is in triangle bounding volume
+		vec3 mid = (e0 + e1) / 2.0f;
+		float_t r = max(length(tri0 - mid), length(tri1 - mid));
+		r = max(r, length(tri2 - mid));
+		if (length(projection - mid) > r) return;
 
-		// quick test to determing if projection and position
-		// vertexes are on same side of triangle.
-		//if (dot(projection, norm) * dot(position, norm) < 0.0f) return;
+		// calculate triangle's plane normal
+		vec3 norm = cross(e1, e0);
 
 		// ray direction
 		vec3 dir = projection - position;
@@ -167,8 +169,14 @@ __global__ void solvePointTriangleCollisionsKernel(
 		// estimate plane d coefficient
 		float_t d = dot(norm, tri0);
 
+		// check if position is already on plane
+		if (dot(norm, position) > -0.01f && dot(norm, position) < 0.01f) {
+			descriptors[cd.pointObjectId].projections[cd.pointIdx] = position;
+			return;
+		}
+
 		// calculate intersection point
-		if (dot(norm, dir) == 0.00f) return;
+		if (dot(norm, dir) == 0.0f) return;
 		float_t q = (d - dot(norm, position)) / dot(norm, dir);
 		vec3 Q = position + q * dir;
 
@@ -177,8 +185,6 @@ __global__ void solvePointTriangleCollisionsKernel(
 
 		// barycentric coordinates test
 		vec3 e2 = Q - tri0;
-
-		if (dot(e2, norm) > 0) return;
 
 		float_t dot00 = dot(e0, e0);
 		float_t dot01 = dot(e0, e1);
@@ -191,8 +197,10 @@ __global__ void solvePointTriangleCollisionsKernel(
 		float_t v = (dot00 * dot12 - dot01 * dot02) * den;
 
 		if (u >= 0 && v >= 0 && (u + v) < 1.0) {
-			Q += 0.02f * -norm;
+			Q += 0.2f * normalize(norm); // place projection above triangle
 			descriptors[cd.pointObjectId].projections[cd.pointIdx] = Q;
+			//descriptors[cd.pointObjectId].projections[cd.pointIdx] =
+			//vec3(0,0,0);
 		}
 	}
 }
