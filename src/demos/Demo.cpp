@@ -40,7 +40,7 @@ private:
 	int	mEnginUpdateTime;
 	mat4 mFloorTransform;
 	bool mPaused;
-	MeshData *md, *md1, *md2;
+	MeshData *md, *md1, *md2, *md3;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -53,6 +53,7 @@ Demo::Demo(int argc, char **argv) :
 	md = MeshData::CreateFromObj("src/demos/cube_small.obj");
 	md1 = MeshData::CreateFromObj("src/demos/star.sbj");
 	md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
+	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
 	ERR("Mesh trianges: %d", md->nodesTriangles.size());
 
@@ -95,6 +96,7 @@ Demo::~Demo(void)
 	delete md;
 	delete md1;
 	delete md2;
+	delete md3;
 }
 
 void Demo::OnUpdate(double dt)
@@ -145,6 +147,12 @@ void Demo::OnKeyboard(int key, int action)
 	}
 	if (key == GLFW_KEY_Y) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md);
+		b->SetColor(vec3(0.0, 0.0, 1.0f));
+		mSolver.addSoftBody(b);
+		mSoftBodies.push_back(b);
+	}
+	if (key == GLFW_KEY_U) {
+		b = new SoftBody(1.0f, 0.1f, 1.0f, md3);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
 		mSolver.addSoftBody(b);
 		mSoftBodies.push_back(b);
