@@ -154,12 +154,6 @@ __global__ void solvePointTriangleCollisionsKernel(
 		vec3 e0 = tri2 - tri0;
 		vec3 e1 = tri1 - tri0;
 
-		// check if projection is in triangle bounding volume
-		vec3 mid = (e0 + e1) / 2.0f;
-		float_t r = max(length(tri0 - mid), length(tri1 - mid));
-		r = max(r, length(tri2 - mid));
-		if (length(projection - mid) > r) return;
-
 		// calculate triangle's plane normal
 		vec3 norm = cross(e1, e0);
 
@@ -181,7 +175,7 @@ __global__ void solvePointTriangleCollisionsKernel(
 		vec3 Q = position + q * dir;
 
 		// check if movement is long enough to intersect plane
-		if (q > 1.0 || q < 0.0) return;
+		if (q > 1.0 || q < -1.0) return;
 
 		// barycentric coordinates test
 		vec3 e2 = Q - tri0;
@@ -197,10 +191,7 @@ __global__ void solvePointTriangleCollisionsKernel(
 		float_t v = (dot00 * dot12 - dot01 * dot02) * den;
 
 		if (u >= 0 && v >= 0 && (u + v) < 1.0) {
-			Q += 0.2f * normalize(norm); // place projection above triangle
 			descriptors[cd.pointObjectId].projections[cd.pointIdx] = Q;
-			//descriptors[cd.pointObjectId].projections[cd.pointIdx] =
-			//vec3(0,0,0);
 		}
 	}
 }
