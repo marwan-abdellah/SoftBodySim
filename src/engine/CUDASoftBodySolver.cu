@@ -299,6 +299,7 @@ bool CUDAContext::InitSoftBody(SoftBody *body)
 
 bool CUDAContext::InitDymmyBodyCollisionConstraint()
 {
+	long int total = 0, bytes = 0;
 	vector<PointTriangleConstraint> constraints;
 	PointTriangleConstraint con;
 
@@ -328,10 +329,7 @@ bool CUDAContext::InitDymmyBodyCollisionConstraint()
 					con.triangleId = std::distance(it->body->mTriangles.begin(),
 							tr);
 					constraints.push_back(con);
-					//ERR("con.pointObjectId: %d", con.pointObjectId);
-					//ERR("con.pointId: %d", con.pointIdx);
-					//ERR("con.triangleObjectId: %d", con.triangleObjectId);
-					//ERR("con.triangleId: %d", con.triangleId);
+					total++;
 				}
 			}
 		}
@@ -341,7 +339,9 @@ bool CUDAContext::InitDymmyBodyCollisionConstraint()
 		cudaMemcpy(it->collisions, &constraints[0],
 				sizeof(PointTriangleConstraint) * constraints.size(),
 				cudaMemcpyHostToDevice);
+		bytes += sizeof(PointTriangleConstraint) * constraints.size();
 	}
+	DBG("allocated constraints %d, bytes %d", total, bytes);
 	return true;
 }
 
