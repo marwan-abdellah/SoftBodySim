@@ -53,6 +53,22 @@ Demo::Demo(int argc, char **argv) :
 	MeshData *md1 = MeshData::CreateFromObj("src/demos/star.sbj");
 	MeshData *md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 
+	ERR("Mesh trianges: %d", md->nodesTriangles.size());
+
+	index3Array_t::iterator it2 = md->faces.begin();
+	FOREACH(it, &md->nodesTriangles) {
+		ERR("(%d %d %d) - (%d %d %d)", (*it)[0], (*it)[1], (*it)[2],
+		(*it2)[0], (*it2)[1], (*it2)[2]); 
+		it2++;
+	}
+	MeshData::vertexArray_t::iterator vit = md->vertexes.begin();
+	FOREACH(it, &md->nodes) {
+		ERR("(%f %f %f) - (%f %f %f)[%d]", (*it)[0], (*it)[1], (*it)[2],
+				vit->position[0], vit->position[1], vit->position[2],
+				md->vertexesNodes[std::distance(md->vertexes.begin(), vit)]);
+		vit++;
+	}
+
 	SoftBody *b = new SoftBody(1.0f, 0.1f, 1.0f, md);
 	b->SetColor(vec3(0.0, 0.0, 1.0f));
 	mSoftBodies.push_back(b);
@@ -122,6 +138,8 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveOut(delta);
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
+	if (key == GLFW_KEY_N)
+		mSolver.projectSystem(0.02);
 	if (key == GLFW_KEY_M)
 	{
 		switch (renderer.getRenderMethod()) {

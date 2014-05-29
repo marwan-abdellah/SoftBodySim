@@ -129,7 +129,6 @@ __global__ void solveCollisionConstraints(
 	}
 }
 
-#define EPSILON (0.00001f)
 /**
   step 5. solving collision constraints.
   */
@@ -152,42 +151,49 @@ __global__ void solvePointTriangleCollisionsKernel(
 		vec3 tri1 = descriptors[cd.triangleObjectId].projections[triIds[1]];
 		vec3 tri2 = descriptors[cd.triangleObjectId].projections[triIds[2]];
 
+		vec3 e0 = tri2 - tri0;
 		vec3 e1 = tri1 - tri0;
-		vec3 e2 = tri2 - tri0;
-		vec3 dir = normalize(projection - position);
 
-		vec3 p = cross(dir, e2);
-		vec3 norm = cross(e1, e2);
+		// calculate triangle's plane normal
+		vec3 norm = cross(e0, e1);
 
-		if (dot(projection, norm) * dot(position, norm) > 0.0f) return;
+		// quick test to determing if projection and position
+		// vertexes are on same side of triangle.
+		//if (dot(projection, norm) * dot(position, norm) < 0.0f) return;
 
-		float_t det = dot(e1, p);
-		if (det > -EPSILON && det < EPSILON)
-			return;
+		// ray direction
+		vec3 dir = projection - position;
 
-		det = 1.0 / det;
+		// estimate plane d coefficient
+		float_t d = dot(norm, tri0);
 
-		vec3 t = position - tri0;
+		// calculate intersection point
+		if (dot(norm, dir) == 0.00f) return;
+		float_t q = (d - dot(norm, position)) / dot(norm, dir);
+		vec3 Q = position + q * dir;
 
-		float_t u = dot(t, p) * det;
-		if (u < 0.0f || u > 1.0f) return;
+		// check if movement is long enough to intersect plane
+		if (q > 1.0 || q < 0.0) return;
 
-		vec3 q = cross(t, e1);
-		float_t v = dot(dir, q) * det;
-		if (v < 0.0f || u + v > 1.0f) return;
+		// barycentric coordinates test
+		vec3 e2 = Q - tri0;
 
-		float_t w = dot(e2, q) * det;
+		if (dot(e2, norm) > 0) return;
 
-		if (w < EPSILON) return;
-		if (length(projection - position) < length(w * dir)) return;
+		float_t dot00 = dot(e0, e0);
+		float_t dot01 = dot(e0, e1);
+		float_t dot02 = dot(e0, e2);
+		float_t dot11 = dot(e1, e1);
+		float_t dot12 = dot(e1, e2);
 
-		projection = position + w * dir;
+		float_t den = 1.0 / (dot00 * dot11 - dot01 * dot01);
+		float_t u = (dot11 * dot02 - dot01 * dot12) * den;
+		float_t v = (dot00 * dot12 - dot01 * dot02) * den;
 
-		//k = dot(norm, projection - q);
-		//if (k > 0.01f)
-		//	return;
-
-		descriptors[cd.pointObjectId].projections[cd.pointIdx] = projection;
+		if (u >= 0 && v >= 0 && (u + v) < 1.0) {
+			Q += 0.02f * -norm;
+			descriptors[cd.pointObjectId].projections[cd.pointIdx] = Q;
+		}
 	}
 }
 

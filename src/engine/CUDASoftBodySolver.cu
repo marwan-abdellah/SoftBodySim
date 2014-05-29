@@ -11,7 +11,7 @@ using namespace glm;
 
 #include "CUDASoftBodySolverKernel.h"
 
-#define DEFAULT_SOLVER_STEPS 10
+#define DEFAULT_SOLVER_STEPS 15
 #define DEFAULT_CELL_SIZE 1.0
 
 class CUDAContext {
@@ -296,6 +296,10 @@ bool CUDAContext::InitDymmyBodyCollisionConstraint()
 					con.triangleId = std::distance(it->body->mTriangles.begin(),
 							tr);
 					constraints.push_back(con);
+					//ERR("con.pointObjectId: %d", con.pointObjectId);
+					//ERR("con.pointId: %d", con.pointIdx);
+					//ERR("con.triangleObjectId: %d", con.triangleObjectId);
+					//ERR("con.triangleId: %d", con.triangleId);
 				}
 			}
 		}
@@ -521,11 +525,11 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 			blockCount = it->nParticles / threadsPerBlock + 1;
 			collBlockCount = it->nCollisions / threadsPerBlock + 1;
 
+			solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
+					1, it->links, it->projections, it->massesInv, it->nLinks);
 			solvePointTriangleCollisionsKernel<<<collBlockCount,
 				threadsPerBlock>>>(mDescriptorsDev, it->collisions,
 						it->nCollisions);
-			solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
-					1, it->links, it->projections, it->massesInv, it->nLinks);
 			solveCollisionConstraints<<<blockCount, threadsPerBlock>>>(
 					it->projections, it->massesInv,
 					world.groundLevel, it->nParticles);
