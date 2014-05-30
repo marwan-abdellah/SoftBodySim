@@ -20,12 +20,14 @@ public:
 	void SetColor(glm::vec3 &color) { mColor = color; }
 	void SetColor(glm::vec3 color) { mColor = color; }
 	const glm::vec3 GetColor(void) { return mColor; }
+	const MeshData *GetMesh(void) { return mMesh; }
 
 protected:
 	VertexBuffer				*mVertexes;
     ElementBuffer               *mEdges;
     ElementBuffer               *mFaces;
 	glm::vec3					mColor;
+	MeshData                    *mMesh;
 };
 
 #endif

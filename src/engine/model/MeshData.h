@@ -3,6 +3,7 @@
 
 #include "engine/geometry/Arrays.h"
 #include "engine/geometry/Plane.h"
+#include "engine/model/Material.h"
 
 #include <vector>
 
@@ -22,7 +23,7 @@ public:
 	/**
 	 * @brief Constructor
 	 */
-	MeshData(void) {}
+	MeshData(void) : material(0) {}
 
 	/**
 	 * @brief Copy constructor
@@ -32,7 +33,8 @@ public:
 		nodesLinks(m.nodesLinks),
 		vertexes(m.vertexes),
 		vertexesNodes(m.vertexesNodes),
-		faces(m.faces) {}
+		faces(m.faces),
+		material(m.material) {}
 
 	/**
 	 * @brief Creates plane mesh aligned to xy axis.
@@ -104,6 +106,7 @@ public:
 
 	index3Array_t  faces;
 	index2Array_t  edges;
+	Material       *material;
 private:
 	/**
 	 * @brief Generates nodesTriangles data from faces.

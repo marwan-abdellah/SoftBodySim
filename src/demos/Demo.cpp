@@ -52,13 +52,13 @@ Demo::Demo(int argc, char **argv) :
 	mPaused(false)
 {
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
-	mMat.Bind();
-	ERR("loading : %d", res);
 	const float_t groundLevel = -2.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");
 	md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
+
+	md->material = &mMat;
 
 	/*
 	ERR("Mesh trianges: %d", md->nodesTriangles.size());

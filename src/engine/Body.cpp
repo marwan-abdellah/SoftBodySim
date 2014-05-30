@@ -6,6 +6,7 @@ Body::Body(MeshData *mesh) :
 	mVertexes = new VertexBuffer(mesh->vertexes);
 	mFaces = new ElementBuffer(mesh->faces);
 	mEdges = new ElementBuffer(mesh->edges);
+	mMesh = mesh;
 }
 
 Body::~Body(void)

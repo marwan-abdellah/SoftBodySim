@@ -176,12 +176,16 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
 {
     const VertexBuffer *buff;
     const ElementBuffer *ebuff;
+	const MeshData *mesh;
 
     if (!obj)
         return;
 
     const vec3 &color = obj->GetColor();
+	mesh = obj->GetMesh();
 
+	if (mesh->material)
+		mesh->material->Bind();
     mCurrent->setUniform("cameraMatrix", camMat);
     mCurrent->setUniform("color", color);
 
@@ -199,4 +203,6 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
     }
 	ebuff->Draw();
     buff->Unbind();
+	if (mesh->material)
+		mesh->material->Unbind();
 }
