@@ -127,6 +127,7 @@ on_error:
 		ERR("%s", log);
 		delete log;
 	}
+	iProgram = 0;
     return false;
 }
 
@@ -134,7 +135,7 @@ void Shader::useShader(void)
 {
     if (iProgram)
         glUseProgram(iProgram);
-    else 
+    else
         ERR("Program failed to compile and link.");
 }
 
