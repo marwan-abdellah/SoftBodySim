@@ -119,6 +119,14 @@ on_error:
     if (iVertexShader) glDeleteShader(iVertexShader);
     if (iGeomShader) glDeleteShader(iGeomShader);
     if (iProgram) glDeleteProgram(iProgram);
+	int len = 0;
+	glGetProgramiv(iProgram, GL_INFO_LOG_LENGTH, &len);
+	if (len > 0) {
+		char *log = new char[len];
+		glGetProgramInfoLog(iProgram, len, &len, log);
+		ERR("%s", log);
+		delete log;
+	}
     return false;
 }
 
@@ -136,7 +144,7 @@ void Shader::setUniform(const char *name, const glm::vec3 &v)
         return;
     GLint k = glGetUniformLocation(iProgram, name);
     if (k == -1) {
-        ERR("Invalid uniform name: %s", name);
+        //ERR("Invalid uniform name: %s", name);
         return;
     }
     glUniform3fv(k, 1, glm::value_ptr(v));
@@ -148,7 +156,7 @@ void Shader::setUniform(const char *name, const glm::mat4 &v)
         return;
     GLint k = glGetUniformLocation(iProgram, name);
     if (k == -1) {
-        ERR("Invalid uniform name: %s", name);
+        //ERR("Invalid uniform name: %s", name);
         return;
     }
     glUniformMatrix4fv(k, 1, false, glm::value_ptr(v));

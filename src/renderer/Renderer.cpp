@@ -31,23 +31,32 @@ static const char *fragment_source =
 static const char *vertex_source2 = 
     "#version 330\n"
     "uniform vec3 color;"
-    "in vec4 position;"
+    "uniform mat4 projMatrix;"
+    "uniform mat4 cameraMatrix;"
+    "uniform vec3 lightSrc;"
+    "in vec3 position;"
+    "in vec2 texture;"
     "out vec4 fcolor;"
+    "out vec2 fuv;"
     "void main()"
     "{"
-    "    gl_Position = position;"
-    "     fcolor = vec4(color, 1);"
+    "    gl_Position = projMatrix * cameraMatrix * vec4(position,1);"
+    "    fcolor = vec4(color, 1);"
+	"    fuv = texture;"
     "}";
 
 static const char *geometry_shader2 = 
     "#version 330\n"
     "layout (triangles) in;"
     "layout (triangle_strip, max_vertices = 3) out;"
+    "in vec4 fposition[];"
     "in vec4 fcolor[];"
+    "in vec2 fuv[];"
     "uniform mat4 projMatrix;"
     "uniform mat4 cameraMatrix;"
     "uniform vec3 lightSrc;"
     "out vec4 mcolor;"
+    "out vec2 muv;"
     "void main() {"
     "    for(int i = 0; i < gl_in.length(); i++)"
     "    {"
@@ -55,9 +64,10 @@ static const char *geometry_shader2 =
     "        vec3 d2 = gl_in[0].gl_Position.xyz - gl_in[2].gl_Position.xyz;"
     "        vec3 norm = normalize(cross(d1, d2));"
     "        vec3 diff = normalize(lightSrc - gl_in[i].gl_Position.xyz);"
-    "       float d = max(0, dot(diff, norm));"
+    "        float d = max(0, dot(diff, norm));"
     "        gl_Position = projMatrix * cameraMatrix * gl_in[i].gl_Position;"
     "        mcolor = vec4(fcolor[i].xyz * ( 0.2 + d), 1);"
+	"        muv = fuv[i];"
     "        EmitVertex();"
     "    }"
     "    EndPrimitive();"
@@ -66,10 +76,13 @@ static const char *geometry_shader2 =
 
 static const char *fragment_source2 = 
     "#version 330\n"
-    "in vec4 mcolor;"
+    "in vec4 fcolor;"
+    "in vec2 fuv;"
+	"uniform sampler2D mytext;"
+    "out vec3 color;"
     "void main(void) {"
-    "    gl_FragColor = mcolor;"
-      "}";
+    "    color = texture(mytext, fuv).rgb;"
+    "}";
 
 void SoftBodyRenderer::setRenderMethod(SoftBodyRenderMethod_e m)
 {
@@ -128,7 +141,7 @@ void SoftBodyRenderer::initialize(int width, int height)
 
     mLighting.setShaderSource(GL_VERTEX_SHADER, vertex_source2);
     mLighting.setShaderSource(GL_FRAGMENT_SHADER, fragment_source2);
-    mLighting.setShaderSource(GL_GEOMETRY_SHADER, geometry_shader2);
+   // mLighting.setShaderSource(GL_GEOMETRY_SHADER, geometry_shader2);
     mLighting.compileAndLink();
     mLighting.useShader();
     mLighting.setUniform("lightSrc", lightSrc);

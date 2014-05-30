@@ -1,6 +1,7 @@
 #include "common.h"
 #include "GLFWApplication.h"
 #include "engine/model/MeshData.h"
+#include "engine/model/Material.h"
 #include "renderer/Renderer.h"
 #include "renderer/Camera.h"
 #include "engine/SoftBody.h"
@@ -41,6 +42,7 @@ private:
 	mat4 mFloorTransform;
 	bool mPaused;
 	MeshData *md, *md1, *md2, *md3;
+	Material mMat;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -49,6 +51,9 @@ Demo::Demo(int argc, char **argv) :
 	mSolver(),
 	mPaused(false)
 {
+	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
+	mMat.Bind();
+	ERR("loading : %d", res);
 	const float_t groundLevel = -2.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");

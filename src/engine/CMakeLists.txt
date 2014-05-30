@@ -6,6 +6,7 @@ set (SRCS
 		VertexBuffer.cpp
 		model/MeshData.cpp
 		model/OBJLexer.cpp
+		model/Material.cpp
 	)
 
 find_package(CUDA REQUIRED)
