@@ -332,6 +332,8 @@ static bool ProcessTexture(OBJLexer &lexer, vec2Array_t &vert)
 		v[i] = lexer.GetValue();
 	}
 	if (!lexer.ProcessNext()) return false;
+	if (lexer.GetToken() == OBJLexer::TOK_NUMBER)
+		lexer.GetNextToken(); // skip third coordinate
 	if (lexer.GetToken() != OBJLexer::TOK_EOL) {
 		ERR("[line: %d] Texture definition should end with newline.", lexer.GetLine());
 		return false;
@@ -340,46 +342,43 @@ static bool ProcessTexture(OBJLexer &lexer, vec2Array_t &vert)
 	return true;
 }
 
+int ParseFaceVertex(OBJLexer &lexer, uvec3 &out)
+{
+	out = uvec3(0,0,0);
+
+	if (lexer.GetToken() != OBJLexer::TOK_NUMBER) return 1;
+	out[0] = lexer.GetValue();
+
+	if (lexer.GetNextToken() != OBJLexer::TOK_SLASH) return 0;
+	if (lexer.GetNextToken() != OBJLexer::TOK_NUMBER) return 1;
+	out[1] = lexer.GetValue();
+
+	if (lexer.GetNextToken() != OBJLexer::TOK_SLASH) return 0;
+	if (lexer.GetNextToken() != OBJLexer::TOK_NUMBER) return 1;
+	out[2] = lexer.GetValue();
+
+	lexer.GetNextToken();
+
+	return 0;
+}
+
 int ParseFaceVertexes(OBJLexer &lexer, index3Array_t &out)
 {
 	uvec3 ret = uvec3(0,0,0);
 
-	if (!lexer.ProcessNext()) return -1;
+	int slashes = 0;
+	vector<int> numbers;
 
-	while (lexer.GetToken() != OBJLexer::TOK_EOL) {
-		if (lexer.GetToken() != OBJLexer::TOK_NUMBER) return -1;
-		ret[0] = (unsigned int)lexer.GetValue();
+	lexer.GetNextToken();
 
-		// 1st slash
-		if (lexer.GetNextToken() != OBJLexer::TOK_SLASH) {
-			out.push_back(ret);
-			continue;
-		}
-
-		if (!lexer.ProcessNext()) return true; // texture | 2nd slash
-		if (lexer.GetToken() != OBJLexer::TOK_NUMBER &&
-			lexer.GetToken() != OBJLexer::TOK_SLASH) {
-			return false;
-		}
-		if (lexer.GetToken() == OBJLexer::TOK_NUMBER) {
-			ret[1] = (unsigned int)lexer.GetValue();
-			if (!lexer.ProcessNext()) return false; // 2nd slash
-		}
-
-		if (lexer.GetToken() != OBJLexer::TOK_SLASH) {
-			out.push_back(ret);
-			continue;
-		}
-
-		if (lexer.GetNextToken() == OBJLexer::TOK_NUMBER) {
-			ret[2] = (unsigned int)lexer.GetValue();
-			out.push_back(ret);
-			continue;
-		}
-		return -1;
+	while (lexer.GetToken() != OBJLexer::TOK_EOL &&
+			lexer.GetToken() != OBJLexer::TOK_EOF) {
+		if (ParseFaceVertex(lexer, ret))
+			return 1;
+		out.push_back(ret);
 	}
 
-	return out.size();
+	return 0;
 }
 
 static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md)
@@ -395,13 +394,13 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 	int res;
 
 	res = ParseFaceVertexes(lexer, vertId);
-	if (res < 2) {
+	if (res) {
 		ERR("[line %d] Unable to parse face vertex indexes", lexer.GetLine());
 		return false;
 	}
 
 	//validate vertex/text/normals ids
-	for (int i = 0; i < res; i++) {
+	for (int i = 0; i < vertId.size(); i++) {
 		if (!vertId[i][0] || vertId[i][0] > md->nodes.size()) {
 			ERR("Invalid Vertex number: %d", vertId[i][0]);
 			return false;
@@ -417,12 +416,12 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 	}
 
 	// If face have only two vertexes (edge) don't create vertexes
-	if (res == 2) {
+	if (vertId.size() == 2) {
 		md->nodesLinks.push_back(uvec2(vertId[0][0] - 1, vertId[1][0] - 1));
 		return true;
 	}
 
-	if (res == 3) {
+	if (vertId.size() == 3) {
 		uvec3 faceId;
 		for (int i = 0; i < 3; i++) {
 			vertex3Map_t::iterator it = map.find(vertId[i]);
@@ -446,6 +445,7 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 		return true;
 	}
 
+	ERR("Invalid vertex count. Expected 2 or 3. Have %d.", vertId.size());
 	return false;
 }
 
@@ -509,6 +509,8 @@ MeshData *MeshData::CreateFromObj(const char *path)
 
 	ret->GenerateLinks();
 	ret->GenerateTriangles();
+
+	DBG("file %s processing ended. Lines processed %d", path, lexer.GetLine());
 
 	return ret;
 }

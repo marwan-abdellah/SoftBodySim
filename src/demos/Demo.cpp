@@ -50,12 +50,14 @@ Demo::Demo(int argc, char **argv) :
 	mPaused(false)
 {
 	const float_t groundLevel = -2.0;
-	md = MeshData::CreateFromObj("src/demos/cube_small.obj");
-	md1 = MeshData::CreateFromObj("src/demos/star.sbj");
+	md = MeshData::CreateFromObj("src/demos/crab.obj");
+	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");
 	md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
+	/*
 	ERR("Mesh trianges: %d", md->nodesTriangles.size());
+	ERR("Mesh vertexes: %d", md->vertexes.size());
 
 	index3Array_t::iterator it2 = md->faces.begin();
 	FOREACH(it, &md->nodesTriangles) {
@@ -70,7 +72,7 @@ Demo::Demo(int argc, char **argv) :
 				md->vertexesNodes[std::distance(md->vertexes.begin(), vit)]);
 		vit++;
 	}
-
+	*/
 
 	floor = new Body(md2);
 	mFloorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
