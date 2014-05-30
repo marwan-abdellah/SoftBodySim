@@ -56,7 +56,7 @@ static const char *geometry_shader2 =
     "        vec3 d2 = gl_in[0].gl_Position.xyz - gl_in[2].gl_Position.xyz;"
     "        normal = normalize(cross(d1, d2));"
     "        gl_Position = projMatrix * cameraMatrix * gl_in[i].gl_Position;"
-	"        position = projMatrix * gl_in[i].gl_Position;"
+	"        position = gl_in[i].gl_Position;"
 	"        muv = fuv[i];"
     "        EmitVertex();"
     "    }"
