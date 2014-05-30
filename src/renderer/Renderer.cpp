@@ -18,7 +18,7 @@ static const char *vertex_source =
     "void main()"
     "{"
     "    gl_Position = projMatrix * cameraMatrix * position;"
-    "     fcolor = vec4(color, 1);"
+    "    fcolor = vec4(color, 1);"
     "}";
 
 static const char *fragment_source = 
@@ -30,18 +30,12 @@ static const char *fragment_source =
 
 static const char *vertex_source2 = 
     "#version 330\n"
-    "uniform vec3 color;"
-    "uniform mat4 projMatrix;"
-    "uniform mat4 cameraMatrix;"
-    "uniform vec3 lightSrc;"
     "in vec3 position;"
     "in vec2 texture;"
-    "out vec4 fcolor;"
     "out vec2 fuv;"
     "void main()"
     "{"
-    "    gl_Position = projMatrix * cameraMatrix * vec4(position,1);"
-    "    fcolor = vec4(color, 1);"
+    "    gl_Position = vec4(position,1);"
 	"    fuv = texture;"
     "}";
 
@@ -49,12 +43,11 @@ static const char *geometry_shader2 =
     "#version 330\n"
     "layout (triangles) in;"
     "layout (triangle_strip, max_vertices = 3) out;"
-    "in vec4 fposition[];"
-    "in vec4 fcolor[];"
-    "in vec2 fuv[];"
     "uniform mat4 projMatrix;"
     "uniform mat4 cameraMatrix;"
     "uniform vec3 lightSrc;"
+    "uniform vec3 color;"
+    "in vec2 fuv[];"
     "out vec4 mcolor;"
     "out vec2 muv;"
     "void main() {"
@@ -66,22 +59,24 @@ static const char *geometry_shader2 =
     "        vec3 diff = normalize(lightSrc - gl_in[i].gl_Position.xyz);"
     "        float d = max(0, dot(diff, norm));"
     "        gl_Position = projMatrix * cameraMatrix * gl_in[i].gl_Position;"
-    "        mcolor = vec4(fcolor[i].xyz * ( 0.2 + d), 1);"
+    "        mcolor = vec4(color.xyz * ( 0.2 + d), 1);"
 	"        muv = fuv[i];"
     "        EmitVertex();"
     "    }"
     "    EndPrimitive();"
-    "}"
-    "";
+    "}";
 
 static const char *fragment_source2 = 
     "#version 330\n"
-    "in vec4 fcolor;"
-    "in vec2 fuv;"
+    "in vec4 mcolor;"
+    "in vec2 muv;"
 	"uniform sampler2D mytext;"
-    "out vec3 color;"
+    "out vec3 raster;"
     "void main(void) {"
-    "    color = texture(mytext, fuv).rgb;"
+	"    if (muv != vec2(0,0))"
+	"    raster = texture(mytext, muv).rgb;"
+	"    else"
+	"    raster = mcolor.rgb;"
     "}";
 
 void SoftBodyRenderer::setRenderMethod(SoftBodyRenderMethod_e m)
@@ -140,10 +135,11 @@ void SoftBodyRenderer::initialize(int width, int height)
     mPointLine.setUniform("projMatrix", mProjectionMat);
 
     mLighting.setShaderSource(GL_VERTEX_SHADER, vertex_source2);
+    mLighting.setShaderSource(GL_GEOMETRY_SHADER, geometry_shader2);
     mLighting.setShaderSource(GL_FRAGMENT_SHADER, fragment_source2);
-   // mLighting.setShaderSource(GL_GEOMETRY_SHADER, geometry_shader2);
     mLighting.compileAndLink();
     mLighting.useShader();
+
     mLighting.setUniform("lightSrc", lightSrc);
     mLighting.setUniform("projMatrix", mProjectionMat);
 
@@ -159,7 +155,7 @@ void SoftBodyRenderer::clearScreen(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
-//void SoftBodyRenderer::RenderBorder(PlainBorder *border, const glm::mat4 *camMat)
+//void SoftBodyRenderer::renderGround()
 //{
 //    const vec3 vColor(0.5, 0.5, 0.5);
 //
@@ -184,8 +180,9 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
     const vec3 &color = obj->GetColor();
 	mesh = obj->GetMesh();
 
-	if (mesh->material)
+	if (mesh->material) {
 		mesh->material->Bind();
+	}
     mCurrent->setUniform("cameraMatrix", camMat);
     mCurrent->setUniform("color", color);
 

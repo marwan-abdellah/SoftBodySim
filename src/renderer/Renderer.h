@@ -35,6 +35,7 @@ class SoftBodyRenderer {
         glm::mat4                       mProjectionMat;
         Shader                          *mCurrent;
         Shader                          mLighting;
+        Shader                          mGround;
         Shader                          mPointLine;
 };
 
