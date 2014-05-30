@@ -130,7 +130,7 @@ static void *allocateCUDABuffer(size_t bytes, bool zeroed=false)
 
 long CUDAContext::AllocateDeviceBuffers(SoftBodyDescriptor *descr)
 {
-	int bytesArray, bytesMass, bytesMapping, bytesLinks, bytesTriangles,
+	int bytesArray, bytesMapping, bytesLinks, bytesTriangles,
 		bytesParticles;
 
 	bytesArray   = descr->nParticles * sizeof(vec3);
@@ -154,7 +154,7 @@ long CUDAContext::AllocateDeviceBuffers(SoftBodyDescriptor *descr)
 	descr->particles = (Particle*)allocateCUDABuffer(bytesParticles);
 	if (!descr->particles) goto on_fail;
 
-	return 4 * bytesArray + bytesMass + bytesMapping + bytesLinks;
+	return 4 * bytesArray + bytesMapping + bytesLinks;
 
 on_fail:
 	DeallocateDeviceBuffers(descr);
@@ -193,7 +193,6 @@ bool CUDAContext::CopyBodyToDeviceBuffers(SoftBodyDescriptor *descr) {
 
 	unsigned int bytesPart = descr->nParticles * sizeof(vec3);
 	unsigned int bytesLnk  = descr->nLinks * sizeof(LinkConstraint);
-	unsigned int bytesMass = descr->nParticles * sizeof(float_t);
 	unsigned int bytesMap  = descr->nMapping * sizeof(uint_t);
 	unsigned int bytesTria = descr->nTriangles * sizeof(uvec3);
 	unsigned int bytesParts = descr->nParticles * sizeof(Particle);
@@ -364,8 +363,6 @@ bool CUDAContext::InitCellIDS()
 
 CUDAContext::CUDAContext(softbodyList_t *bodies)
 {
-	bool res;
-
 	mCellIDS.count = 0;
 	mSolverSteps = DEFAULT_SOLVER_STEPS;
 
@@ -489,7 +486,6 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 	int threadsPerBlock = 128;
 	int blockCount;
 	int linkBlockCount, collBlockCount;
-	int idx = 0;
 
 	// predict motion
 	FOREACH(it, &mDescriptors) {
