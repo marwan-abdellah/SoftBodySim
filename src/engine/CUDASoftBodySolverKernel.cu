@@ -11,30 +11,38 @@ __device__ uint_t hash(uint_t id)
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(
 		vec3 gravity,
-		Particle *particles,
+		vec3 *positions,
+		vec3 *projections,
+		vec3 *velocities,
 		vec3 *ext_forces,
+		float_t *masses,
 		float_t dt,
 		uint_t max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	if ( idx < max_idx) {
-		Particle p = particles[idx];
+
 		// 0. Load from global mem.
 		vec3 force(0,0,0);
 		if (ext_forces)
 			vec3 force = ext_forces[idx];
+
+		vec3 position = positions[idx];
+		float_t imass = masses[idx];
+		vec3 velocity = velocities[idx];
 		
 		// 1. Updating velocities.
-		p.velocity += dt * p.imass * (force + gravity);
+		velocity += dt * imass * (force + gravity);
 
 		// 2. Damp velocities.
-		p.velocity *= 0.99f; // Naive damping
+		velocity *= 0.99f; // Naive damping
 
 		// 3. projecting positions
-		p.projection = p.position + p.velocity * dt;
+		vec3 projection = position + velocity * dt;
 
 		// update global tables
-		particles[idx] = p;
+		projections[idx] = projection;
+		velocities[idx] = velocity;
 	}
 }
 
@@ -44,7 +52,8 @@ __global__ void cudaProjectPositionsAndVelocitiesKernel(
 __global__ void solveLinksConstraints(
 		unsigned int max_steps,
 		LinkConstraint *links,
-		Particle *particles,
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
 		glm::uint_t max_idx)
 {
 	__shared__ vec3   ACCUM[2 * MAX_LINKS];
@@ -55,10 +64,10 @@ __global__ void solveLinksConstraints(
 	if (link_idx < max_idx) {
 
 		LinkConstraint lnk = links[link_idx];
-		glm::vec3 pos0 = particles[lnk.index[0]].projection;
-		glm::vec3 pos1 = particles[lnk.index[1]].projection;
-		glm::float_t mass_inv0 = particles[lnk.index[0]].imass;
-		glm::float_t mass_inv1 = particles[lnk.index[1]].imass;
+		glm::vec3 pos0 = projections[lnk.index[0]];
+		glm::vec3 pos1 = projections[lnk.index[1]];
+		glm::float_t mass_inv0 = masses_inv[lnk.index[0]];
+		glm::float_t mass_inv1 = masses_inv[lnk.index[1]];
 
 		// assume that will be no colliosions; MAX_LINS = 2^x, X in N
 		uint_t id0 = hash(lnk.index[0]) & (2 * MAX_LINKS - 1);
@@ -100,29 +109,29 @@ __global__ void solveLinksConstraints(
 		pos0 = ACCUM[id0] * (1.0f / (float_t)COUNTER[id0]);
 		pos1 = ACCUM[id1] * (1.0f / (float_t)COUNTER[id1]);
 
-		particles[lnk.index[0]].projection = pos0;
-		particles[lnk.index[1]].projection = pos1;
+		projections[lnk.index[0]] = pos0;
+		projections[lnk.index[1]] = pos1;
 	}
 }
 
-__global__ void solveGroundCollisionConstraints(
-		Particle *particles,
+__global__ void solveCollisionConstraints(
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
 		glm::float_t ground_level,
 		glm::uint_t max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
-		glm::vec3 pos = particles[idx].projection;
+		glm::vec3 pos = projections[idx];
 
 		if (pos[1] < ground_level)
 			pos[1] = ground_level;
 
-		particles[idx].projection = pos;
+		projections[idx] = pos;
 	}
 }
 
-#if 0
 /**
   step 5. solving collision constraints.
   */
@@ -189,36 +198,36 @@ __global__ void solvePointTriangleCollisionsKernel(
 		}
 	}
 }
-#endif
 
 /**
   step 6. Integrate motion.
   */
 __global__ void integrateMotionKernel(
 		glm::float_t dt,
-		Particle *particles,
+		glm::vec3 *positions,
+		glm::vec3 *projections,
+		glm::vec3 *velocities,
 		glm::uint max_idx
 		)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
-		glm::vec3 pos = particles[idx].position;
-		glm::vec3 proj = particles[idx].projection;
+		glm::vec3 pos = positions[idx];
+		glm::vec3 proj = projections[idx];
 
-		particles[idx].velocity = (proj - pos) / dt;
-		particles[idx].position = proj;
+		velocities[idx] = (proj - pos) / dt;
+		positions[idx] = proj;
 	}
 }
 
-__global__ void cudaUpdateVertexBufferKernel(MeshData::Vertex *vboPtr,
-		Particle *particles, glm::uint *mapping, glm::uint max_idx)
+__global__ void cudaUpdateVertexBufferKernel(MeshData::Vertex *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
 		glm::uint index = mapping[idx];
-		glm::vec3 vertex = particles[index].position;
+		glm::vec3 vertex = positions[index];
 		vboPtr[idx].position = vertex;
 	}
 }

@@ -26,8 +26,11 @@ struct CellID {
 struct SoftBodyDescriptor {
 	SoftBody                  *body;
 	cudaGraphicsResource      *graphics;
+	glm::vec3                 *positions;
+	glm::vec3                 *projections;
+	glm::vec3                 *velocities;
 	glm::vec3                 *forces;
-	Particle                  *particles;
+	glm::float_t              *massesInv;
 	unsigned int              nParticles;
 	LinkConstraint            *links;
 	unsigned int              nLinks;
@@ -44,27 +47,33 @@ struct SoftBodyDescriptor {
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(
 	glm::vec3 gravity,
-	Particle *particles,
+	glm::vec3 *positions,
+	glm::vec3 *projections,
+	glm::vec3 *velocities,
 	glm::vec3 *ext_forces,
+	glm::float_t *masses,
 	glm::float_t dt,
 	glm::uint_t max_idx);
 
 __global__ void integrateMotionKernel(
 		glm::float_t dt,
-		Particle *positions,
+		glm::vec3 *positions,
+		glm::vec3 *projections,
+		glm::vec3 *velocities,
 		glm::uint max_idx
 		);
 
 __global__ void cudaUpdateVertexBufferKernel(
 		MeshData::Vertex *vboPtr,
-		Particle *positions,
+		glm::vec3 *positions,
 		glm::uint *mapping,
 		glm::uint max_idx);
 
 __global__ void solveLinksConstraints(
 		unsigned int steps,
 		LinkConstraint *links,
-		Particle *projections,
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
 		glm::uint_t max_idx);
 
 __global__ void calculateLinkStiffness(
@@ -77,8 +86,9 @@ __global__ void solvePointTriangleCollisionsKernel(
 		PointTriangleConstraint *collisions_data,
 		glm::uint_t max_idx);
 
-__global__ void solveGroundCollisionConstraints(
-		Particle *particles,
+__global__ void solveCollisionConstraints(
+		glm::vec3 *projections,
+		glm::float_t *masses_inv,
 		glm::float_t ground_level,
 		glm::uint_t max_idx);
 
