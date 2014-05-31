@@ -1,15 +1,12 @@
 #ifndef CUDA_SOLVER_H
 #define CUDA_SOLVER_H
 
-#include "SoftBody.h"
-#include "VertexBuffer.h"
+#include "engine/solver/SoftBodySolver.h"
 
-#include <list>
 
-typedef std::list<SoftBody*>	 softbodyList_t; 
 class CUDAContext;
 
-class CUDASoftBodySolver {
+class CUDASoftBodySolver : public SoftBodySolver {
 	public:
 		/**
 		 * Default constructor
@@ -21,35 +18,15 @@ class CUDASoftBodySolver {
 		 */
 		~CUDASoftBodySolver(void);
 
-		/**
-		 * Simulation parameters structure
-		 *
-		 * gravity - gravity vector (can be non-
-		 */
-		struct SoftBodyWorldParameters {
-			glm::vec3   gravity;
-			float_t     groundLevel;
-		};
+		bool Initialize(void);
+		void Shutdown(void);
+		void ProjectSystem(glm::float_t dt);
+		void UpdateVertexBuffers(void);
 
-		bool initialize(void);
-		void shutdown(void);
-
-		void setWorldParameters(SoftBodyWorldParameters &params);
-
-		void addSoftBodies(softbodyList_t &bodies);
-		void removeBodies(softbodyList_t *bodies);
-		void addSoftBody(SoftBody *body); void removeSoftBody(SoftBody *body);
-
-		void projectSystem(glm::float_t dt);
-
-		void updateVertexBuffers(void);
-		void updateVertexBuffersAsync(void);
-
+		void AddSoftBody(SoftBody *body);
 	private:
 		CUDAContext *mContext;
-		softbodyList_t   mBodies;
-		bool			 mInitialized;
-		SoftBodyWorldParameters mWorldParams;
+		bool         mInitialized;
 };
 
 #endif

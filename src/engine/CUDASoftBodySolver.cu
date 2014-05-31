@@ -449,7 +449,7 @@ CUDASoftBodySolver::~CUDASoftBodySolver(void)
 	if (mContext) delete mContext;
 }
 
-bool CUDASoftBodySolver::initialize(void)
+bool CUDASoftBodySolver::Initialize(void)
 {
 	if (mInitialized) return true;
 
@@ -464,7 +464,7 @@ bool CUDASoftBodySolver::initialize(void)
 	return true;
 }
 
-void CUDASoftBodySolver::shutdown(void)
+void CUDASoftBodySolver::Shutdown(void)
 {
 	if (!mInitialized) return;
 
@@ -476,13 +476,7 @@ void CUDASoftBodySolver::shutdown(void)
 	mInitialized = false;
 }
 
-void CUDASoftBodySolver::updateVertexBuffersAsync(void)
-{
-	if (mInitialized)
-		mContext->UpdateVertexBuffers(true);
-}
-
-void CUDASoftBodySolver::updateVertexBuffers(void)
+void CUDASoftBodySolver::UpdateVertexBuffers(void)
 {
 	if (mInitialized)
 		mContext->UpdateVertexBuffers(false);
@@ -539,24 +533,13 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 			dt, mParticles.data(), mParticles.size());
 }
 
-void CUDASoftBodySolver::projectSystem(float_t dt)
+void CUDASoftBodySolver::ProjectSystem(float_t dt)
 {
 	if (mInitialized)
 		mContext->ProjectSystem(dt, mWorldParams);
 }
 
-void CUDASoftBodySolver::setWorldParameters(SoftBodyWorldParameters &params)
-{
-	mWorldParams = params;
-}
-
-void CUDASoftBodySolver::addSoftBodies(softbodyList_t &bodies)
-{
-	FOREACH_R(it, bodies)
-		mBodies.push_back(*it);
-}
-
-void CUDASoftBodySolver::addSoftBody(SoftBody *body)
+void CUDASoftBodySolver::AddSoftBody(SoftBody *body)
 {
 	mBodies.push_back(body);
 	bool res = true;
@@ -566,9 +549,4 @@ void CUDASoftBodySolver::addSoftBody(SoftBody *body)
 		if (!res)
 			ERR("Failed to add SoftBody!");
 	}
-}
-
-void CUDASoftBodySolver::removeSoftBody(SoftBody *body)
-{
-	mBodies.remove(body);
 }

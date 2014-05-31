@@ -90,9 +90,8 @@ Demo::Demo(int argc, char **argv) :
 	worldParams.gravity = vec3(0, -10.0, 0);
 	worldParams.groundLevel = groundLevel;
 
-	mSolver.addSoftBodies(mSoftBodies);
-	mSolver.setWorldParameters(worldParams);
-	mSolver.initialize();
+	mSolver.SetWorldParameters(worldParams);
+	mSolver.Initialize();
 }
 
 Demo::~Demo(void)
@@ -109,12 +108,12 @@ Demo::~Demo(void)
 void Demo::OnUpdate(double dt)
 {
 	if (mPaused) return;
-	mSolver.projectSystem(dt);
+	mSolver.ProjectSystem(dt);
 }
 
 void Demo::OnRender(void)
 {
-	mSolver.updateVertexBuffers();
+	mSolver.UpdateVertexBuffers();
 
 	renderer.clearScreen();
 	FOREACH(b, &mSoftBodies)
@@ -143,29 +142,29 @@ void Demo::OnKeyboard(int key, int action)
 		mPaused = !mPaused;
 	if (key == GLFW_KEY_C) {
 		mSoftBodies.clear();
-		mSolver.shutdown();
-		mSolver.initialize();
+		mSolver.Shutdown();
+		mSolver.Initialize();
 	}
 	if (key == GLFW_KEY_T) {
 		b = new SoftBody(1,0.1,1,md1);
 		b->SetColor(vec3(1.0, 1.0, 0.0f));
-		mSolver.addSoftBody(b);
+		mSolver.AddSoftBody(b);
 		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_Y) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
-		mSolver.addSoftBody(b);
+		mSolver.AddSoftBody(b);
 		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_U) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md3);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
-		mSolver.addSoftBody(b);
+		mSolver.AddSoftBody(b);
 		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_N)
-		mSolver.projectSystem(0.02);
+		mSolver.ProjectSystem(0.02);
 	if (key == GLFW_KEY_M)
 	{
 		switch (renderer.getRenderMethod()) {

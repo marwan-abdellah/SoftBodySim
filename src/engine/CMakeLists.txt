@@ -7,6 +7,7 @@ set (SRCS
 		model/MeshData.cpp
 		model/OBJLexer.cpp
 		model/Material.cpp
+		solver/SoftBodySolver.cpp
 	)
 
 find_package(CUDA REQUIRED)
