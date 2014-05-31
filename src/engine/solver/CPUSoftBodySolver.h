@@ -54,6 +54,7 @@ private:
 	vec3Array_t mVertexes;
 
 	descriptorsArray_t mDescriptors;
+	void PredictMotion(float dt);
 };
 
 

@@ -10,14 +10,21 @@ CPUSoftBodySolver::CPUSoftBodySolver()
 
 CPUSoftBodySolver::~CPUSoftBodySolver()
 {
+	Shutdown();
+}
+
+void CPUSoftBodySolver::PredictMotion(float dt)
+{
+	REP(i, mPositions.size()) {
+		mVelocities[i] += dt * mInvMasses[i] * (mForces[i] + mWorldParams.gravity);
+		mVelocities[i] *= 0.99;
+		mProjections[i] = mPositions[i] + mVelocities[i] * dt;
+	}
 }
 
 void CPUSoftBodySolver::ProjectSystem(float_t dt)
 {
-	// PredictMotion();
-	// for (i = 0; i < solverSteps; i++)
-	//    solverConstraints();
-	// IntegrateSystem();
+	PredictMotion(dt);
 }
 
 bool CPUSoftBodySolver::Initialize(void)
