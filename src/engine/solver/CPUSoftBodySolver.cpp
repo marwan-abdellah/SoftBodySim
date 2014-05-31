@@ -40,7 +40,7 @@ void CPUSoftBodySolver::SolveGroundCollisions(void)
 void CPUSoftBodySolver::ProjectSystem(float_t dt)
 {
 	PredictMotion(dt);
-	for(int i=0; i < mSolverSteps; i++) {
+	REP(i, mSolverSteps) {
 		SolveGroundCollisions();
 	}
 
@@ -67,6 +67,35 @@ void CPUSoftBodySolver::Shutdown(void)
 	SoftBodySolver::Shutdown();
 }
 
+static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n)
+{
+	double masssum = 0;
+	vec3 xmsum = vec3(0,0,0);
+
+	//calculate sum(xi * mi) amd sum(mi)
+	REP(i, n) {
+		xmsum += pos[i] * mass[i];
+		masssum += mass[i];
+	}
+
+	return xmsum / (float_t)masssum;
+}
+
+void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj)
+{
+	ShapeDescriptor ret;
+
+	ret.mc0 = calculateMassCenter(
+			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
+
+	// calculate differences q0i = x0i - mc0
+	REP(i, obj->mParticles.size()) {
+		vec3 q = obj->mParticles[i] - ret.mc0;
+		ret.diffs.push_back(q);
+	}
+	mShapes.push_back(ret);
+}
+
 void CPUSoftBodySolver::UpdateVertexBuffers(void)
 {
 	FOREACH(it, &mDescriptors) {
@@ -90,6 +119,9 @@ void CPUSoftBodySolver::AddSoftBody(SoftBody *b)
 	descr.linkCount = b->mLinks.size();
 	descr.mappingBaseIdx = mMapping.size();
 	descr.nMapping = b->mMeshVertexParticleMapping.size();
+	descr.shapeMatching.descriptor = mShapes.size();
+
+	AddShapeDescriptor(b);
 
 	mDescriptors.push_back(descr);
 

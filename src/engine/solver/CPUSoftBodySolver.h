@@ -39,8 +39,16 @@ private:
 		int linkCount;
 		int mappingBaseIdx;
 		int nMapping;
+		struct {
+			int descriptor;
+		} shapeMatching;
+	};
+	struct ShapeDescriptor {
+		glm::vec3 mc0; // mass center (mc0)
+		vec3Array_t diffs; // differences (x0i - mc0);
 	};
 	typedef std::vector<SoftBodyDescriptor> descriptorsArray_t;
+	typedef std::vector<ShapeDescriptor> shapeDescriptorsArray_t;
 
 	vec3Array_t mPositions;
 	vec3Array_t mProjections;
@@ -54,9 +62,12 @@ private:
 	vec3Array_t mVertexes;
 
 	descriptorsArray_t mDescriptors;
+	shapeDescriptorsArray_t mShapes;
+
 	void PredictMotion(float dt);
 	void IntegrateSystem(float dt);
 	void SolveGroundCollisions(void);
+	void AddShapeDescriptor(SoftBody *obj);
 };
 
 
