@@ -35,6 +35,7 @@ public:
 	size_t GetVertexCount(void) const { return mVertexCount; }
 
 	void SetVertexes(vec3Array_t &vertexes);
+	void SetVertexes(glm::vec3 *vertexes);
 	void SetNormals(vec3Array_t &vertexes);
 	void SetTextureCoords(vec2Array_t &vertexes);
 

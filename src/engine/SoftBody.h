@@ -11,7 +11,9 @@
 #include "model/MeshData.h"
 
 class SoftBody;
+class SoftBodySolver;
 class CUDASoftBodySolver;
+class CPUSoftBodySolver;
 class CUDACOntext;
 
 
@@ -45,6 +47,7 @@ private:
     indexArray_t                mMeshVertexParticleMapping; /* Needed for updating mesh
 															   vertex buffer */
 
+friend class CPUSoftBodySolver;
 friend class CUDASoftBodySolver;
 friend class CUDAContext;
 };

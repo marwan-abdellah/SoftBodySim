@@ -60,6 +60,15 @@ void VertexBuffer::SetNormals(vec3Array_t &vertexes)
 	glBindVertexArray(0);
 }
 
+void VertexBuffer::SetVertexes(glm::vec3 *vertexes)
+{
+	glBindVertexArray(mVAO);
+	glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+	glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, mVertexCount * sizeof(vec3), vertexes);
+	glBindVertexArray(0);
+}
+
 void VertexBuffer::SetVertexes(vec3Array_t &vertexes)
 {
 	if (mVertexCount != vertexes.size()) {

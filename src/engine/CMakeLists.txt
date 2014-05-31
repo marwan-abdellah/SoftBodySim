@@ -8,6 +8,7 @@ set (SRCS
 		model/OBJLexer.cpp
 		model/Material.cpp
 		solver/SoftBodySolver.cpp
+		solver/CPUSoftBodySolver.cpp
 	)
 
 find_package(CUDA REQUIRED)
