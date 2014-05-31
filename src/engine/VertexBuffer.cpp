@@ -6,21 +6,37 @@
 using namespace glm;
 
 
-VertexBuffer::VertexBuffer(MeshData::vertexArray_t &vertexes)
+VertexBuffer::VertexBuffer(vec3Array_t &vertexes) :
+	mVertexCount(vertexes.size()),
+	mNormalsOffset(-1),
+	mTextureOffset(-1)
 {
 	glGenVertexArrays(1, &mVAO);
 	glBindVertexArray(mVAO);
 	glGenBuffers(1, &mVBO);
-	SetData(vertexes);
+	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 
-	glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
-	glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(MeshData::Vertex), NULL);
-	glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
-	glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(MeshData::Vertex), (void*)(offsetof(MeshData::Vertex, normal)));
-	glEnableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
-	glVertexAttribPointer(VERTEX_ATTR_TEX_COORDS, 2, GL_FLOAT, GL_FALSE, sizeof(MeshData::Vertex), (void*)(offsetof(MeshData::Vertex, texture)));
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * mVertexCount, 0, GL_STATIC_DRAW);
+	SetVertexes(vertexes);
+}
 
-	glBindVertexArray(0);
+VertexBuffer::VertexBuffer(vec3Array_t &vertexes, vec3Array_t &normals,
+		vec2Array_t &textures) :
+	mVertexCount(vertexes.size())
+{
+	glGenVertexArrays(1, &mVAO);
+	glBindVertexArray(mVAO);
+	glGenBuffers(1, &mVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
+
+	glBufferData(GL_ARRAY_BUFFER, (2 * sizeof(vec3) + sizeof(vec2)) * mVertexCount, 0, GL_STATIC_DRAW);
+
+	mNormalsOffset = sizeof(vec3) * mVertexCount;
+	mTextureOffset = 2 * mNormalsOffset;
+
+	SetVertexes(vertexes);
+	SetNormals(normals);
+	SetTextureCoords(textures);
 }
 
 VertexBuffer::~VertexBuffer(void)
@@ -29,11 +45,46 @@ VertexBuffer::~VertexBuffer(void)
     glDeleteBuffers(1, &mVBO);
 }
 
-void VertexBuffer::SetData(MeshData::vertexArray_t &vertexes)
+void VertexBuffer::SetNormals(vec3Array_t &vertexes)
 {
-	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
-	mVertexCount = vertexes.size();
-	glBufferData(GL_ARRAY_BUFFER, sizeof(MeshData::Vertex) * mVertexCount, &vertexes[0], GL_STATIC_DRAW);
+	if (mNormalsOffset < 0) return;
+	if (mVertexCount != vertexes.size()) {
+		ERR("Invalid normal array size. Should match vertex array.");
+		return;
+	}
+	glBindVertexArray(mVAO);
+	glEnableVertexAttribArray(VERTEX_ATTR_NORMAL);
+	glVertexAttribPointer(VERTEX_ATTR_NORMAL, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)mNormalsOffset);
+	glBufferSubData(GL_ARRAY_BUFFER, mNormalsOffset, mVertexCount * sizeof(vec3), &vertexes[0]);
+
+	glBindVertexArray(0);
+}
+
+void VertexBuffer::SetVertexes(vec3Array_t &vertexes)
+{
+	if (mVertexCount != vertexes.size()) {
+		ERR("Invalid normal array size. Should match vertex array.");
+		return;
+	}
+	glBindVertexArray(mVAO);
+	glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
+	glVertexAttribPointer(VERTEX_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), 0);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, mVertexCount * sizeof(vec3), &vertexes[0]);
+	glBindVertexArray(0);
+}
+
+void VertexBuffer::SetTextureCoords(vec2Array_t &coords)
+{
+	if (mTextureOffset < 0) return;
+	if (mVertexCount != coords.size()) {
+		ERR("Invalid texture coords array size. Should match vertex array.");
+		return;
+	}
+	glBindVertexArray(mVAO);
+	glEnableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
+	glVertexAttribPointer(VERTEX_ATTR_TEX_COORDS, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)mTextureOffset);
+	glBufferSubData(GL_ARRAY_BUFFER, mTextureOffset, mVertexCount * sizeof(vec2), &coords[0]);
+	glBindVertexArray(0);
 }
 
 void VertexBuffer::Draw(DrawType t) const
@@ -61,7 +112,6 @@ void VertexBuffer::Unbind(void) const
     glBindVertexArray(0);
     glDisableVertexAttribArray(VERTEX_ATTR_POSITION);
     glDisableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glDisableVertexAttribArray(VERTEX_ATTR_COLOR);
     glDisableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }

@@ -42,7 +42,7 @@ __global__ void integrateMotionKernel(
 		);
 
 __global__ void cudaUpdateVertexBufferKernel(
-		MeshData::Vertex *vboPtr,
+		glm::vec3 *vboPtr,
 		glm::vec3 *positions,
 		glm::uint *mapping,
 		glm::uint baseIdx,

@@ -65,7 +65,9 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 			uvec3 id(0, y, z);
 			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
 			unsigned int d = _node_insert(map, ret->nodes, id, p);
-			ret->vertexes.push_back(Vertex(p, vec2(), vec3(-1, 0, 0)));
+			ret->vertexes.push_back(p);
+			ret->normals.push_back(vec3(-1, 0, 0));
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(d);
 		}
 
@@ -87,7 +89,9 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 			uvec3 id(nx - 1, y, z);
 			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
 			unsigned int d = _node_insert(map, ret->nodes, id, p);
-			ret->vertexes.push_back(Vertex(p, vec2(), vec3(1, 0, 0)));
+			ret->vertexes.push_back(p);
+			ret->normals.push_back(vec3(1, 0, 0));
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(d);
 		}
 
@@ -109,7 +113,9 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 			uvec3 id(x, 0, z);
 			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
 			unsigned int d = _node_insert(map, ret->nodes, id, p);
-			ret->vertexes.push_back(Vertex(p, vec2(), vec3(0, -1, 0)));
+			ret->vertexes.push_back(p);
+			ret->normals.push_back(vec3(0, -1.0, 0));
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(d);
 		}
 
@@ -131,7 +137,9 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 			uvec3 id(x, ny - 1, z);
 			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
 			unsigned int d = _node_insert(map, ret->nodes, id, p);
-			ret->vertexes.push_back(Vertex(p, vec2(), vec3(0, 1, 0)));
+			ret->vertexes.push_back(p);
+			ret->normals.push_back(vec3(0, 1, 0));
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(d);
 		}
 
@@ -153,7 +161,9 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 			uvec3 id(x, y, 0);
 			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
 			unsigned int d = _node_insert(map, ret->nodes, id, p);
-			ret->vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, 1)));
+			ret->vertexes.push_back(p);
+			ret->normals.push_back(vec3(0, 0, 1));
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(d);
 		}
 
@@ -175,7 +185,9 @@ MeshData *MeshData::CreateCube(vec3 bottomLeftFront, vec3 upperRightBack, size_t
 			uvec3 id(x, y, nz - 1);
 			vec3 p = vec3(id[0] * diff[0], id[1] * diff[1], id[2] * diff[2]) + bottomLeftFront;
 			unsigned int d = _node_insert(map, ret->nodes, id, p);
-			ret->vertexes.push_back(Vertex(p, vec2(), vec3(0, 0, -1)));
+			ret->vertexes.push_back(p);
+			ret->normals.push_back(vec3(0, 0, -1));
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(d);
 		}
 
@@ -211,10 +223,11 @@ MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 			vec3 pos(x * xstep, y * ystep, 0.0);
 			pos = pos - shift;
 			vec3 norm(0.0, 0.0, 1.0);
-			Vertex v(pos, vec2(), norm);
-			ret->vertexes.push_back(v);
+			ret->vertexes.push_back(pos);
+			ret->normals.push_back(norm);
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(ret->nodes.size());
-			ret->nodes.push_back(v.position);
+			ret->nodes.push_back(pos);
 		}
 	}
 
@@ -432,9 +445,10 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 					txt = textures.size() == 0 ? vec2(0,0) : textures[vertId[i][1]-1];
 				if (vertId[i][2])
 					nrm = normals.size() == 0 ? vec3(0,0,0) : normals[vertId[i][2]-1];
-				MeshData::Vertex v(md->nodes[vertId[i][0]-1], txt, nrm);
 				faceId[i] = md->vertexes.size();
-				md->vertexes.push_back(v);
+				md->vertexes.push_back(md->nodes[vertId[i][0] -1]);
+				md->textureCoords.push_back(txt);
+				md->normals.push_back(nrm);
 				md->vertexesNodes.push_back(vertId[i][0] - 1);
 				map.insert(make_pair(vertId[i], faceId[i]));
 			}

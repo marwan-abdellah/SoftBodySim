@@ -271,7 +271,7 @@ CUDAContext::~CUDAContext()
 void CUDAContext::UpdateVertexBuffers(bool async)
 {
 	cudaError_t err;
-	MeshData::Vertex *ptr;
+	vec3 *ptr;
 	int threadsPerBlock = 128;
 
 	// map all in one call

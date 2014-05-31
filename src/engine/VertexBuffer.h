@@ -24,17 +24,21 @@ public:
         VERTEX_ATTR_POSITION,
         VERTEX_ATTR_TEX_COORDS,
         VERTEX_ATTR_NORMAL,
-        VERTEX_ATTR_COLOR,
     };
-    VertexBuffer(MeshData::vertexArray_t &vertexes);
+    VertexBuffer(vec3Array_t &vertexes);
+    VertexBuffer(vec3Array_t &vertexes, vec2Array_t &textures);
+    VertexBuffer(vec3Array_t &vertexes, vec3Array_t &normals);
+    VertexBuffer(vec3Array_t &vertexes, vec3Array_t &normals, vec2Array_t &tex);
     ~VertexBuffer(void);
 
-	void SetData(MeshData::vertexArray_t &vertexes);
     GLint GetVBO() const { return mVBO; }
-
 	size_t GetVertexCount(void) const { return mVertexCount; }
 
-    void Bind(int attrs) const;
+	void SetVertexes(vec3Array_t &vertexes);
+	void SetNormals(vec3Array_t &vertexes);
+	void SetTextureCoords(vec2Array_t &vertexes);
+
+    void Bind(int attr) const;
     void Unbind(void) const;
 
 	void Draw(DrawType t) const;
@@ -43,6 +47,7 @@ private:
 	void BindAttrs(int attrs) const;
 	size_t mVertexCount;
     GLuint mVAO, mVBO;
+	int mNormalsOffset, mTextureOffset;
 };
 
 class ElementBuffer {
