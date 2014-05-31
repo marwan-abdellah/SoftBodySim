@@ -21,7 +21,7 @@ SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
 	mForces.resize(mParticles.size());
 	mLinks.resize(mesh->nodesLinks.size());
 
-	mass /= 1.0;
+	mass = 1.0 / mass;
 	FOREACH(it, &mMassInv)
 		*it = mass;
 

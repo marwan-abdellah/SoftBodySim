@@ -54,20 +54,22 @@ __global__ void solveLinksConstraints(
 		LinkConstraint *links,
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
+		glm::uint_t baseIdx,
+		glm::uint_t linkIdx,
 		glm::uint_t max_idx)
 {
 	__shared__ vec3   ACCUM[2 * MAX_LINKS];
 	__shared__ uint_t COUNTER[2 * MAX_LINKS];
 
-	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int link_idx = blockIdx.x * blockDim.x + threadIdx.x + linkIdx;
 
 	if (link_idx < max_idx) {
 
 		LinkConstraint lnk = links[link_idx];
-		glm::vec3 pos0 = projections[lnk.index[0]];
-		glm::vec3 pos1 = projections[lnk.index[1]];
-		glm::float_t mass_inv0 = masses_inv[lnk.index[0]];
-		glm::float_t mass_inv1 = masses_inv[lnk.index[1]];
+		glm::vec3 pos0 = projections[lnk.index[0] + baseIdx];
+		glm::vec3 pos1 = projections[lnk.index[1] + baseIdx];
+		glm::float_t mass_inv0 = masses_inv[lnk.index[0] + baseIdx];
+		glm::float_t mass_inv1 = masses_inv[lnk.index[1] + baseIdx];
 
 		// assume that will be no colliosions; MAX_LINS = 2^x, X in N
 		uint_t id0 = hash(lnk.index[0]) & (2 * MAX_LINKS - 1);
@@ -109,12 +111,12 @@ __global__ void solveLinksConstraints(
 		pos0 = ACCUM[id0] * (1.0f / (float_t)COUNTER[id0]);
 		pos1 = ACCUM[id1] * (1.0f / (float_t)COUNTER[id1]);
 
-		projections[lnk.index[0]] = pos0;
-		projections[lnk.index[1]] = pos1;
+		projections[lnk.index[0] + baseIdx] = pos0;
+		projections[lnk.index[1] + baseIdx] = pos1;
 	}
 }
 
-__global__ void solveCollisionConstraints(
+__global__ void solveGroundCollisionConstraints(
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
 		glm::float_t ground_level,
@@ -135,6 +137,7 @@ __global__ void solveCollisionConstraints(
 /**
   step 5. solving collision constraints.
   */
+#if 0
 __global__ void solvePointTriangleCollisionsKernel(
 		SoftBodyDescriptor *descriptors,
 		PointTriangleConstraint *collisions_data,
@@ -198,6 +201,7 @@ __global__ void solvePointTriangleCollisionsKernel(
 		}
 	}
 }
+#endif
 
 /**
   step 6. Integrate motion.
@@ -221,13 +225,15 @@ __global__ void integrateMotionKernel(
 	}
 }
 
-__global__ void cudaUpdateVertexBufferKernel(MeshData::Vertex *vboPtr, glm::vec3 *positions, glm::uint *mapping, glm::uint max_idx)
+__global__ void cudaUpdateVertexBufferKernel(MeshData::Vertex *vboPtr, glm::vec3
+		*positions, glm::uint *mapping, uint_t baseIdx, uint_t mappingBaseIdx,
+		glm::uint max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
-		glm::uint index = mapping[idx];
-		glm::vec3 vertex = positions[index];
+		glm::uint index = mapping[mappingBaseIdx + idx];
+		glm::vec3 vertex = positions[baseIdx + index];
 		vboPtr[idx].position = vertex;
 	}
 }
@@ -235,9 +241,10 @@ __global__ void cudaUpdateVertexBufferKernel(MeshData::Vertex *vboPtr, glm::vec3
 __global__ void calculateLinkStiffness(
 		unsigned int solver_steps,
 		LinkConstraint *links,
+		glm::uint_t linkBaseIdx,
 		glm::uint_t max_idx)
 {
-	int link_idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int link_idx = blockIdx.x * blockDim.x + threadIdx.x + linkBaseIdx;
 
 	if (link_idx < max_idx) {
 		LinkConstraint lnk = links[link_idx];
@@ -247,6 +254,7 @@ __global__ void calculateLinkStiffness(
 	}
 }
 
+#if 0
 __global__ void calculateSpatialHash(
 		glm::uint_t objectID,
 		glm::uint_t baseIdx,
@@ -271,3 +279,4 @@ __global__ void calculateSpatialHash(
 		cellIds[baseIdx + idx] = cell;
 	}
 }
+#endif

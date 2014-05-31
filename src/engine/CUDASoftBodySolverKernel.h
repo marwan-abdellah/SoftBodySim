@@ -10,39 +10,17 @@ struct PointTriangleConstraint {
 	glm::uint_t triangleId;
 };
 
-enum CellIDType {
-	CELL_HOME = 0,
-	CELL_PHANTOM = 1,
-	CELL_INVALID = 2
-};
-
-struct CellID {
-	glm::uint_t objectID;
-	glm::uint_t triangleID;
-	glm::uint_t hash;
-	bool control : 2;
-};
-
 struct SoftBodyDescriptor {
 	SoftBody                  *body;
 	cudaGraphicsResource      *graphics;
-	glm::vec3                 *positions;
-	glm::vec3                 *projections;
-	glm::vec3                 *velocities;
-	glm::vec3                 *forces;
-	glm::float_t              *massesInv;
-	unsigned int              nParticles;
-	LinkConstraint            *links;
-	unsigned int              nLinks;
-	glm::uint_t               *mapping;  /* Mapping between particles positions and vertexes 
-									   is VertexBuffer.
-									 Used for updating Vertex poistions */
-	unsigned int              nMapping;
 	unsigned int              baseIdx;
-	glm::uvec3                *triangles;
+	unsigned int              nParticles;
+	unsigned int              linkIdx;
+	unsigned int              nLinks;
+	unsigned int              mappingIdx;
+	unsigned int              nMapping;
+	unsigned int              trianglesIdx;
 	int                       nTriangles;
-	PointTriangleConstraint   *collisions;
-	int                       nCollisions;
 };
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(
@@ -67,6 +45,8 @@ __global__ void cudaUpdateVertexBufferKernel(
 		MeshData::Vertex *vboPtr,
 		glm::vec3 *positions,
 		glm::uint *mapping,
+		glm::uint baseIdx,
+		glm::uint mappingBaseIdx,
 		glm::uint max_idx);
 
 __global__ void solveLinksConstraints(
@@ -74,11 +54,14 @@ __global__ void solveLinksConstraints(
 		LinkConstraint *links,
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
+		glm::uint_t baseIdx,
+		glm::uint_t linkIdx,
 		glm::uint_t max_idx);
 
 __global__ void calculateLinkStiffness(
 		unsigned int solver_steps,
 		LinkConstraint *links,
+		glm::uint_t linkIdx,
 		glm::uint_t max_idx);
 
 __global__ void solvePointTriangleCollisionsKernel(
@@ -86,12 +69,13 @@ __global__ void solvePointTriangleCollisionsKernel(
 		PointTriangleConstraint *collisions_data,
 		glm::uint_t max_idx);
 
-__global__ void solveCollisionConstraints(
+__global__ void solveGroundCollisionConstraints(
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
 		glm::float_t ground_level,
 		glm::uint_t max_idx);
 
+#if 0
 __global__ void calculateSpatialHash(
 		glm::uint_t objectID,
 		glm::uint_t baseIdx,
@@ -100,3 +84,4 @@ __global__ void calculateSpatialHash(
 		glm::float_t cellSize,
 		CellID *cellIds,
 		glm::uint_t max_idx);
+#endif
