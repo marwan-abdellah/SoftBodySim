@@ -6,6 +6,7 @@
 #include "renderer/Camera.h"
 #include "engine/SoftBody.h"
 #include "engine/CUDASoftBodySolver.h"
+#include "engine/solver/CPUSoftBodySolver.h"
 
 #include <iostream>
 #include <glm/glm.hpp>
@@ -37,19 +38,20 @@ private:
 	int mMouseLastY;
 	bool mMousePressed;
 	Camera mCamera;
-	CUDASoftBodySolver mSolver;
+	SoftBodySolver *mSolver;
 	int	mEnginUpdateTime;
 	mat4 mFloorTransform;
 	bool mPaused;
 	MeshData *md, *md1, *md2, *md3;
 	Material mMat;
+	bool cudaSolver;
 };
 
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
 	mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
-	mSolver(),
-	mPaused(false)
+	mPaused(false),
+	cudaSolver(0)
 {
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
 	if (res) ERR("Texture loading failed!");
@@ -91,8 +93,9 @@ Demo::Demo(int argc, char **argv) :
 	worldParams.gravity = vec3(0, -10.0, 0);
 	worldParams.groundLevel = groundLevel;
 
-	mSolver.SetWorldParameters(worldParams);
-	mSolver.Initialize();
+	mSolver = new CPUSoftBodySolver();
+	mSolver->SetWorldParameters(worldParams);
+	mSolver->Initialize();
 }
 
 Demo::~Demo(void)
@@ -104,17 +107,18 @@ Demo::~Demo(void)
 	delete md1;
 	delete md2;
 	delete md3;
+	delete mSolver;
 }
 
 void Demo::OnUpdate(double dt)
 {
 	if (mPaused) return;
-	mSolver.ProjectSystem(dt);
+	mSolver->ProjectSystem(dt);
 }
 
 void Demo::OnRender(void)
 {
-	mSolver.UpdateVertexBuffers();
+	mSolver->UpdateVertexBuffers();
 
 	renderer.clearScreen();
 	FOREACH(b, &mSoftBodies)
@@ -141,31 +145,45 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveOut(delta);
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
+	if (key == GLFW_KEY_V) {
+		mSoftBodies.clear();
+		delete mSolver;
+		cudaSolver = !cudaSolver;
+		if (cudaSolver) {
+			mSolver = new CUDASoftBodySolver();
+			DBG("CUDA Solver enabled");
+		}
+		else {
+			mSolver = new CPUSoftBodySolver();
+			DBG("CPU Solver enabled");
+		}
+		mSolver->Initialize();
+	}
 	if (key == GLFW_KEY_C) {
 		mSoftBodies.clear();
-		mSolver.Shutdown();
-		mSolver.Initialize();
+		mSolver->Shutdown();
+		mSolver->Initialize();
 	}
 	if (key == GLFW_KEY_T) {
 		b = new SoftBody(1,0.1,1,md1);
 		b->SetColor(vec3(1.0, 1.0, 0.0f));
-		mSolver.AddSoftBody(b);
+		mSolver->AddSoftBody(b);
 		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_Y) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
-		mSolver.AddSoftBody(b);
+		mSolver->AddSoftBody(b);
 		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_U) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md3);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
-		mSolver.AddSoftBody(b);
+		mSolver->AddSoftBody(b);
 		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_N)
-		mSolver.ProjectSystem(0.02);
+		mSolver->ProjectSystem(0.02);
 	if (key == GLFW_KEY_M)
 	{
 		switch (renderer.getRenderMethod()) {

@@ -12,7 +12,7 @@ using namespace glm;
 
 #include "CUDASoftBodySolverKernel.h"
 
-#define DEFAULT_SOLVER_STEPS 15
+#define DEFAULT_SOLVER_STEPS 10
 #define DEFAULT_CELL_SIZE 1.0
 
 class CUDAContext {

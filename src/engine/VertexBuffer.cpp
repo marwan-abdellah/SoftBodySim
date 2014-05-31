@@ -119,10 +119,6 @@ void VertexBuffer::Bind(int attrs) const
 void VertexBuffer::Unbind(void) const
 {
     glBindVertexArray(0);
-    glDisableVertexAttribArray(VERTEX_ATTR_POSITION);
-    glDisableVertexAttribArray(VERTEX_ATTR_NORMAL);
-    glDisableVertexAttribArray(VERTEX_ATTR_TEX_COORDS);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 ElementBuffer::ElementBuffer(index2Array_t &array)

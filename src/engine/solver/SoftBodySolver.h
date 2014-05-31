@@ -32,6 +32,7 @@ public:
 	virtual void RemoveSoftBody(SoftBody *body);
 protected:
 	softbodyList_t   mBodies;
+	int 			 mSolverSteps;
 	SoftBodyWorldParameters mWorldParams;
 };
 

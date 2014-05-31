@@ -55,6 +55,8 @@ private:
 
 	descriptorsArray_t mDescriptors;
 	void PredictMotion(float dt);
+	void IntegrateSystem(float dt);
+	void SolveGroundCollisions(void);
 };
 
 

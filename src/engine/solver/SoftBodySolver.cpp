@@ -3,10 +3,13 @@
 
 using namespace glm;
 
+#define DEFAULT_STEPS 10
+
 SoftBodySolver::SoftBodySolver(void)
 {
 	mWorldParams.gravity = vec3(0, -10.0f, 0);
 	mWorldParams.groundLevel = -2.0f;
+	mSolverSteps = DEFAULT_STEPS;
 }
 
 SoftBodySolver::~SoftBodySolver(void)
