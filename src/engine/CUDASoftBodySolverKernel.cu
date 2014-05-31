@@ -20,7 +20,9 @@ __global__ void cudaProjectPositionsAndVelocitiesKernel(
 	if ( idx < max_idx) {
 		Particle p = particles[idx];
 		// 0. Load from global mem.
-		vec3 force = ext_forces[idx];
+		vec3 force(0,0,0);
+		if (ext_forces)
+			vec3 force = ext_forces[idx];
 		
 		// 1. Updating velocities.
 		p.velocity += dt * p.imass * (force + gravity);

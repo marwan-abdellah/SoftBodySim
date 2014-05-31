@@ -1,4 +1,5 @@
 #include "CUDASoftBodySolver.h"
+#include "CUDAVector.h"
 
 #include "common.h"
 #include <cstring>
@@ -46,6 +47,8 @@ private:
 
 	descriptorArray_t                  mDescriptors;
 	SoftBodyDescriptor				   *mDescriptorsDev;
+
+	CUDAVector<Particle>               mParticles;
 
 	vector<cudaGraphicsResource*>      mResArray; /* helper array to map all resources 
 												  in one call */
@@ -211,6 +214,8 @@ bool CUDAContext::CopyBodyToDeviceBuffers(SoftBodyDescriptor *descr) {
 
 	err = cudaMemcpy(descr->particles, &(body->mParticles2[0]), bytesParts, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess) return false;
+
+	mParticles.push_back(&(body->mParticles2[0]), descr->nParticles);
 
 	return true;
 }
@@ -386,11 +391,13 @@ CUDAContext::CUDAContext(softbodyList_t *bodies)
 		return;
 	}
 
+#if 0
 	if (!InitDymmyBodyCollisionConstraint()) {
 		ERR("Unable to allocate collision constraints on device!");
 		ShutdownDevice();
 		return;
 	}
+#endif 
 	if (!InitCellIDS()) {
 		ERR("Unable to init Cell IDS!");
 		ShutdownDevice();
@@ -422,7 +429,7 @@ void CUDAContext::UpdateVertexBuffers(bool async)
 		}
 		int blockCount = it->nMapping / threadsPerBlock + 1;
 		cudaUpdateVertexBufferKernel<<<blockCount, threadsPerBlock >>>(
-				ptr, it->particles, it->mapping, it->nMapping);
+				ptr, mParticles.data(), it->mapping, it->nMapping);
 	}
 
 	cudaGraphicsUnmapResources(mResArray.size(), &mResArray[0]);
@@ -488,13 +495,12 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 	int linkBlockCount, collBlockCount;
 
 	// predict motion
-	FOREACH(it, &mDescriptors) {
-		blockCount = it->nParticles / threadsPerBlock + 1;
+	blockCount = mParticles.size() / threadsPerBlock + 1;
 
-		cudaProjectPositionsAndVelocitiesKernel<<<blockCount,
-			threadsPerBlock>>>(world.gravity, it->particles,
-				it->forces, dt, it->nParticles);
-	}
+	cudaProjectPositionsAndVelocitiesKernel<<<blockCount,
+		threadsPerBlock>>>(world.gravity, mParticles.data(),
+			NULL, dt, mParticles.size());
+//	}
 
 	// collision detection
 #if 0
@@ -505,10 +511,11 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 				DEFAULT_CELL_SIZE, mCellIDS.devPtr, it->nTriangles);
 		idx++;
 	}
-#endif
 
+#endif
 	// solver
 	for (int i = 0; i < mSolverSteps; i++) {
+#if 0
 		FOREACH(it, &mDescriptors) {
 			linkBlockCount = it->nLinks / MAX_LINKS + 1;
 			blockCount = it->nParticles / threadsPerBlock + 1;
@@ -519,18 +526,17 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 //			solvePointTriangleCollisionsKernel<<<collBlockCount,
 //				threadsPerBlock>>>(mDescriptorsDev, it->collisions,
 //						it->nCollisions);
-			solveGroundCollisionConstraints<<<blockCount, threadsPerBlock>>>(
-					it->particles, world.groundLevel, it->nParticles);
 		}
+#endif
+		solveGroundCollisionConstraints<<<blockCount, threadsPerBlock>>>(
+				mParticles.data(), world.groundLevel, mParticles.size());
 	}
 
-	// integrate motion
-	FOREACH(it, &mDescriptors) {
-		threadsPerBlock = 128;
-		blockCount = it->nParticles / threadsPerBlock + 1;
-		integrateMotionKernel<<<blockCount, threadsPerBlock>>>(
-				dt, it->particles, it->nParticles);
-	}
+    //integrate motion
+	threadsPerBlock = 128;
+	blockCount = mParticles.size() / threadsPerBlock + 1;
+	integrateMotionKernel<<<blockCount, threadsPerBlock>>>(
+			dt, mParticles.data(), mParticles.size());
 }
 
 void CUDASoftBodySolver::projectSystem(float_t dt)
@@ -557,7 +563,6 @@ void CUDASoftBodySolver::addSoftBody(SoftBody *body)
 	if (mInitialized) {
 		res &= mContext->InitSoftBody(body);
 		res &= mContext->InitBodyDescriptors();
-		res &= mContext->InitDymmyBodyCollisionConstraint();
 		if (!res)
 			ERR("Failed to add SoftBody!");
 	}
