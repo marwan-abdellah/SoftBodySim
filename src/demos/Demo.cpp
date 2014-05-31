@@ -52,6 +52,7 @@ Demo::Demo(int argc, char **argv) :
 	mPaused(false)
 {
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
+	if (res) ERR("Texture loading failed!");
 	const float_t groundLevel = -2.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");

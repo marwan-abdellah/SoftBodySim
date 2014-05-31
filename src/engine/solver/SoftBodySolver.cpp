@@ -11,6 +11,7 @@ SoftBodySolver::SoftBodySolver(void)
 
 SoftBodySolver::~SoftBodySolver(void)
 {
+	mBodies.clear();
 }
 
 void SoftBodySolver::SetWorldParameters(SoftBodyWorldParameters &params)
@@ -26,4 +27,9 @@ void SoftBodySolver::AddSoftBody(SoftBody *body)
 void SoftBodySolver::RemoveSoftBody(SoftBody *body)
 {
 	mBodies.remove(body);
+}
+
+void SoftBodySolver::Shutdown(void)
+{
+	mBodies.clear();
 }

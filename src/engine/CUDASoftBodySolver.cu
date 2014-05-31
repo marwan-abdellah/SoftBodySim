@@ -328,8 +328,8 @@ void CUDASoftBodySolver::Shutdown(void)
 		delete mContext;
 		mContext = NULL;
 	}
-	mBodies.clear();
 	mInitialized = false;
+	SoftBodySolver::Shutdown();
 }
 
 void CUDASoftBodySolver::UpdateVertexBuffers(void)
@@ -376,9 +376,6 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 			solvePointTriangleCollisionsKernel<<<collBlockCount,
 				threadsPerBlock>>>(mDescriptorsDev, it->collisions,
 						it->nCollisions);
-			solveCollisionConstraints<<<blockCount, threadsPerBlock>>>(
-					it->projections, it->massesInv,
-					world.groundLevel, it->nParticles);
 #endif
 		}
 		solveGroundCollisionConstraints<<<blockCount, threadsPerBlock>>>(
