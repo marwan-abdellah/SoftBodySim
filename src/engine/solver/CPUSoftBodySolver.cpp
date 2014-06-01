@@ -1,8 +1,11 @@
 #include "engine/solver/CPUSoftBodySolver.h"
+#include "engine/geometry/Math.h"
 #include "common.h"
+#include <glm/ext.hpp>
 
 using namespace glm;
 
+static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n);
 
 CPUSoftBodySolver::CPUSoftBodySolver()
 {
@@ -37,10 +40,52 @@ void CPUSoftBodySolver::SolveGroundCollisions(void)
 		mProjections[i][1] = mProjections[i][1] < ground ? ground : mProjections[i][1];
 }
 
+void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
+{
+	vec3 mc;
+	mat3 A, R;
+	FOREACH_R(it, mDescriptors) {
+		// calculate mass center after pojection
+		mc = calculateMassCenter(&mProjections[it->baseIdx],
+								 &mInvMasses[it->baseIdx],
+								 it->count);
+		// calculate A = sum(mi * (xi - mc) * (x0i - mc0))
+		A = mat3();
+		REP(i, it->count) {
+			vec3 p = mProjections[it->baseIdx + i] - mc;
+			A += mInvMasses[it->baseIdx + i] *
+				outerProduct(p, mShapes[it->shapeMatching.descriptor].diffs[i]);
+		}
+		mat3 B = transpose(A) * A;
+
+		// B is symmetrix matrix so it is diagonizable
+		vec3 eig = eigenvalues_jacobi(B, 10);
+
+		B = diagonal3x3(eig);
+
+		// calculate squere root of diagonal matrix
+		B[0][0] = sqrt(B[0][0]);
+		B[1][1] = sqrt(B[1][1]);
+		B[2][2] = sqrt(B[2][2]);
+
+		// calculate Rotation matrix
+		R = A * inverse(B);
+
+		// calculate target positions and multiply it be constraint stiffness
+		// parameter
+	    REP(i , it->count) {
+			vec3 g = R * mShapes[it->shapeMatching.descriptor].diffs[i] + mc;
+			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * 0.1f;
+		}
+	}
+}
+
 void CPUSoftBodySolver::ProjectSystem(float_t dt)
 {
 	PredictMotion(dt);
+
 	REP(i, mSolverSteps) {
+		SolveShapeMatchConstraint();
 		SolveGroundCollisions();
 	}
 
@@ -88,7 +133,7 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj)
 	ret.mc0 = calculateMassCenter(
 			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
 
-	// calculate differences q0i = x0i - mc0
+	// calculate relative locations q0i = x0i - mc0
 	REP(i, obj->mParticles.size()) {
 		vec3 q = obj->mParticles[i] - ret.mc0;
 		ret.diffs.push_back(q);

@@ -45,7 +45,7 @@ private:
 	};
 	struct ShapeDescriptor {
 		glm::vec3 mc0; // mass center (mc0)
-		vec3Array_t diffs; // differences (x0i - mc0);
+		vec3Array_t diffs; // relative locations (x0i - mc0);
 	};
 	typedef std::vector<SoftBodyDescriptor> descriptorsArray_t;
 	typedef std::vector<ShapeDescriptor> shapeDescriptorsArray_t;
@@ -68,6 +68,7 @@ private:
 	void IntegrateSystem(float dt);
 	void SolveGroundCollisions(void);
 	void AddShapeDescriptor(SoftBody *obj);
+	void SolveShapeMatchConstraint(void);
 };
 
 

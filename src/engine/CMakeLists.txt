@@ -9,6 +9,7 @@ set (SRCS
 		model/Material.cpp
 		solver/SoftBodySolver.cpp
 		solver/CPUSoftBodySolver.cpp
+		geometry/Math.cpp
 	)
 
 find_package(CUDA REQUIRED)
