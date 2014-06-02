@@ -49,7 +49,7 @@ private:
 
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
-	mCamera(vec3(0,0,8), vec3(0,0,0), vec3(0,1,0)),
+	mCamera(vec3(0,0,28), vec3(0,0,0), vec3(0,1,0)),
 	mPaused(false),
 	cudaSolver(0)
 {
@@ -58,7 +58,7 @@ Demo::Demo(int argc, char **argv) :
 	const float_t groundLevel = -2.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");
-	md2 = MeshData::CreatePlane(300.0, 300.0, 2, 2);
+	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
 	md->material = &mMat;
