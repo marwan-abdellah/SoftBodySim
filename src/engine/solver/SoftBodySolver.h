@@ -16,6 +16,10 @@ public:
 	struct SoftBodyWorldParameters {
 		glm::vec3   gravity;
 		float_t     groundLevel;
+		float_t     leftWall;
+		float_t     rightWall;
+		float_t     backWall;
+		float_t     frontWall;
 	};
 
 	SoftBodySolver();
@@ -27,6 +31,7 @@ public:
 	virtual void UpdateVertexBuffers(void) = 0;
 
 	void SetWorldParameters(SoftBodyWorldParameters &params);
+	const softbodyList_t &GetBodies(void) { return mBodies; }
 
 	virtual void AddSoftBody(SoftBody *body);
 	virtual void RemoveSoftBody(SoftBody *body);

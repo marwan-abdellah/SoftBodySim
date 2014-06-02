@@ -10,14 +10,14 @@ using namespace glm;
 static const char *vertex_source = 
     "#version 330\n"
     "uniform mat4 projMatrix;"
-    "uniform mat4 cameraMatrix;"
+    "uniform mat4 modeViewMatrix;"
     "uniform vec3 color;"
     "in vec4 position;"
     "out vec4 fcolor;"
 
     "void main()"
     "{"
-    "    gl_Position = projMatrix * cameraMatrix * position;"
+    "    gl_Position = projMatrix * modeViewMatrix * position;"
     "    fcolor = vec4(color, 1);"
     "}";
 
@@ -44,7 +44,7 @@ static const char *geometry_shader2 =
     "layout (triangles) in;"
     "layout (triangle_strip, max_vertices = 3) out;"
     "uniform mat4 projMatrix;"
-    "uniform mat4 cameraMatrix;"
+    "uniform mat4 modeViewMatrix;"
     "in vec2 fuv[];"
     "out vec2 muv;"
     "out vec3 normal;"
@@ -55,7 +55,7 @@ static const char *geometry_shader2 =
     "        vec3 d1 = gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz;"
     "        vec3 d2 = gl_in[0].gl_Position.xyz - gl_in[2].gl_Position.xyz;"
     "        normal = normalize(cross(d1, d2));"
-    "        gl_Position = projMatrix * cameraMatrix * gl_in[i].gl_Position;"
+    "        gl_Position = projMatrix * modeViewMatrix * gl_in[i].gl_Position;"
 	"        position = gl_in[i].gl_Position;"
 	"        muv = fuv[i];"
     "        EmitVertex();"
@@ -158,19 +158,6 @@ void SoftBodyRenderer::clearScreen(void)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
-//void SoftBodyRenderer::renderGround()
-//{
-//    const vec3 vColor(0.5, 0.5, 0.5);
-//
-//    if (!border)
-//        return;
-//
-//    mCurrent->setUniform("color", &vColor);
-//    mCurrent->setUniform("cameraMatrix", camMat);
-//
-//    border->draw();
-//}
-
 void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
 {
     const VertexBuffer *buff;
@@ -183,15 +170,16 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
     const vec3 &color = obj->GetColor();
 	mesh = obj->GetMesh();
 
-	if (mesh->material) {
+	if (mesh->material)
 		mesh->material->Bind();
-	}
-    mCurrent->setUniform("cameraMatrix", camMat);
+
+	mat4 modelView = camMat * obj->GetModelMatrix();
+    mCurrent->setUniform("modeViewMatrix", modelView);
     mCurrent->setUniform("color", color);
 
     buff = obj->GetVertexes();
     if (!buff) return;
-    buff->Bind(VertexBuffer::VERTEX_ATTR_POSITION);
+    buff->Bind(0);
 
     switch (mMethod) {
         case SB_RENDER_PARTICLES:

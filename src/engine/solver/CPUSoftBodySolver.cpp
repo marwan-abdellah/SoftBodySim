@@ -33,11 +33,21 @@ void CPUSoftBodySolver::IntegrateSystem(float dt)
 	}
 }
 
-void CPUSoftBodySolver::SolveGroundCollisions(void)
+void CPUSoftBodySolver::SolveGroundWallCollisions(void)
 {
 	float_t ground = mWorldParams.groundLevel;
-	REP(i, mPositions.size())
+	float_t left = mWorldParams.leftWall;
+	float_t right = mWorldParams.rightWall;
+	float_t front = mWorldParams.frontWall;
+	float_t back = mWorldParams.backWall;
+
+	REP(i, mPositions.size()) {
 		mProjections[i][1] = mProjections[i][1] < ground ? ground : mProjections[i][1];
+		mProjections[i][0] = mProjections[i][0] < left ? left : mProjections[i][0];
+		mProjections[i][0] = mProjections[i][0] > right ? right : mProjections[i][0];
+		mProjections[i][2] = mProjections[i][2] > front ? front : mProjections[i][2];
+		mProjections[i][2] = mProjections[i][2] < back ? back : mProjections[i][2];
+	}
 }
 
 void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
@@ -84,11 +94,13 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 
 void CPUSoftBodySolver::ProjectSystem(float_t dt)
 {
+	if (!mInitialized) return;
+
 	PredictMotion(dt);
 
 	REP(i, mSolverSteps) {
 		SolveShapeMatchConstraint();
-		SolveGroundCollisions();
+		SolveGroundWallCollisions();
 	}
 
 	IntegrateSystem(dt);
@@ -98,20 +110,25 @@ bool CPUSoftBodySolver::Initialize(void)
 {
 	FOREACH_R(it, mBodies)
 		AddSoftBody(*it);
-	return true;
+
+	mInitialized = true;
+	return mInitialized;
 }
 
 void CPUSoftBodySolver::Shutdown(void)
 {
 	mPositions.clear();
-	mProjections.clear(); mForces.clear();
+	mProjections.clear();
+	mForces.clear();
 	mVelocities.clear();
 	mInvMasses.clear();
 	mLinks.clear();
 	mMapping.clear();
 	mDescriptors.clear();
+	mShapes.clear();
 
 	SoftBodySolver::Shutdown();
+	mInitialized = false;
 }
 
 static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n)
@@ -184,4 +201,6 @@ void CPUSoftBodySolver::AddSoftBody(SoftBody *b)
 			b->mMeshVertexParticleMapping.end());
 
 	mVertexes.resize(mVertexes.capacity());
+
+	SoftBodySolver::AddSoftBody(b);
 }

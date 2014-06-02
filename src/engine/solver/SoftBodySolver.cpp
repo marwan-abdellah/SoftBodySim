@@ -9,6 +9,10 @@ SoftBodySolver::SoftBodySolver(void)
 {
 	mWorldParams.gravity = vec3(0, -10.0f, 0);
 	mWorldParams.groundLevel = -2.0f;
+	mWorldParams.leftWall = -20.0f;
+	mWorldParams.rightWall = 20.0f;
+	mWorldParams.frontWall = 20.0f;
+	mWorldParams.backWall = -20.0f;
 	mSolverSteps = DEFAULT_STEPS;
 }
 
@@ -34,5 +38,7 @@ void SoftBodySolver::RemoveSoftBody(SoftBody *body)
 
 void SoftBodySolver::Shutdown(void)
 {
+	FOREACH(it, &mBodies)
+		delete *it;
 	mBodies.clear();
 }

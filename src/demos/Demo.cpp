@@ -33,18 +33,18 @@ public:
 private:
 	Body *floor;
 	SoftBodyRenderer    renderer;
-	softbodyList_t     mSoftBodies;
+	vector<Body*> mBodies;
 	int mMouseLastX;
 	int mMouseLastY;
 	bool mMousePressed;
 	Camera mCamera;
 	SoftBodySolver *mSolver;
 	int	mEnginUpdateTime;
-	mat4 mFloorTransform;
 	bool mPaused;
 	MeshData *md, *md1, *md2, *md3;
 	Material mMat;
 	bool cudaSolver;
+	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -57,52 +57,37 @@ Demo::Demo(int argc, char **argv) :
 	if (res) ERR("Texture loading failed!");
 	const float_t groundLevel = -2.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
+	md->material = &mMat;
 	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
-	md->material = &mMat;
-
-	/*
-	ERR("Mesh trianges: %d", md->nodesTriangles.size());
-	ERR("Mesh vertexes: %d", md->vertexes.size());
-
-	index3Array_t::iterator it2 = md->faces.begin();
-	FOREACH(it, &md->nodesTriangles) {
-		ERR("(%d %d %d) - (%d %d %d)", (*it)[0], (*it)[1], (*it)[2],
-		(*it2)[0], (*it2)[1], (*it2)[2]); 
-		it2++;
-	}
-	MeshData::vertexArray_t::iterator vit = md->vertexes.begin();
-	FOREACH(it, &md->nodes) {
-		ERR("(%f %f %f) - (%f %f %f)[%d]", (*it)[0], (*it)[1], (*it)[2],
-				vit->position[0], vit->position[1], vit->position[2],
-				md->vertexesNodes[std::distance(md->vertexes.begin(), vit)]);
-		vit++;
-	}
-	*/
-
 	floor = new Body(md2);
-	mFloorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
-	mFloorTransform = rotate(mFloorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	mat4 floorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
+	floorTransform = rotate(floorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
+	floor->SetModelMatrix(floorTransform);
+	floor->SetColor(vec3(1.0,1.0,1.0));
+	mBodies.push_back(floor);
 
 	renderer.initialize(width, height);
 	renderer.setRenderMethod(SB_RENDER_FACES);
 
-	CUDASoftBodySolver::SoftBodyWorldParameters worldParams;
-	worldParams.gravity = vec3(0, -10.0, 0);
-	worldParams.groundLevel = groundLevel;
+	mWorldParams.gravity = vec3(0, -10.0, 0);
+	mWorldParams.leftWall = -25.0f;
+	mWorldParams.rightWall = 3.0f;
+	mWorldParams.backWall = -25.0f;
+	mWorldParams.frontWall = 25.0f;
+	mWorldParams.groundLevel = groundLevel;
 
 	mSolver = new CPUSoftBodySolver();
-	mSolver->SetWorldParameters(worldParams);
+	mSolver->SetWorldParameters(mWorldParams);
 	mSolver->Initialize();
 }
 
 Demo::~Demo(void)
 {
-	FOREACH(b, &mSoftBodies)
+	FOREACH(b, &mBodies)
 		delete *b;
-	delete floor;
 	delete md;
 	delete md1;
 	delete md2;
@@ -121,10 +106,12 @@ void Demo::OnRender(void)
 	mSolver->UpdateVertexBuffers();
 
 	renderer.clearScreen();
-	FOREACH(b, &mSoftBodies)
+
+	FOREACH_R(b, mBodies)
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
 
-	renderer.renderBody(floor, mCamera.getCameraMatrix() * mFloorTransform);
+	FOREACH_R(a, mSolver->GetBodies())
+		renderer.renderBody(*a, mCamera.getCameraMatrix());
 }
 
 void Demo::OnKeyboard(int key, int action)
@@ -146,21 +133,22 @@ void Demo::OnKeyboard(int key, int action)
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
 	if (key == GLFW_KEY_V) {
-		mSoftBodies.clear();
+		mSolver->Shutdown();
 		delete mSolver;
 		cudaSolver = !cudaSolver;
 		if (cudaSolver) {
 			mSolver = new CUDASoftBodySolver();
+			mSolver->SetWorldParameters(mWorldParams);
 			DBG("CUDA Solver enabled");
 		}
 		else {
 			mSolver = new CPUSoftBodySolver();
+			mSolver->SetWorldParameters(mWorldParams);
 			DBG("CPU Solver enabled");
 		}
 		mSolver->Initialize();
 	}
 	if (key == GLFW_KEY_C) {
-		mSoftBodies.clear();
 		mSolver->Shutdown();
 		mSolver->Initialize();
 	}
@@ -168,19 +156,15 @@ void Demo::OnKeyboard(int key, int action)
 		b = new SoftBody(1,0.1,1,md1);
 		b->SetColor(vec3(1.0, 1.0, 0.0f));
 		mSolver->AddSoftBody(b);
-		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_Y) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md);
-		b->SetColor(vec3(0.0, 0.0, 1.0f));
 		mSolver->AddSoftBody(b);
-		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_U) {
 		b = new SoftBody(1.0f, 0.1f, 1.0f, md3);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
 		mSolver->AddSoftBody(b);
-		mSoftBodies.push_back(b);
 	}
 	if (key == GLFW_KEY_N)
 		mSolver->ProjectSystem(0.02);

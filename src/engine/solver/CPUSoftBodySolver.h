@@ -66,9 +66,10 @@ private:
 
 	void PredictMotion(float dt);
 	void IntegrateSystem(float dt);
-	void SolveGroundCollisions(void);
+	void SolveGroundWallCollisions(void);
 	void AddShapeDescriptor(SoftBody *obj);
 	void SolveShapeMatchConstraint(void);
+	bool mInitialized;
 };
 
 

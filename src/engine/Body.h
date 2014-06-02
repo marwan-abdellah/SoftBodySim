@@ -21,6 +21,8 @@ public:
 	void SetColor(glm::vec3 color) { mColor = color; }
 	const glm::vec3 GetColor(void) { return mColor; }
 	const MeshData *GetMesh(void) { return mMesh; }
+	const glm::mat4 &GetModelMatrix(void) { return mModelMatrix; }
+	void SetModelMatrix(glm::mat4 &model) { mModelMatrix = model; }
 
 protected:
 	VertexBuffer				*mVertexes;
@@ -28,6 +30,7 @@ protected:
     ElementBuffer               *mFaces;
 	glm::vec3					mColor;
 	MeshData                    *mMesh;
+	glm::mat4                   mModelMatrix;
 };
 
 #endif
