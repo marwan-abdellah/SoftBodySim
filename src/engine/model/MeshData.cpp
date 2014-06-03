@@ -225,6 +225,7 @@ MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 			vec3 norm(0.0, 0.0, 1.0);
 			ret->vertexes.push_back(pos);
 			ret->normals.push_back(norm);
+			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(ret->nodes.size());
 			ret->nodes.push_back(pos);
 		}
@@ -441,13 +442,11 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 				vec3 nrm;
 				vec2 txt;
 				if (vertId[i][1])
-					txt = textures.size() == 0 ? vec2(0,0) : textures[vertId[i][1]-1];
+					md->textureCoords.push_back(textures[vertId[i][1]-1]);
 				if (vertId[i][2])
-					nrm = normals.size() == 0 ? vec3(0,0,0) : normals[vertId[i][2]-1];
+					md->normals.push_back(normals[vertId[i][2]-1]);
 				faceId[i] = md->vertexes.size();
 				md->vertexes.push_back(md->nodes[vertId[i][0] -1]);
-				md->textureCoords.push_back(txt);
-				md->normals.push_back(nrm);
 				md->vertexesNodes.push_back(vertId[i][0] - 1);
 				map.insert(make_pair(vertId[i], faceId[i]));
 			}

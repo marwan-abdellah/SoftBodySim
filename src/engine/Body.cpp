@@ -8,7 +8,6 @@ Body::Body(MeshData *mesh) :
 {
 	bool haveN = mesh->normals.size() == mesh->vertexes.size();
 	bool haveT = mesh->textureCoords.size() == mesh->vertexes.size();
-	ERR("%d %d", haveN, haveT);
 	mVertexes = new VertexBuffer(mesh->vertexes.size(), VertexBuffer::DYNAMIC,
 			haveN, haveT);
 	mVertexes->SetVertexes(mesh->vertexes);

@@ -105,6 +105,9 @@ void Demo::OnRender(void)
 
 	renderer.clearScreen();
 
+	FOREACH_R(b, mBodies)
+		renderer.renderBody(*b, mCamera.getCameraMatrix());
+
 	FOREACH_R(b, mSolver->GetBodies())
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
 }

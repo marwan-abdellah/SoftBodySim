@@ -35,13 +35,14 @@ VertexBuffer::VertexBuffer(size_t n, Usage usage, bool normals, bool textures) :
 
 	GLenum type = usage == STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 	glBufferData(GL_ARRAY_BUFFER, size , 0, type);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
 VertexBuffer::~VertexBuffer(void)
 {
-    glDeleteBuffers(1, &mVAO);
     glDeleteBuffers(1, &mVBO);
+    glDeleteVertexArrays(1, &mVAO);
 }
 
 void VertexBuffer::SetNormals(vec3Array_t &vertexes)
@@ -54,6 +55,7 @@ void VertexBuffer::SetNormals(vec3Array_t &vertexes)
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	glBufferSubData(GL_ARRAY_BUFFER, mNormalsOffset, mVertexCount * sizeof(vec3), &vertexes[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
@@ -62,6 +64,7 @@ void VertexBuffer::SetVertexes(glm::vec3 *vertexes)
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, mVertexCount * sizeof(vec3), vertexes);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
@@ -74,6 +77,7 @@ void VertexBuffer::SetVertexes(vec3Array_t &vertexes)
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, mVertexCount * sizeof(vec3), &vertexes[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 
@@ -87,6 +91,7 @@ void VertexBuffer::SetTextureCoords(vec2Array_t &coords)
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
 	glBufferSubData(GL_ARRAY_BUFFER, mTextureOffset, mVertexCount * sizeof(vec2), &coords[0]);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 }
 

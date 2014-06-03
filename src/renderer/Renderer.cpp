@@ -11,22 +11,19 @@ static const char *vertex_source =
     "#version 330\n"
     "uniform mat4 projMatrix;"
     "uniform mat4 modeViewMatrix;"
-    "uniform vec3 color;"
     "in vec4 position;"
-    "out vec4 fcolor;"
 
     "void main()"
     "{"
     "    gl_Position = projMatrix * modeViewMatrix * position;"
-    "    fcolor = vec4(color, 1);"
     "}";
 
 static const char *fragment_source = 
     "#version 330\n"
-    "in vec4 fcolor;"
+    "out vec3 color;"
     "void main(void) {"
-    "    gl_FragColor = fcolor;"
-      "}";
+    "    color = vec3(1.0, 1.0, 1.0);"
+    "}";
 
 static const char *vertex_source2 = 
     "#version 330\n"
@@ -67,19 +64,14 @@ static const char *fragment_source2 =
     "#version 330\n"
     "uniform vec3 lightSrc;"
 	"uniform sampler2D mytext;"
-    "uniform vec3 color;"
     "in vec2 muv;"
     "in vec3 normal;"
     "in vec4 position;"
-    "out vec3 raster;"
+    "out vec3 color;"
     "void main(void) {"
     "    vec3 diff = normalize(lightSrc - position.xyz);"
     "    float d = max(0, dot(diff, normal));"
-    "    vec3 mcolor = vec3(color.xyz * ( 0.2 + d));"
-	"    if (muv != vec2(0,0))"
-	"    raster = texture(mytext, muv).rgb * (0.2 + d);"
-	"    else"
-	"    raster = mcolor;"
+	"    color = texture(mytext, muv).rgb * (0.2 + d);"
     "}";
 
 void SoftBodyRenderer::setRenderMethod(SoftBodyRenderMethod_e m)
@@ -164,18 +156,12 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
     const ElementBuffer *ebuff;
 	const MeshData *mesh;
 
-    if (!obj)
-        return;
-
-    const vec3 &color = obj->GetColor();
 	mesh = obj->GetMesh();
-
 	if (mesh->material)
 		mesh->material->Bind();
 
 	mat4 modelView = camMat * obj->GetModelMatrix();
     mCurrent->setUniform("modeViewMatrix", modelView);
-    mCurrent->setUniform("color", color);
 
     buff = obj->GetVertexes();
     if (!buff) return;
