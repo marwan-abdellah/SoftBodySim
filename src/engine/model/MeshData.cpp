@@ -225,7 +225,6 @@ MeshData *MeshData::CreatePlane(float width, float height, size_t nx, size_t ny)
 			vec3 norm(0.0, 0.0, 1.0);
 			ret->vertexes.push_back(pos);
 			ret->normals.push_back(norm);
-			ret->textureCoords.push_back(vec2());
 			ret->vertexesNodes.push_back(ret->nodes.size());
 			ret->nodes.push_back(pos);
 		}

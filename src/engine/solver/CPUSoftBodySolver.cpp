@@ -162,6 +162,8 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj)
 
 void CPUSoftBodySolver::UpdateVertexBuffers(void)
 {
+	if (!mInitialized) return;
+
 	FOREACH(it, &mDescriptors) {
 		for(int i = 0; i < it->nMapping; i++) {
 			int idx = mMapping[it->mappingBaseIdx + i];

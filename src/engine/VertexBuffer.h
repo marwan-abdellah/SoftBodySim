@@ -25,10 +25,11 @@ public:
         VERTEX_ATTR_TEX_COORDS,
         VERTEX_ATTR_NORMAL,
     };
-    VertexBuffer(vec3Array_t &vertexes);
-    VertexBuffer(vec3Array_t &vertexes, vec2Array_t &textures);
-    VertexBuffer(vec3Array_t &vertexes, vec3Array_t &normals);
-    VertexBuffer(vec3Array_t &vertexes, vec3Array_t &normals, vec2Array_t &tex);
+	enum Usage {
+		STATIC,
+		DYNAMIC
+	};
+    VertexBuffer(size_t n, Usage usage, bool normals=false, bool textures=false);
     ~VertexBuffer(void);
 
     GLint GetVBO() const { return mVBO; }
@@ -36,19 +37,26 @@ public:
 
 	void SetVertexes(vec3Array_t &vertexes);
 	void SetVertexes(glm::vec3 *vertexes);
+
 	void SetNormals(vec3Array_t &vertexes);
-	void SetTextureCoords(vec2Array_t &vertexes);
+	void SetNormals(glm::vec3 *vertexes);
+
+	void SetTextureCoords(vec2Array_t &coords);
+	void SetTextureCoords(glm::vec2 *coords);
 
     void Bind(int attr) const;
     void Unbind(void) const;
 
 	void Draw(DrawType t) const;
 
+	bool HaveTextureCoords(void) const { return mTextureOffset > 0; }
+	bool HaveNormals(void) const { return mNormalsOffset > 0; }
+
 private:
 	void BindAttrs(int attrs) const;
 	size_t mVertexCount;
     GLuint mVAO, mVBO;
-	int mNormalsOffset, mTextureOffset;
+	long mNormalsOffset, mTextureOffset;
 };
 
 class ElementBuffer {

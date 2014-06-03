@@ -31,7 +31,6 @@ public:
 	void OnRender(void);
 	void OnUpdate(double dt);
 private:
-	Body *floor;
 	SoftBodyRenderer    renderer;
 	vector<Body*> mBodies;
 	int mMouseLastX;
@@ -39,7 +38,6 @@ private:
 	bool mMousePressed;
 	Camera mCamera;
 	SoftBodySolver *mSolver;
-	int	mEnginUpdateTime;
 	bool mPaused;
 	MeshData *md, *md1, *md2, *md3;
 	Material mMat;
@@ -62,15 +60,12 @@ Demo::Demo(int argc, char **argv) :
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
-	floor = new Body(md2);
+	Body *floor = new Body(md2);
 	mat4 floorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
 	floorTransform = rotate(floorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
 	floor->SetModelMatrix(floorTransform);
 	floor->SetColor(vec3(1.0,1.0,1.0));
 	mBodies.push_back(floor);
-
-	renderer.initialize(width, height);
-	renderer.setRenderMethod(SB_RENDER_FACES);
 
 	mWorldParams.gravity = vec3(0, -10.0, 0);
 	mWorldParams.leftWall = -25.0f;
@@ -78,6 +73,9 @@ Demo::Demo(int argc, char **argv) :
 	mWorldParams.backWall = -25.0f;
 	mWorldParams.frontWall = 25.0f;
 	mWorldParams.groundLevel = groundLevel;
+
+	renderer.initialize(width, height);
+	renderer.setRenderMethod(SB_RENDER_FACES);
 
 	mSolver = new CPUSoftBodySolver();
 	mSolver->SetWorldParameters(mWorldParams);
@@ -107,11 +105,8 @@ void Demo::OnRender(void)
 
 	renderer.clearScreen();
 
-	FOREACH_R(b, mBodies)
+	FOREACH_R(b, mSolver->GetBodies())
 		renderer.renderBody(*b, mCamera.getCameraMatrix());
-
-	FOREACH_R(a, mSolver->GetBodies())
-		renderer.renderBody(*a, mCamera.getCameraMatrix());
 }
 
 void Demo::OnKeyboard(int key, int action)
