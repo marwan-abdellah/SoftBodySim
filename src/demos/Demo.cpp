@@ -62,18 +62,11 @@ Demo::Demo(int argc, char **argv) :
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
-	Body *floor = new Body(md2);
-	mat4 floorTransform = translate(0.0f, groundLevel - 0.001f, 0.0f); // add delta to avoid z-fighting
-	floorTransform = rotate(floorTransform, -90.0f, 1.0f, 0.0f, 0.0f);
-	floor->SetModelMatrix(floorTransform);
-	floor->SetColor(vec3(1.0,1.0,1.0));
-	mBodies.push_back(floor);
-
 	mWorldParams.gravity = vec3(0, -10.0, 0);
-	mWorldParams.leftWall = -25.0f;
-	mWorldParams.rightWall = 25.0f;
-	mWorldParams.backWall = -25.0f;
-	mWorldParams.frontWall = 25.0f;
+	mWorldParams.leftWall = -15.0f;
+	mWorldParams.rightWall = 15.0f;
+	mWorldParams.backWall = -15.0f;
+	mWorldParams.frontWall = 15.0f;
 	mWorldParams.groundLevel = groundLevel;
 
 	renderer.initialize(width, height);

@@ -168,10 +168,11 @@ void SoftBodyRenderer::SetWorld(SoftBodySolver::SoftBodyWorldParameters &p)
 	if (mWorld) delete mWorld;
 
 	vec3Array_t vb;
-	vb.push_back(vec3(p.rightWall, p.groundLevel, p.frontWall));
-	vb.push_back(vec3(p.rightWall, p.groundLevel, p.backWall));
-	vb.push_back(vec3(p.leftWall, p.groundLevel, p.backWall));
-	vb.push_back(vec3(p.leftWall, p.groundLevel, p.frontWall));
+	float_t groundLevel = p.groundLevel - 0.001f; // avoid z-fighting
+	vb.push_back(vec3(p.rightWall, groundLevel, p.frontWall));
+	vb.push_back(vec3(p.rightWall, groundLevel, p.backWall));
+	vb.push_back(vec3(p.leftWall, groundLevel, p.backWall));
+	vb.push_back(vec3(p.leftWall, groundLevel, p.frontWall));
 
 	mWorld = new VertexBuffer(vb.size(), VertexBuffer::STATIC);
 	mWorld->SetVertexes(vb);
