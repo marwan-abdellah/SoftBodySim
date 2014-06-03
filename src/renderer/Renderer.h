@@ -9,6 +9,7 @@
 
 #include "Shader.h"
 #include "engine/SoftBody.h"
+#include "engine/solver/SoftBodySolver.h"
 
 #include <list>
 
@@ -20,6 +21,7 @@ typedef enum SoftBodyRenderMethod {
 class SoftBodyRenderer {
 
     public:
+		SoftBodyRenderer();
         void                            initialize(int w, int h);
         void                            shutdown(void);
         void                            setRenderMethod(SoftBodyRenderMethod_e);
@@ -27,6 +29,8 @@ class SoftBodyRenderer {
         void                            renderBody(Body *s, const glm::mat4 &view);
         void                            clearScreen(void);
         void                            setLightSource(glm::vec3);
+		void     SetWorld(SoftBodySolver::SoftBodyWorldParameters &params);
+		void DrawWorld(const glm::mat4 &view);
 
     private:
         void logShader(GLint shader);
@@ -37,6 +41,7 @@ class SoftBodyRenderer {
         Shader                          mLighting;
         Shader                          mGround;
         Shader                          mPointLine;
+		VertexBuffer                    *mWorld;
 };
 
 #endif

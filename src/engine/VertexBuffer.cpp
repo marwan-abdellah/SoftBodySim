@@ -97,7 +97,7 @@ void VertexBuffer::SetTextureCoords(vec2Array_t &coords)
 
 void VertexBuffer::Draw(DrawType t) const
 {
-	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
+	glBindVertexArray(mVAO);
 	GLenum type;
 	switch (t) {
 		case TRIANGLES:
@@ -106,8 +106,12 @@ void VertexBuffer::Draw(DrawType t) const
 		case LINES:
 			type = GL_LINES;
 			break;
+		case QUADS:
+			type = GL_QUADS;
+			break;
 	}
 	glDrawArrays(type, 0, mVertexCount);
+	glBindVertexArray(0);
 }
 
 void VertexBuffer::Bind(int attrs) const
@@ -166,5 +170,9 @@ void ElementBuffer::Draw(void) const
             break;
         case LINES:
             glDrawElements(GL_LINES, mElementsCount * 2, GL_UNSIGNED_INT, 0);
+			break;
+        case QUADS:
+            glDrawElements(GL_QUADS, mElementsCount * 4, GL_UNSIGNED_INT, 0);
+			break;
     };
 }

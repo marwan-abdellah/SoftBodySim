@@ -69,13 +69,14 @@ Demo::Demo(int argc, char **argv) :
 
 	mWorldParams.gravity = vec3(0, -10.0, 0);
 	mWorldParams.leftWall = -25.0f;
-	mWorldParams.rightWall = 3.0f;
+	mWorldParams.rightWall = 1.0f;
 	mWorldParams.backWall = -25.0f;
 	mWorldParams.frontWall = 25.0f;
 	mWorldParams.groundLevel = groundLevel;
 
 	renderer.initialize(width, height);
 	renderer.setRenderMethod(SB_RENDER_FACES);
+	renderer.SetWorld(mWorldParams);
 
 	mSolver = new CPUSoftBodySolver();
 	mSolver->SetWorldParameters(mWorldParams);
@@ -104,9 +105,7 @@ void Demo::OnRender(void)
 	mSolver->UpdateVertexBuffers();
 
 	renderer.clearScreen();
-
-	FOREACH_R(b, mBodies)
-		renderer.renderBody(*b, mCamera.getCameraMatrix());
+	renderer.DrawWorld(mCamera.getCameraMatrix());
 
 	FOREACH_R(b, mSolver->GetBodies())
 		renderer.renderBody(*b, mCamera.getCameraMatrix());

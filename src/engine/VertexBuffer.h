@@ -12,6 +12,7 @@
  */
 enum DrawType {
 	TRIANGLES,
+	QUADS,
 	LINES 
 };
 

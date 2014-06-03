@@ -21,8 +21,9 @@ static const char *vertex_source =
 static const char *fragment_source = 
     "#version 330\n"
     "out vec3 color;"
+	"uniform vec3 incolor;"
     "void main(void) {"
-    "    color = vec3(1.0, 1.0, 1.0);"
+    "    color = incolor;"
     "}";
 
 static const char *vertex_source2 = 
@@ -128,6 +129,7 @@ void SoftBodyRenderer::initialize(int width, int height)
     mPointLine.compileAndLink();
     mPointLine.useShader();
     mPointLine.setUniform("projMatrix", mProjectionMat);
+	mPointLine.setUniform("incolor", vec3(0.0, 0.0, 1.0));
 
     mLighting.setShaderSource(GL_VERTEX_SHADER, vertex_source2);
     mLighting.setShaderSource(GL_GEOMETRY_SHADER, geometry_shader2);
@@ -143,6 +145,36 @@ void SoftBodyRenderer::initialize(int width, int height)
 
 void SoftBodyRenderer::shutdown()
 {
+}
+
+SoftBodyRenderer::SoftBodyRenderer() :
+	mWorld(0)
+{
+}
+
+void SoftBodyRenderer::DrawWorld(const mat4 &cam)
+{
+	if (!mWorld) return;
+	mPointLine.useShader();
+	mPointLine.setUniform("incolor", vec3(0.4, 0.4, 0.4));
+    mPointLine.setUniform("modeViewMatrix", cam);
+	mWorld->Draw(QUADS);
+	mPointLine.setUniform("incolor", vec3(0.0, 0.0, 1.0));
+	mCurrent->useShader();
+}
+
+void SoftBodyRenderer::SetWorld(SoftBodySolver::SoftBodyWorldParameters &p)
+{
+	if (mWorld) delete mWorld;
+
+	vec3Array_t vb;
+	vb.push_back(vec3(p.rightWall, p.groundLevel, p.frontWall));
+	vb.push_back(vec3(p.rightWall, p.groundLevel, p.backWall));
+	vb.push_back(vec3(p.leftWall, p.groundLevel, p.backWall));
+	vb.push_back(vec3(p.leftWall, p.groundLevel, p.frontWall));
+
+	mWorld = new VertexBuffer(vb.size(), VertexBuffer::STATIC);
+	mWorld->SetVertexes(vb);
 }
 
 void SoftBodyRenderer::clearScreen(void)
