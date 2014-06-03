@@ -43,17 +43,19 @@ private:
 	Material mMat;
 	bool cudaSolver;
 	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
+	float_t mSpringness;
 };
 
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
-	mCamera(vec3(0,0,28), vec3(0,0,0), vec3(0,1,0)),
+	mCamera(vec3(0,0,28), vec3(0,-8,0), vec3(0,1,0)),
 	mPaused(false),
-	cudaSolver(0)
+	cudaSolver(0),
+	mSpringness(0.1)
 {
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
 	if (res) ERR("Texture loading failed!");
-	const float_t groundLevel = -2.0;
+	const float_t groundLevel = -12.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md->material = &mMat;
 	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");
@@ -69,7 +71,7 @@ Demo::Demo(int argc, char **argv) :
 
 	mWorldParams.gravity = vec3(0, -10.0, 0);
 	mWorldParams.leftWall = -25.0f;
-	mWorldParams.rightWall = 1.0f;
+	mWorldParams.rightWall = 25.0f;
 	mWorldParams.backWall = -25.0f;
 	mWorldParams.frontWall = 25.0f;
 	mWorldParams.groundLevel = groundLevel;
@@ -150,16 +152,16 @@ void Demo::OnKeyboard(int key, int action)
 		mSolver->Initialize();
 	}
 	if (key == GLFW_KEY_T) {
-		b = new SoftBody(1,0.1,1,md1);
+		b = new SoftBody(1, mSpringness, 1.0,md1);
 		b->SetColor(vec3(1.0, 1.0, 0.0f));
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_Y) {
-		b = new SoftBody(1.0f, 0.1f, 1.0f, md);
+		b = new SoftBody(1.0f, mSpringness, 1.0f, md);
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_U) {
-		b = new SoftBody(1.0f, 0.1f, 1.0f, md3);
+		b = new SoftBody(1.0f, mSpringness, 1.0f, md3);
 		b->SetColor(vec3(0.0, 0.0, 1.0f));
 		mSolver->AddSoftBody(b);
 	}
@@ -180,6 +182,20 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveRight(angle);
 	else if (key == GLFW_KEY_D)
 		mCamera.moveLeft(angle);
+	if (key == GLFW_KEY_MINUS) {
+		mSpringness -= 0.001;
+		DBG("Springness : %f", mSpringness);
+		softbodyList_t &list = mSolver->GetBodies();
+		FOREACH_R(it, list)
+			(*it)->SetSpringness(mSpringness);
+	}
+	if (key == GLFW_KEY_EQUAL) {
+		mSpringness += 0.001;
+		DBG("Springness : %f", mSpringness);
+		softbodyList_t &list = mSolver->GetBodies();
+		FOREACH_R(it, list)
+			(*it)->SetSpringness(mSpringness);
+	}
 }
 
 void Demo::OnMouseClick(int type, int state, int x, int y)

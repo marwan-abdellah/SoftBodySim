@@ -55,6 +55,7 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 	vec3 mc;
 	mat3 A, R;
 	mat3 E;
+	float_t sping;
 	FOREACH_R(it, mDescriptors) {
 		// calculate mass center after pojection
 		mc = calculateMassCenter(&mProjections[it->baseIdx],
@@ -66,12 +67,12 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		REP(i, it->count) {
 			vec3 p = mProjections[it->baseIdx + i] - mc;
 			A += mInvMasses[it->baseIdx + i] *
-				outerProduct(p, mShapes[it->shapeMatching.descriptor].diffs[i]);
+				outerProduct(mShapes[it->shapeMatching.descriptor].diffs[i], p);
 		}
 		mat3 B = transpose(A) * A;
 
 		// B is symmetrix matrix so it is diagonizable
-		vec3 eig = eigenvalues_jacobi(B, 30, E);
+		vec3 eig = eigenvalues_jacobi(B, 10, E);
 
 		mat3 D = diagonal3x3(eig);
 		// calculate squere root of diagonal matrix
@@ -85,9 +86,10 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		R = A * inverse(B);
 
 		// calculate target positions and multiply it be constraint stiffness
+		sping = it->body->mSpringiness;
 	    REP(i , it->count) {
 			vec3 g = R * mShapes[it->shapeMatching.descriptor].diffs[i] + mc;
-			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * 0.05f;
+			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * sping;
 		}
 	}
 }

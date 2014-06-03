@@ -31,7 +31,7 @@ public:
 	virtual void UpdateVertexBuffers(void) = 0;
 
 	void SetWorldParameters(SoftBodyWorldParameters &params);
-	const softbodyList_t &GetBodies(void) { return mBodies; }
+	softbodyList_t &GetBodies(void) { return mBodies; }
 
 	virtual void AddSoftBody(SoftBody *body);
 	virtual void RemoveSoftBody(SoftBody *body);

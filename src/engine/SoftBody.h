@@ -24,6 +24,8 @@ public:
     ~SoftBody(void) {}
 
 	const Sphere *getBoundingVolume(void) { return &mCollisionSphere; }
+	float_t GetSpringness(void) { return mSpringiness; }
+	void SetSpringness(float_t val) { mSpringiness = val; }
 
 private:
     vec3Array_t                 mParticles;
