@@ -44,6 +44,7 @@ private:
 	bool cudaSolver;
 	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
 	float_t mSpringness;
+	bool mMouseMotion;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -51,7 +52,8 @@ Demo::Demo(int argc, char **argv) :
 	mCamera(vec3(0,0,28), vec3(0,-8,0), vec3(0,1,0)),
 	mPaused(false),
 	cudaSolver(0),
-	mSpringness(0.1)
+	mSpringness(0.1),
+	mMouseMotion(false)
 {
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
 	if (res) ERR("Texture loading failed!");
@@ -111,6 +113,13 @@ void Demo::OnKeyboard(int key, int action)
 	float angle = 2.0f;
 	float delta = 0.1f;
 	SoftBody *b;
+
+	if (key == GLFW_KEY_S) {
+		if (action == GLFW_RELEASE)
+			mMouseMotion = false;
+		else if (action == GLFW_PRESS)
+			mMouseMotion = true;
+	}
 
 	if (action == GLFW_RELEASE) return;
 
@@ -210,19 +219,21 @@ void Demo::OnMouseMove(int x, int y)
 	if (!mMousePressed)
 		return;
 
-	static float angle = 0.2f;
-	int dx = x - mMouseLastX;
-	int dy = y - mMouseLastY;
+	if (mMouseMotion) {
+		static float angle = 0.2f;
+		int dx = x - mMouseLastX;
+		int dy = y - mMouseLastY;
 
-	vec3 np;
-	if (dx > 0)
-		mCamera.moveRight(angle * dx);
-	else
-		mCamera.moveLeft(-angle * dx);
-	if (dy > 0)
-		mCamera.moveUp(angle * dy);
-	else
-		mCamera.moveDown(-angle * dy);
+		vec3 np;
+		if (dx > 0)
+			mCamera.moveRight(angle * dx);
+		else
+			mCamera.moveLeft(-angle * dx);
+		if (dy > 0)
+			mCamera.moveUp(angle * dy);
+		else
+			mCamera.moveDown(-angle * dy);
+	}
 
 	mMouseLastX = x;
 	mMouseLastY = y;
