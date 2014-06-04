@@ -63,11 +63,11 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 								 it->count);
 		// calculate A = sum(mi * (xi - mc) * (x0i - mc0))
 		//ERR("Mass center: %f %f %f", mc[0], mc[1], mc[2]);
-		A = mat3();
+		A = mat3(0.0f);
 		REP(i, it->count) {
 			vec3 p = mProjections[it->baseIdx + i] - mc;
 			A += mInvMasses[it->baseIdx + i] *
-				outerProduct(mShapes[it->shapeMatching.descriptor].diffs[i], p);
+				outerProduct(p, mShapes[it->shapeMatching.descriptor].diffs[i]);
 		}
 		mat3 B = transpose(A) * A;
 
@@ -135,7 +135,7 @@ void CPUSoftBodySolver::Shutdown(void)
 
 static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n)
 {
-	double masssum = 0;
+	double masssum = 0.0;
 	vec3 xmsum = vec3(0,0,0);
 
 	//calculate sum(xi * mi) amd sum(mi)
@@ -150,6 +150,7 @@ static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n)
 void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj)
 {
 	ShapeDescriptor ret;
+	float_t max = 0;
 
 	ret.mc0 = calculateMassCenter(
 			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
@@ -158,7 +159,10 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj)
 	REP(i, obj->mParticles.size()) {
 		vec3 q = obj->mParticles[i] - ret.mc0;
 		ret.diffs.push_back(q);
+		if (length(q) > max)
+			max = length(q);
 	}
+	ret.radius = max;
 	mShapes.push_back(ret);
 }
 
