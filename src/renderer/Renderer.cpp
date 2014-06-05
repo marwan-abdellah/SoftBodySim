@@ -5,6 +5,8 @@
 
 #include <glm/ext.hpp>
 
+#define SPHERE_RADIUS 2.0f
+
 using namespace glm;
 
 static const char *vertex_source = 
@@ -140,6 +142,11 @@ void SoftBodyRenderer::initialize(int width, int height)
     mLighting.setUniform("lightSrc", lightSrc);
     mLighting.setUniform("projMatrix", mProjectionMat);
 
+	MeshData *mesh = MeshData::CreateSphere(vec3(0,0,0), SPHERE_RADIUS, 20, 20);
+	mSphere = new VertexBuffer(mesh->vertexes.size(), VertexBuffer::STATIC);
+	mSphere->SetVertexes(mesh->vertexes);
+	delete mesh;
+
     mCurrent = &mLighting;
 }
 
@@ -188,12 +195,22 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
     const VertexBuffer *buff;
     const ElementBuffer *ebuff;
 	const MeshData *mesh;
+	mat4 modelView = camMat * obj->GetModelMatrix();
+	const Sphere &bs = obj->GetBoundingSphere();
 
+	float_t fac = bs.mRadius / SPHERE_RADIUS;
+	mat4 camTrans = camMat * translate(bs.mCenter) * scale(fac, fac, fac);
+	mPointLine.useShader();
+    mPointLine.setUniform("modeViewMatrix", camTrans);
+	mSphere->Bind(0);
+	mSphere->Draw(POINTS);
+	mSphere->Unbind();
+
+	mCurrent->useShader();
 	mesh = obj->GetMesh();
 	if (mesh->material)
 		mesh->material->Bind();
 
-	mat4 modelView = camMat * obj->GetModelMatrix();
     mCurrent->setUniform("modeViewMatrix", modelView);
 
     buff = obj->GetVertexes();

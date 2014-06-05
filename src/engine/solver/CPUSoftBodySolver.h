@@ -43,6 +43,7 @@ private:
 		int linkCount;
 		int mappingBaseIdx;
 		int nMapping;
+		Sphere BS; // bounding sphere
 		struct {
 			glm::vec3 mc; // current mass center
 			int descriptor;

@@ -4,13 +4,13 @@
 #include <glm/glm.hpp>
 
 struct Sphere {
-	Sphere(void) {}
+	Sphere(void) : mCenter(glm::vec3()), mRadius(0) {}
 	Sphere(const Sphere &s)
-		: m_center(s.m_center), m_radius(s.m_radius) {}
+		: mCenter(s.mCenter), mRadius(s.mRadius) {}
 	~Sphere(void) {}
 
-	glm::vec3    m_center;
-	glm::float_t m_radius;
+	glm::vec3    mCenter;
+	glm::float_t mRadius;
 };
 
 #endif

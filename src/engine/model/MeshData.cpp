@@ -6,10 +6,14 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <glm/gtx/constants.hpp>
+
 using namespace glm;
 using namespace std;
 
 #define BUCKET_MAX (1 << 20)
+
+#define PI (pi<double>())
 
 class Index3Hasher {
 public:
@@ -523,6 +527,27 @@ MeshData *MeshData::CreateFromObj(const char *path)
 	ret->GenerateTriangles();
 
 	DBG("file %s processing ended. Lines processed %d", path, lexer.GetLine());
+
+	return ret;
+}
+
+MeshData *MeshData::CreateSphere(glm::vec3 center, glm::float_t radius, size_t nv, size_t nh)
+{
+	MeshData *ret = new MeshData();
+	if (!ret) return NULL;
+
+	double dh = PI / (nh + 1);
+	double dv = 2 * PI / (nv + 1);
+
+	for(double h = 0.0; h <= PI; h += dh) {
+		double y = cos(h) * radius;
+		double r = sin(h) * radius;
+		for(double v = 0.0; v <= 2 * PI; v += dv) {
+			double x = sin(v) * r;
+			double z = cos(v) * r;
+			ret->vertexes.push_back(vec3((float_t)x, (float_t)y, (float_t)z));
+		}
+	}
 
 	return ret;
 }

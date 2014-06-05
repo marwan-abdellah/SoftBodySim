@@ -23,16 +23,15 @@ public:
              MeshData *mesh);
     ~SoftBody(void) {}
 
-	const Sphere *getBoundingVolume(void) { return &mCollisionSphere; }
 	float_t GetSpringness(void) { return mSpringiness; }
 	void SetSpringness(float_t val) { mSpringiness = val; }
+	const Sphere &GetBoundingSphere(void) { return mBoundingSphere; }
 
 private:
     vec3Array_t                 mParticles;
     vec3Array_t                 mVelocities;
     vec3Array_t                 mForces;
-
-    // inverted mass of every particle
+// inverted mass of every particle
     floatArray_t				mMassInv;
     glm::float_t                mDamping;
     glm::float_t                mSpringiness;
@@ -43,7 +42,7 @@ private:
     volumeArray_t               mVolumes;
 
 	//collision
-	Sphere                      mCollisionSphere;
+	Sphere                      mBoundingSphere;
 
     // drawing data
     indexArray_t                mMeshVertexParticleMapping; /* Needed for updating mesh

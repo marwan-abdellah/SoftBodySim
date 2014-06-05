@@ -100,6 +100,9 @@ void VertexBuffer::Draw(DrawType t) const
 	glBindVertexArray(mVAO);
 	GLenum type;
 	switch (t) {
+		case POINTS:
+			type = GL_POINTS;
+			break;
 		case TRIANGLES:
 			type = GL_TRIANGLES;
 			break;

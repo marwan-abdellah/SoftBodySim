@@ -43,6 +43,7 @@ class SoftBodyRenderer {
         Shader                          mGround;
         Shader                          mPointLine;
 		VertexBuffer                    *mWorld;
+		VertexBuffer                    *mSphere;
 };
 
 #endif

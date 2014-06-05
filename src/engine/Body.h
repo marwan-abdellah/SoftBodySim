@@ -23,7 +23,7 @@ public:
 	const MeshData *GetMesh(void) { return mMesh; }
 	const glm::mat4 &GetModelMatrix(void) { return mModelMatrix; }
 	void SetModelMatrix(glm::mat4 &model) { mModelMatrix = model; }
-
+	const Sphere &GetBoundingSphere(void) { return mBS; }
 protected:
 	VertexBuffer				*mVertexes;
     ElementBuffer               *mEdges;
@@ -31,6 +31,7 @@ protected:
 	glm::vec3					mColor;
 	MeshData                    *mMesh;
 	glm::mat4                   mModelMatrix;
+	Sphere                      mBS; // bounding sphere
 };
 
 #endif

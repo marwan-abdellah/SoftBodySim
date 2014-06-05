@@ -11,9 +11,10 @@
  *
  */
 enum DrawType {
+	POINTS,
+	LINES,
 	TRIANGLES,
-	QUADS,
-	LINES 
+	QUADS
 };
 
 /**

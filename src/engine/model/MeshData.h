@@ -58,6 +58,16 @@ public:
 	static MeshData *CreateCube(glm::vec3 leftLowerFront, glm::vec3 rightUpperBack, size_t nx, size_t ny, size_t nz);
 
 	/**
+	 * @brief Creates sphere mesh
+	 *
+	 * @param[in] center Sphere center
+	 * @param[in] radius Sphere radius
+	 * @param[in] nv number of vertical lines
+	 * @param[in] nh number of horizontal lines
+	 */
+	static MeshData *CreateSphere(glm::vec3 center, glm::float_t radius, size_t nv, size_t nh);
+
+	/**
 	 * @brief Creates mesh form Wavefron 'obj' text format.
 	 *
 	 * @param[in] path Wavefront file path.
@@ -70,16 +80,6 @@ public:
 	 * @brief Generates nodesLinks data from faces.
 	 */
 	void GenerateLinks(void);
-
-	/**
-	 * @brief Type of primitives to draw from vertexes.
-	 */
-	enum MeshType
-	{
-		POINTS,
-		LINES,
-		TRIANGLES
-	};
 
 	/**
 	 * @brief Nodes of 3D model mesh. Each node can map to multiple 
@@ -102,9 +102,9 @@ public:
 	index3Array_t nodesTriangles;
 
 	// vertexes
-	vec3Array_t  vertexes;
-	vec3Array_t  normals;
-	vec2Array_t  textureCoords;
+	vec3Array_t    vertexes;
+	vec3Array_t    normals;
+	vec2Array_t    textureCoords;
 	indexArray_t   vertexesNodes;
 
 	index3Array_t  faces;

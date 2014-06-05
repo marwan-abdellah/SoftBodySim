@@ -138,6 +138,7 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		}
 
 		it->shapeMatching.mc = mc;
+		it->body->mBS.mCenter = mc;
 	}
 }
 
@@ -252,6 +253,10 @@ void CPUSoftBodySolver::AddSoftBody(SoftBody *b)
 	descr.shapeMatching.descriptor = mShapes.size();
 
 	AddShapeDescriptor(b);
+
+	b->mBS.mCenter = mShapes[descr.shapeMatching.descriptor].mc0;
+	b->mBS.mRadius = mShapes[descr.shapeMatching.descriptor].radius;
+	descr.shapeMatching.mc = mShapes[descr.shapeMatching.descriptor].mc0;
 
 	mDescriptors.push_back(descr);
 
