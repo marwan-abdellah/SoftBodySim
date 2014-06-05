@@ -45,6 +45,8 @@ private:
 	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
 	float_t mSpringness;
 	bool mMouseMotion;
+	SoftBody *b;
+	bool mGrabb;
 };
 
 Demo::Demo(int argc, char **argv) :
@@ -52,8 +54,10 @@ Demo::Demo(int argc, char **argv) :
 	mCamera(vec3(0,0,28), vec3(0,-8,0), vec3(0,1,0)),
 	mPaused(false),
 	cudaSolver(0),
-	mSpringness(0.1),
-	mMouseMotion(false)
+	mSpringness(0.03),
+	mMouseMotion(false),
+	b(0),
+	mGrabb(0)
 {
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
 	if (res) ERR("Texture loading failed!");
@@ -110,11 +114,9 @@ void Demo::OnRender(void)
 
 void Demo::OnKeyboard(int key, int action)
 {
-	float angle = 2.0f;
 	float delta = 0.1f;
-	SoftBody *b;
 
-	if (key == GLFW_KEY_S) {
+	if (key == GLFW_KEY_LEFT_SHIFT) {
 		if (action == GLFW_RELEASE)
 			mMouseMotion = false;
 		else if (action == GLFW_PRESS)
@@ -123,10 +125,6 @@ void Demo::OnKeyboard(int key, int action)
 
 	if (action == GLFW_RELEASE) return;
 
-	if (key == GLFW_KEY_W)
-		mCamera.moveUp(angle);
-	if (key == GLFW_KEY_D)
-		mCamera.moveDown(angle);
 	if (key == GLFW_KEY_Z)
 		mCamera.moveIn(delta);
 	if (key == GLFW_KEY_X)
@@ -180,10 +178,6 @@ void Demo::OnKeyboard(int key, int action)
 			break;
 		}
 	}
-	if (key == GLFW_KEY_A)
-		mCamera.moveRight(angle);
-	else if (key == GLFW_KEY_D)
-		mCamera.moveLeft(angle);
 	if (key == GLFW_KEY_MINUS) {
 		mSpringness -= 0.001;
 		DBG("Springness : %f", mSpringness);
@@ -212,6 +206,21 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 	}
 	else if (state == GLFW_RELEASE)
 		mMousePressed = false;
+
+	if (!mMouseMotion && state == GLFW_PRESS) { 
+		indexArray_t p;
+		p.push_back(3);
+		p.push_back(1);
+		p.push_back(2);
+		mSolver->GrabStart(b, p, vec3(5.0, 1.0, -1.5f), 160.1f);
+		mGrabb = true;
+		DBG("Grab start");
+	}
+	if (!mMouseMotion && state == GLFW_RELEASE) { 
+		mSolver->GrabStop();
+		mGrabb = false;
+		DBG("Grab stop");
+	}
 }
 
 void Demo::OnMouseMove(int x, int y)
@@ -233,6 +242,9 @@ void Demo::OnMouseMove(int x, int y)
 			mCamera.moveUp(angle * dy);
 		else
 			mCamera.moveDown(-angle * dy);
+	}
+	if (mGrabb) {
+		// notign
 	}
 
 	mMouseLastX = x;

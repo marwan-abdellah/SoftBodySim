@@ -30,6 +30,10 @@ public:
 	virtual void ProjectSystem(glm::float_t dt) = 0;
 	virtual void UpdateVertexBuffers(void) = 0;
 
+	virtual void GrabStart(SoftBody *body, indexArray_t &indexes, glm::vec3 destination, float_t stifness) {}
+	virtual void GrabUpdate(SoftBody *b, glm::vec3 dest) {}
+	virtual void GrabStop(){}
+
 	void SetWorldParameters(SoftBodyWorldParameters &params);
 	softbodyList_t &GetBodies(void) { return mBodies; }
 

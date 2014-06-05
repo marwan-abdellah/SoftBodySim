@@ -30,6 +30,10 @@ public:
 	 * Update bodies drawing data
 	 */
 	void UpdateVertexBuffers(void);
+
+	void GrabStart(SoftBody *body, indexArray_t &indexes, glm::vec3 destination, float_t stifness);
+	void GrabUpdate(SoftBody *b, glm::vec3 dest);
+	void GrabStop();
 private:
 	struct SoftBodyDescriptor {
 		SoftBody *body;
@@ -40,6 +44,7 @@ private:
 		int mappingBaseIdx;
 		int nMapping;
 		struct {
+			glm::vec3 mc; // current mass center
 			int descriptor;
 		} shapeMatching;
 	};
@@ -48,6 +53,13 @@ private:
 		vec3Array_t diffs; // relative locations (x0i - mc0);
 		float_t radius; // maximum distance between mass center and particle;
 	};
+	struct {
+		int descriptor;
+		bool enabled;
+		indexArray_t particles;
+		glm::vec3 destination;
+		float_t stiffness;
+	} mGrabbing;
 	typedef std::vector<SoftBodyDescriptor> descriptorsArray_t;
 	typedef std::vector<ShapeDescriptor> shapeDescriptorsArray_t;
 
@@ -65,11 +77,13 @@ private:
 	descriptorsArray_t mDescriptors;
 	shapeDescriptorsArray_t mShapes;
 
+	indexArray_t mFreezedParticles;
 	void PredictMotion(float dt);
 	void IntegrateSystem(float dt);
 	void SolveGroundWallCollisions(void);
 	void AddShapeDescriptor(SoftBody *obj);
 	void SolveShapeMatchConstraint(void);
+	void SolveFreezedParticlesConstraints();
 	bool mInitialized;
 };
 

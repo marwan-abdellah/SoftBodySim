@@ -18,10 +18,56 @@ CPUSoftBodySolver::~CPUSoftBodySolver()
 
 void CPUSoftBodySolver::PredictMotion(float dt)
 {
+	FOREACH_R(it, mGrabbing.particles) {
+		vec3 g = (mGrabbing.destination - mPositions[*it]) * mGrabbing.stiffness;
+		mForces[*it] = g;
+	}
+
 	REP(i, mPositions.size()) {
 		mVelocities[i] += dt * mInvMasses[i] * (mForces[i] + mWorldParams.gravity);
-		mVelocities[i] *= 0.99;
+		mVelocities[i] *= 0.99f;
 		mProjections[i] = mPositions[i] + mVelocities[i] * dt;
+	}
+}
+
+void CPUSoftBodySolver::GrabStart(SoftBody *body, indexArray_t &indexes, glm::vec3 dest, float_t stifness)
+{
+	if (mGrabbing.enabled) return;
+	int descr = -1;
+
+	FOREACH_R(it, mDescriptors) {
+		if (it->body == body) {
+			descr = std::distance(mDescriptors.begin(), it);
+			break;
+		}
+	}
+	if (descr == -1) {
+		ERR("Object not managed by solver!");
+		return;
+	}
+	mGrabbing.descriptor = descr;
+	mGrabbing.enabled = true;
+	mGrabbing.destination = dest;
+	mGrabbing.stiffness = stifness;
+
+	FOREACH_R(p, indexes)
+		mGrabbing.particles.push_back(*p + mDescriptors[descr].baseIdx);
+}
+
+void CPUSoftBodySolver::GrabUpdate(SoftBody *b, glm::vec3 dest)
+{
+	if (mGrabbing.enabled) {
+		mGrabbing.destination = dest;
+	}
+}
+
+void CPUSoftBodySolver::GrabStop()
+{
+	if (mGrabbing.enabled) {
+		mGrabbing.enabled = false;
+		FOREACH_R(it, mGrabbing.particles)
+			mForces[*it] = vec3(0.0f, 0.0f, 0.0f);
+		mGrabbing.particles.clear();
 	}
 }
 
@@ -62,7 +108,6 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 								 &mInvMasses[it->baseIdx],
 								 it->count);
 		// calculate A = sum(mi * (xi - mc) * (x0i - mc0))
-		//ERR("Mass center: %f %f %f", mc[0], mc[1], mc[2]);
 		A = mat3(0.0f);
 		REP(i, it->count) {
 			vec3 p = mProjections[it->baseIdx + i] - mc;
@@ -91,6 +136,15 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 			vec3 g = R * mShapes[it->shapeMatching.descriptor].diffs[i] + mc;
 			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * sping;
 		}
+
+		it->shapeMatching.mc = mc;
+	}
+}
+
+void CPUSoftBodySolver::SolveFreezedParticlesConstraints()
+{
+	FOREACH_R(it, mFreezedParticles) {
+		mProjections[*it] = mPositions[*it];
 	}
 }
 
@@ -102,6 +156,7 @@ void CPUSoftBodySolver::ProjectSystem(float_t dt)
 
 	REP(i, mSolverSteps) {
 		SolveShapeMatchConstraint();
+		SolveFreezedParticlesConstraints();
 		SolveGroundWallCollisions();
 	}
 
@@ -128,6 +183,9 @@ void CPUSoftBodySolver::Shutdown(void)
 	mMapping.clear();
 	mDescriptors.clear();
 	mShapes.clear();
+
+	mGrabbing.enabled = false;
+	mGrabbing.particles.clear();
 
 	SoftBodySolver::Shutdown();
 	mInitialized = false;

@@ -31,6 +31,7 @@ class SoftBodyRenderer {
         void                            setLightSource(glm::vec3);
 		void     SetWorld(SoftBodySolver::SoftBodyWorldParameters &params);
 		void DrawWorld(const glm::mat4 &view);
+		glm::mat4 &GetProjectionMatrix(void) { return mProjectionMat; }
 
     private:
         void logShader(GLint shader);
