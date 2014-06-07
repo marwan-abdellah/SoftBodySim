@@ -16,8 +16,7 @@
 
 using namespace std;
 
-#define SIZE(x) (sizeof(x)/sizeof(x[0]))
-
+const double timestep = 0.02;
 const int width = 800;
 const int height = 600;
 
@@ -168,7 +167,7 @@ void Demo::OnKeyboard(int key, int action)
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_N)
-		mSolver->ProjectSystem(0.02);
+		mSolver->ProjectSystem(timestep);
 	if (key == GLFW_KEY_M)
 	{
 		switch (renderer.getRenderMethod()) {
@@ -273,5 +272,5 @@ void Demo::OnMouseMove(int x, int y)
 int main(int argc, char **argv)
 {
 	Demo demo(argc, argv);
-	demo.MainLoop(0.02);
+	demo.MainLoop(timestep);
 }
