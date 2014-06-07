@@ -2,16 +2,17 @@
 #define SOFTBODY_RENREDER_H
 
 #define GL_GLEXT_PROTOTYPES
-
 #include <GL/gl.h>
 #include <GL/glext.h>
+
+#include <glm/fwd.hpp>
+
 #include <vector>
+#include <list>
 
 #include "Shader.h"
 #include "engine/SoftBody.h"
 #include "engine/solver/SoftBodySolver.h"
-
-#include <list>
 
 typedef enum SoftBodyRenderMethod {
     SB_RENDER_FACES,

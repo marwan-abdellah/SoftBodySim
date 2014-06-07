@@ -3,8 +3,8 @@
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
-#include <glm/glm.hpp>
-#include <glm/ext.hpp>
+
+#include <glm/fwd.hpp>
 
 class Shader {
 public:

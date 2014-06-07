@@ -176,6 +176,8 @@ void ElementBuffer::Draw(void) const
 			break;
         case QUADS:
             glDrawElements(GL_QUADS, mElementsCount * 4, GL_UNSIGNED_INT, 0);
+		case POINTS:
+            glDrawElements(GL_POINTS, mElementsCount, GL_UNSIGNED_INT, 0);
 			break;
     };
 }

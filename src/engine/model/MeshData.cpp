@@ -383,7 +383,6 @@ int ParseFaceVertexes(OBJLexer &lexer, index3Array_t &out)
 {
 	uvec3 ret = uvec3(0,0,0);
 
-	int slashes = 0;
 	vector<int> numbers;
 
 	lexer.GetNextToken();
@@ -417,7 +416,7 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 	}
 
 	//validate vertex/text/normals ids
-	for (int i = 0; i < vertId.size(); i++) {
+	for (unsigned int i = 0; i < vertId.size(); i++) {
 		if (!vertId[i][0] || vertId[i][0] > md->nodes.size()) {
 			ERR("Invalid Vertex number: %d", vertId[i][0]);
 			return false;
@@ -461,7 +460,7 @@ static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &texture
 		return true;
 	}
 
-	ERR("Invalid vertex count. Expected 2 or 3. Have %d.", vertId.size());
+	ERR("Invalid vertex count. Expected 2 or 3. Have %lu.", vertId.size());
 	return false;
 }
 

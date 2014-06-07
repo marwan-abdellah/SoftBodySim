@@ -1,6 +1,6 @@
 #ifndef ARRAYS_H
 #define ARRAYS_H
-
+  
 #include <glm/glm.hpp>
 #include <vector>
 

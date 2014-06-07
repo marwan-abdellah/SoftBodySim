@@ -3,8 +3,6 @@
 
 using namespace glm;
 
-#define PI 3.14159
-
 static void inline rotate(mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
 {
 	double a = c * mat[i0][j0] - s * mat[i1][j1];
@@ -45,7 +43,7 @@ vec3 eigenvalues_jacobi(mat3 &mat, int max_iter, mat3 &E)
 					ret[i] = mii1;
 					ret[j] = mjj1;
 					mat[i][j] = 0.0;
-					for(int k = 0; k < i; k++) rotate(mat, c, s, k, i, k, j);
+					for(unsigned int k = 0; k < i; k++) rotate(mat, c, s, k, i, k, j);
 					for(int k = i + 1; k < j; k++) rotate(mat, c, s, i, k, k, j);
 					for(int k = j + 1; k < 3; k++) rotate(mat, c, s, i, k, j, k);
 					for(int k = 0; k < 3; k++) rotate(E, c, s, k, i, k, j);

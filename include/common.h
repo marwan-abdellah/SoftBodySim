@@ -1,3 +1,6 @@
+#ifndef SB_COMMON_H
+#define SB_COMMON_H
+
 #include <cassert>
 #include <cstdio>
 
@@ -12,3 +15,11 @@
 #define WRN(fmt, ...) fprintf(stderr, "\033[01;33m:%s:%d:" fmt "\033[0m\n", __func__, __LINE__, ##__VA_ARGS__)
 
 #define SB_ASSERT(expr) assert(expr)
+
+//add swizzle operators
+#define GLM_SWIZZLE
+
+//remove warnings
+#define GLM_FORCE_RADIANS
+
+#endif

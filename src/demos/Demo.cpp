@@ -1,5 +1,7 @@
 #define GLM_SWIZZLE
+
 #include "common.h"
+
 #include "GLFWApplication.h"
 #include "engine/model/MeshData.h"
 #include "engine/model/Material.h"
@@ -11,6 +13,7 @@
 
 #include <iostream>
 #include <glm/gtx/intersect.hpp>
+#include <glm/gtc/constants.hpp>
 
 using namespace std;
 
@@ -204,7 +207,6 @@ glm::vec3 Demo::GetWoorldCoordinates(int x, int y)
 	ret[0] = (2.0f * x) / width - 1.0f;
 	ret[1] = 1.0f - (2.0 * y) / height;
 	ret[2] = 1.0f; // place ray always in front of eye
-	ERR("NDC: %f %f %f", ret[0], ret[1], ret[2]);
 
 	glm::vec4 pos = glm::vec4(ret, 1.0);
 	pos = glm::inverse(renderer.GetProjectionMatrix()) * pos;
@@ -213,19 +215,6 @@ glm::vec3 Demo::GetWoorldCoordinates(int x, int y)
 
 	pos = glm::inverse(mCamera.getCameraMatrix()) * pos;
 	glm::vec3 p1 = pos.xyz();
-	ERR("far %f %f %f", p1[0], p1[1], p1[2]);
-	//ERR("pos: %f %f %f %f", pos[0], pos[1], pos[2], pos[3]);
-/*
-	ret[2] = -1.0;
-	pos = glm::vec4(ret, 1.0);
-	pos = invMVP * pos;
-	ERR("pos: %f %f %f %f", pos[0], pos[1], pos[2], pos[3]);
-
-	glm::vec3 p2 = glm::vec3(pos[0]/pos[3], pos[1]/pos[3], pos[2]/pos[3]);
-	ERR("near %f %f %f", p2[0], p2[1], p2[2]);
-
-	return normalize(p1 - p2);
-	*/
 	return glm::normalize(p1);
 }
 
@@ -245,13 +234,10 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 	if (!mCameraMotion && state == GLFW_PRESS) { 
 		glm::vec3 dir = GetWoorldCoordinates(x, y);
 		const glm::vec3 eye = mCamera.GetEyePosition();
-		ERR("eye: %f %f %f", eye[0], eye[1], eye[2]);
-		ERR("dir: %f %f %f", dir[0], dir[1], dir[2]);
 		softbodyList_t &bodies = mSolver->GetBodies();
 		glm::vec3 ip, nr;
 		FOREACH_R(it, bodies) {
 			const Sphere &s = (*it)->GetBoundingSphere();
-			ERR("Sphere: %f %f %f r:%f", s.mCenter[0], s.mCenter[1], s.mCenter[2], s.mRadius);
 			if (glm::intersectRaySphere(eye, dir, s.mCenter, s.mRadius, ip, nr)) {
 				ERR("intersect: %f %f %f", ip[0], ip[1], ip[2]);
 				ERR("%p IN!!!", *it);
@@ -276,7 +262,7 @@ void Demo::OnMouseMove(int x, int y)
 		return;
 
 	if (mCameraMotion) {
-		static float angle = 0.2f;
+		static float angle = glm::pi<glm::float_t>() / (5.0f * 180.0f);
 		int dx = x - mMouseLastX;
 		int dy = y - mMouseLastY;
 

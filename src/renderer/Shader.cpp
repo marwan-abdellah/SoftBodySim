@@ -1,5 +1,9 @@
-#include "Shader.h"
 #include "common.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "Shader.h"
 
 using namespace glm;
 

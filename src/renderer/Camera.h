@@ -1,8 +1,7 @@
 #ifndef __CAMERA_H
 #define __CAMERA_H
 
-#include <cmath>
-#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
 
 class Camera {
 	public:

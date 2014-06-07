@@ -1,9 +1,12 @@
-#include "Renderer.h"
 #include "common.h"
-#include <stdio.h>
-#include <GL/glu.h>
 
-#include <glm/ext.hpp>
+#include <stdio.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
+
+#include "Renderer.h"
 
 #define SPHERE_RADIUS 2.0f
 
@@ -123,7 +126,7 @@ void SoftBodyRenderer::initialize(int width, int height)
 
     vec3 lightSrc(-5, 1, 0);
 
-    mProjectionMat = perspectiveFov(60.0f,
+    mProjectionMat = perspectiveFov(pi<float_t>() / 3.0f,
             (float)mWidth, (float)mHeight, 1.0f, 100.0f);
 
     mPointLine.setShaderSource(GL_VERTEX_SHADER, vertex_source);
@@ -199,7 +202,7 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
 	const Sphere &bs = obj->GetBoundingSphere();
 
 	float_t fac = bs.mRadius / SPHERE_RADIUS;
-	mat4 camTrans = camMat * translate(bs.mCenter);
+	mat4 camTrans = translate(camMat, bs.mCenter);
 	camTrans = scale(camTrans, vec3(fac, fac, fac));
 	mPointLine.useShader();
     mPointLine.setUniform("modeViewMatrix", camTrans);
