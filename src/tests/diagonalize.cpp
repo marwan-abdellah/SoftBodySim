@@ -5,9 +5,8 @@
 #include <glm/ext.hpp>
 
 using namespace std;
-using namespace glm;
 
-static int print(mat3 &mat)
+static void print(glm::mat3 &mat)
 {
 	for(int i =0; i < 3; i++)
 		ERR("%f %f %f", mat[i][0], mat[i][1], mat[i][2]);
@@ -16,8 +15,8 @@ static int print(mat3 &mat)
 int main(int argc, const char *argv[])
 {
 	int nTests, iters;
-	mat3 mat, E;
-	vec3 eigs;
+	glm::mat3 mat, E;
+	glm::vec3 eigs;
 	cin >> nTests;
 	cin >> iters;
 	while (nTests--) {
@@ -27,13 +26,13 @@ int main(int argc, const char *argv[])
 			}
 		}
 		cout.precision(5);
-		mat3 t = mat;
+		glm::mat3 t = mat;
 		eigs = eigenvalues_jacobi(t, iters, E);
-		mat3 D = diagonal3x3(eigs);
-		D[0][0] = sqrt(D[0][0]);
-		D[1][1] = sqrt(D[1][1]);
-		D[2][2] = sqrt(D[2][2]);
-		mat3 O = inverse(E) * D *E;
+		glm::mat3 D = glm::diagonal3x3(eigs);
+		D[0][0] = glm::sqrt(D[0][0]);
+		D[1][1] = glm::sqrt(D[1][1]);
+		D[2][2] = glm::sqrt(D[2][2]);
+		glm::mat3 O = glm::inverse(E) * D *E;
 		O = O * O;
 		bool equal = true;
 		for (int i = 0; i < 3; i++)

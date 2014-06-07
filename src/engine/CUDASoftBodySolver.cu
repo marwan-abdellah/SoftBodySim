@@ -5,7 +5,6 @@
 #include <cstring>
 
 using namespace std;
-using namespace glm;
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
@@ -29,7 +28,7 @@ public:
 	bool ShutdownDevice();
 
 	void UpdateVertexBuffers(bool async);
-	void ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldParameters
+	void ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWorldParameters
 			&parms);
 	bool InitSoftBody(SoftBody *body);
 private:
@@ -46,15 +45,15 @@ private:
 	descriptorArray_t                  mDescriptors;
 	CUDAVector<SoftBodyDescriptor>	   mDescriptorsDev;
 
-	CUDAVector<vec3>                   mPositions;
-	CUDAVector<vec3>                   mProjections;
-	CUDAVector<vec3>                   mVelocities;
-	CUDAVector<float_t>                mInvMasses;
-	CUDAVector<vec3>                   mForces;
+	CUDAVector<glm::vec3>                   mPositions;
+	CUDAVector<glm::vec3>                   mProjections;
+	CUDAVector<glm::vec3>                   mVelocities;
+	CUDAVector<glm::float_t>                mInvMasses;
+	CUDAVector<glm::vec3>                   mForces;
 
 	CUDAVector<LinkConstraint>         mLinks;
-	CUDAVector<uint_t>                 mMapping;
-	CUDAVector<uvec3>                  mTriangles;
+	CUDAVector<glm::uint_t>                 mMapping;
+	CUDAVector<glm::uvec3>                  mTriangles;
 
 	vector<cudaGraphicsResource*>      mResArray; /* helper array to map all resources 
 												  in one call */
@@ -271,7 +270,7 @@ CUDAContext::~CUDAContext()
 void CUDAContext::UpdateVertexBuffers(bool async)
 {
 	cudaError_t err;
-	vec3 *ptr;
+	glm::vec3 *ptr;
 	int threadsPerBlock = 128;
 
 	// map all in one call
@@ -338,7 +337,7 @@ void CUDASoftBodySolver::UpdateVertexBuffers(void)
 		mContext->UpdateVertexBuffers(false);
 }
 
-void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldParameters &world)
+void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWorldParameters &world)
 {
 	int threadsPerBlock = 128;
 	int blockCount;
@@ -391,7 +390,7 @@ void CUDAContext::ProjectSystem(float_t dt, CUDASoftBodySolver::SoftBodyWorldPar
 			mVelocities.data(), mPositions.size());
 }
 
-void CUDASoftBodySolver::ProjectSystem(float_t dt)
+void CUDASoftBodySolver::ProjectSystem(glm::float_t dt)
 {
 	if (mInitialized)
 		mContext->ProjectSystem(dt, mWorldParams);

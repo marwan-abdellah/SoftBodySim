@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdio>
 
 #define VAR(v,w) __typeof(w) v=w
 
