@@ -6,6 +6,7 @@
 #include "engine/model/Material.h"
 
 #include <vector>
+#include <set>
 
 /**
  * @brief MeshData class 
@@ -15,10 +16,7 @@
  */
 class MeshData {
 public:
-	struct Vertex;
-	typedef std::vector<Vertex>                 vertexArray_t;
-	typedef std::vector<Vertex>::iterator       vertexArrayIterator_t;
-	typedef std::vector<Vertex>::const_iterator vertexArrayConstIterator_t;
+	typedef std::vector< std::set<int> > neighboursArray_t;
 
 	/**
 	 * @brief Constructor
@@ -110,11 +108,14 @@ public:
 	index3Array_t  faces;
 	index2Array_t  edges;
 	Material       *material;
+
+	const neighboursArray_t &GetNeighboursArray(void);
 private:
 	/**
 	 * @brief Generates nodesTriangles data from faces.
 	 */
 	void GenerateTriangles(void);
+	neighboursArray_t neighbours;
 };
 
 #endif

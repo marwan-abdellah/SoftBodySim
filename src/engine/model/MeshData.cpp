@@ -550,3 +550,24 @@ MeshData *MeshData::CreateSphere(glm::vec3 center, glm::float_t radius, size_t n
 
 	return ret;
 }
+
+const MeshData::neighboursArray_t &MeshData::GetNeighboursArray(void)
+{
+	if (neighbours.size() > 0) return neighbours;
+
+	neighbours.resize(nodes.size());
+
+	FOREACH_R(it, nodesTriangles) {
+		int id1 = (*it)[0];
+		int id2 = (*it)[1];
+		int id3 = (*it)[2];
+		neighbours[id1].insert(id2);
+		neighbours[id1].insert(id3);
+		neighbours[id2].insert(id1);
+		neighbours[id2].insert(id3);
+		neighbours[id3].insert(id1);
+		neighbours[id3].insert(id2);
+	}
+
+	return neighbours;
+}

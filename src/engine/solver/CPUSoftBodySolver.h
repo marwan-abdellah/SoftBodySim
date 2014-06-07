@@ -1,6 +1,8 @@
 #ifndef CPU_SOFT_BODY_SOLVER_H
 #define CPU_SOFT_BODY_SOLVER_H
 
+#include <set>
+
 #include "engine/solver/SoftBodySolver.h"
 
 class CPUSoftBodySolver : public SoftBodySolver {
@@ -35,25 +37,14 @@ public:
 	void GrabUpdate(Ray &r);
 	void GrabStop();
 private:
-	struct SoftBodyDescriptor {
-		SoftBody *body;
-		int baseIdx; // index of first particle of body in mParticles array
-		int count;   // number of particles for given body
-		int linkBaseIdx;
-		int linkCount;
-		int mappingBaseIdx;
-		int nMapping;
-		Sphere BS; // bounding sphere
-		struct {
-			glm::vec3 mc; // current mass center
-			int descriptor;
-		} shapeMatching;
-	};
-	struct ShapeDescriptor {
-		glm::vec3 mc0; // mass center (mc0)
-		vec3Array_t diffs; // relative locations (x0i - mc0);
-		float_t radius; // maximum distance between mass center and particle;
-	};
+	struct ShapeDescriptor;
+	struct SoftBodyDescriptor;
+	struct ShapeRegion;
+	typedef std::vector<SoftBodyDescriptor> descriptorsArray_t;
+	typedef std::vector<ShapeDescriptor> shapeDescriptorsArray_t;
+	typedef std::vector<ShapeRegion> shapeRegionsArray_t;
+	typedef std::vector<glm::mat3> mat3Array_t;
+
 	struct {
 		int descriptor;
 		bool enabled;
@@ -62,8 +53,6 @@ private:
 		Plane dragPlane; // plan along which particles are dragged
 		float_t stiffness;
 	} mGrabbing;
-	typedef std::vector<SoftBodyDescriptor> descriptorsArray_t;
-	typedef std::vector<ShapeDescriptor> shapeDescriptorsArray_t;
 
 	vec3Array_t mPositions;
 	vec3Array_t mProjections;
@@ -79,15 +68,45 @@ private:
 	descriptorsArray_t mDescriptors;
 	shapeDescriptorsArray_t mShapes;
 
-	indexArray_t mFreezedParticles;
 	void PredictMotion(float dt);
 	void IntegrateSystem(float dt);
 	void SolveGroundWallCollisions(void);
-	void AddShapeDescriptor(SoftBody *obj);
+	void AddShapeDescriptor(SoftBody *obj, int n);
 	void SolveShapeMatchConstraint(void);
 	void SolveFreezedParticlesConstraints();
+	void GetRegion(int idx, const MeshData::neighboursArray_t &nei, int max, indexArray_t &out);
 	bool mInitialized;
 };
 
+struct CPUSoftBodySolver::SoftBodyDescriptor {
+	SoftBody *body;
+	int baseIdx; // index of first particle of body in mParticles array
+	int count;   // number of particles for given body
+	int linkBaseIdx;
+	int linkCount;
+	int mappingBaseIdx;
+	int nMapping;
+	Sphere BS; // bounding sphere
+	struct {
+		glm::vec3 mc; // current mass center
+		int descriptor;
+	} shapeMatching;
+	vec3Array_t posAccumulator; // needed for 
+	indexArray_t accumulatorCounter; 
+};
+
+struct CPUSoftBodySolver::ShapeDescriptor {
+	glm::vec3 mc0; // mass center (mc0)
+	vec3Array_t initPos; // initial particle locations (x0i);
+	float_t radius; // maximum distance between mass center and particle;
+	float_t massTotal; // object total mass
+	shapeRegionsArray_t regions; // shape regions
+};
+
+struct CPUSoftBodySolver::ShapeRegion {
+	glm::vec3 mc0; // initial region mass center
+	float_t mass; // region total mass
+	indexArray_t indexes; // indexes of neighbour particles creating region
+};
 
 #endif

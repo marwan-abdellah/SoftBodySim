@@ -2,6 +2,10 @@
 #include "engine/geometry/Math.h"
 #include "common.h"
 
+#include <queue>
+#include <set>
+#include <algorithm>
+
 #include <glm/ext.hpp>
 #include <glm/gtx/intersect.hpp>
 
@@ -121,6 +125,77 @@ void CPUSoftBodySolver::SolveGroundWallCollisions(void)
 	}
 }
 
+#define ADAPTIVE_SH
+#ifdef ADAPTIVE_SH
+void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
+{
+	mat3 E;
+	vec3 mc;
+	FOREACH_R(it, mDescriptors) {
+		// clear accumulator(s)
+		REP(i, it->count) {
+			it->posAccumulator[i] = vec3(0,0,0);
+			it->accumulatorCounter[i] = 0;
+		}
+
+		// process regions
+		FOREACH_R(reg, mShapes[it->shapeMatching.descriptor].regions) {
+			mat3 A(0);
+			mc = vec3(0,0,0);
+			FOREACH_R(k, reg->indexes) {
+				mc += mProjections[it->baseIdx + *k] *
+					mInvMasses[it->baseIdx + *k];
+				A += mInvMasses[it->baseIdx + *k] *
+					outerProduct(mProjections[it->baseIdx + *k],
+							mShapes[it->shapeMatching.descriptor].initPos[*k]);
+			}
+			// current region mass center
+			mc = mc / reg->mass;
+			// region transform matrix
+			A -=  reg->mass * outerProduct(mc, reg->mc0);
+			mat3 B = transpose(A) * A;
+
+			// B is symmetrix matrix so it is diagonizable
+			vec3 eig = eigenvalues_jacobi(B, 10, E);
+
+			mat3 D = diagonal3x3(eig);
+
+			// calculate squere root of diagonal matrix
+			D[0][0] = sqrt(D[0][0]);
+			D[1][1] = sqrt(D[1][1]);
+			D[2][2] = sqrt(D[2][2]);
+			
+			B = inverse(E) * D * E;
+
+			// calculate Rotation matrix
+			mat3 R = A * inverse(B);
+
+			// accumulate newly calculated positions
+			FOREACH_R(idx, reg->indexes) {
+				vec3 g = R * (mShapes[it->shapeMatching.descriptor].initPos[*idx] -
+						reg->mc0) + mc;
+				it->posAccumulator[*idx] += g;
+				it->accumulatorCounter[*idx]++;
+			}
+		}
+
+		// update particles position by taking average from region transform
+		float_t sping = it->body->mSpringiness;
+		REP(i, it->count) {
+			SB_ASSERT(it->accumulatorCounter[i] != 0);
+			vec3 g = it->posAccumulator[i] / (float_t)it->accumulatorCounter[i];
+			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * sping;
+		}
+
+		mc = calculateMassCenter(&mProjections[it->baseIdx],
+								 &mInvMasses[it->baseIdx],
+								 it->count);
+		it->shapeMatching.mc = mc;
+		it->body->mBS.mCenter = mc;
+	}
+}
+
+#else
 void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 {
 	vec3 mc;
@@ -135,10 +210,12 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		// calculate A = sum(mi * (xi - mc) * (x0i - mc0))
 		A = mat3(0.0f);
 		REP(i, it->count) {
-			vec3 p = mProjections[it->baseIdx + i] - mc;
 			A += mInvMasses[it->baseIdx + i] *
-				outerProduct(p, mShapes[it->shapeMatching.descriptor].diffs[i]);
+				outerProduct(mProjections[it->baseIdx + i],
+						mShapes[it->shapeMatching.descriptor].initPos[i]);
 		}
+		A -= mShapes[it->shapeMatching.descriptor].massTotal *
+			outerProduct(mc, mShapes[it->shapeMatching.descriptor].mc0);
 		mat3 B = transpose(A) * A;
 
 		// B is symmetrix matrix so it is diagonizable
@@ -158,7 +235,8 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		// calculate target positions and multiply it be constraint stiffness
 		sping = it->body->mSpringiness;
 	    REP(i , it->count) {
-			vec3 g = R * mShapes[it->shapeMatching.descriptor].diffs[i] + mc;
+			vec3 g = R * (mShapes[it->shapeMatching.descriptor].initPos[i] -
+					mShapes[it->shapeMatching.descriptor].mc0) + mc;
 			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * sping;
 		}
 
@@ -166,13 +244,7 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		it->body->mBS.mCenter = mc;
 	}
 }
-
-void CPUSoftBodySolver::SolveFreezedParticlesConstraints()
-{
-	FOREACH_R(it, mFreezedParticles) {
-		mProjections[*it] = mPositions[*it];
-	}
-}
+#endif
 
 void CPUSoftBodySolver::ProjectSystem(float_t dt)
 {
@@ -180,11 +252,8 @@ void CPUSoftBodySolver::ProjectSystem(float_t dt)
 
 	PredictMotion(dt);
 
-	REP(i, mSolverSteps) {
-		SolveShapeMatchConstraint();
-		SolveFreezedParticlesConstraints();
-		SolveGroundWallCollisions();
-	}
+	SolveShapeMatchConstraint();
+	SolveGroundWallCollisions();
 
 	IntegrateSystem(dt);
 }
@@ -231,22 +300,89 @@ static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n)
 	return xmsum / (float_t)masssum;
 }
 
-void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj)
+void CPUSoftBodySolver::GetRegion(int idx, const MeshData::neighboursArray_t &nei, int max, indexArray_t &out)
+{
+	struct Node {
+		Node(int i, int d) : idx(i), distance(d) {}
+		int idx;
+		int distance;
+	};
+	std::queue<Node> toprocess;
+	std::set<int> processed;
+
+	toprocess.push(Node(idx, 0));
+
+	while (!toprocess.empty()) {
+		Node n = toprocess.front();
+		out.push_back(n.idx);
+		toprocess.pop();
+		processed.insert(n.idx);
+
+		if (n.distance >= max) return;
+
+		FOREACH_R(it, nei[n.idx]) {
+			if (processed.find(*it) == processed.end())
+				toprocess.push(Node(*it, n.distance + 1));
+		}
+	}
+}
+
+void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 {
 	ShapeDescriptor ret;
 	float_t max = 0;
+	float_t mass = 0.0f;
 
 	ret.mc0 = calculateMassCenter(
 			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
 
-	// calculate relative locations q0i = x0i - mc0
+	ret.initPos.reserve(obj->mParticles.size());
+
+	// add initial locations x0i
 	REP(i, obj->mParticles.size()) {
 		vec3 q = obj->mParticles[i] - ret.mc0;
-		ret.diffs.push_back(q);
+		ret.initPos.push_back(obj->mParticles[i]);
+		mass += obj->mMassInv[i];
 		if (length(q) > max)
 			max = length(q);
 	}
 	ret.radius = max;
+	ret.massTotal = mass;
+	ret.regions.reserve(obj->mParticles.size());
+
+	const MeshData::neighboursArray_t &na = obj->mMesh->GetNeighboursArray();
+	long len = 0;
+	unsigned int smin = 999999;
+	unsigned int smax = 0;
+
+	// create shape regions
+	REP(i, obj->mParticles.size()) {
+		ShapeRegion reg;
+		mass = 0.0f;
+
+		GetRegion(i, na, distance, reg.indexes);
+		len += reg.indexes.size();
+		if (smin > reg.indexes.size())
+			smin = reg.indexes.size();
+		if (smax < reg.indexes.size())
+			smax = reg.indexes.size();
+
+		vec3 mc(0,0,0);
+		FOREACH_R(it, reg.indexes) {
+			mass += obj->mMassInv[*it];
+			mc += obj->mParticles[*it] * obj->mMassInv[*it];
+		}
+		reg.mc0 = mc / mass;
+		reg.mass = mass;
+
+		ret.regions.push_back(reg);
+	}
+
+	WRN("Regions total: %ld", ret.regions.size());
+	WRN("Average region size: %f", (float)len / ret.regions.size());
+	WRN("Max region size: %d", smax);
+	WRN("Min region size: %d", smin);
+
 	mShapes.push_back(ret);
 }
 
@@ -276,8 +412,10 @@ void CPUSoftBodySolver::AddSoftBody(SoftBody *b)
 	descr.mappingBaseIdx = mMapping.size();
 	descr.nMapping = b->mMeshVertexParticleMapping.size();
 	descr.shapeMatching.descriptor = mShapes.size();
+	descr.posAccumulator.resize(descr.count);
+	descr.accumulatorCounter.resize(descr.count);
 
-	AddShapeDescriptor(b);
+	AddShapeDescriptor(b, 2);
 
 	b->mBS.mCenter = mShapes[descr.shapeMatching.descriptor].mc0;
 	b->mBS.mRadius = mShapes[descr.shapeMatching.descriptor].radius;

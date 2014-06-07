@@ -65,7 +65,7 @@ Demo::Demo(int argc, char **argv) :
 	const float_t groundLevel = -12.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md->material = &mMat;
-	md1 = MeshData::CreateFromObj("src/demos/cube_small.obj");
+	md1 = MeshData::CreateFromObj("src/demos/frog.obj");
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
