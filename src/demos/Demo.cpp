@@ -53,7 +53,7 @@ private:
 
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
-	mCamera(glm::vec3(0,0,28), glm::vec3(0,0,0), glm::vec3(0,1,0)),
+	mCamera(glm::vec3(0,0,28), glm::vec3(0,-8.0f,0), glm::vec3(0,1,0)),
 	mPaused(false),
 	cudaSolver(0),
 	mSpringness(0.03),
