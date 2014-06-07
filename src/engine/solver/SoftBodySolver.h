@@ -2,6 +2,7 @@
 #define SOFT_BODY_SOLVER_H
 
 #include "engine/SoftBody.h"
+#include "engine/geometry/Ray.h"
 #include <list>
 
 typedef std::list<SoftBody*> softbodyList_t; 
@@ -30,9 +31,9 @@ public:
 	virtual void ProjectSystem(glm::float_t dt) = 0;
 	virtual void UpdateVertexBuffers(void) = 0;
 
-	virtual void GrabStart(SoftBody *body, indexArray_t &indexes, glm::vec3 destination, float_t stifness) {}
-	virtual void GrabUpdate(SoftBody *b, glm::vec3 dest) {}
-	virtual void GrabStop(){}
+	virtual void GrabStart(Ray &r, glm::float_t radius, glm::float_t stifness) {}
+	virtual void GrabUpdate(Ray &r) {}
+	virtual void GrabStop() {}
 
 	void SetWorldParameters(SoftBodyWorldParameters &params);
 	softbodyList_t &GetBodies(void) { return mBodies; }

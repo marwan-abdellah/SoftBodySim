@@ -31,8 +31,8 @@ public:
 	 */
 	void UpdateVertexBuffers(void);
 
-	void GrabStart(SoftBody *body, indexArray_t &indexes, glm::vec3 destination, float_t stifness);
-	void GrabUpdate(SoftBody *b, glm::vec3 dest);
+	void GrabStart(Ray &r, glm::float_t radius, glm::float_t stifness);
+	void GrabUpdate(Ray &r);
 	void GrabStop();
 private:
 	struct SoftBodyDescriptor {
@@ -59,6 +59,7 @@ private:
 		bool enabled;
 		indexArray_t particles;
 		glm::vec3 destination;
+		Plane dragPlane; // plan along which particles are dragged
 		float_t stiffness;
 	} mGrabbing;
 	typedef std::vector<SoftBodyDescriptor> descriptorsArray_t;

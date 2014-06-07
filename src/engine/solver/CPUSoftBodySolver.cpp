@@ -1,7 +1,9 @@
 #include "engine/solver/CPUSoftBodySolver.h"
 #include "engine/geometry/Math.h"
 #include "common.h"
+
 #include <glm/ext.hpp>
+#include <glm/gtx/intersect.hpp>
 
 using namespace glm;
 
@@ -30,34 +32,57 @@ void CPUSoftBodySolver::PredictMotion(float dt)
 	}
 }
 
-void CPUSoftBodySolver::GrabStart(SoftBody *body, indexArray_t &indexes, glm::vec3 dest, float_t stifness)
+void CPUSoftBodySolver::GrabStart(Ray &ray, float_t radius, float_t stifness)
 {
 	if (mGrabbing.enabled) return;
 	int descr = -1;
+	vec3 ip;
+	vec3 nr;
 
+	// broad phase
+	// FIXME check distance from ray origin also
 	FOREACH_R(it, mDescriptors) {
-		if (it->body == body) {
+		vec3 center = it->shapeMatching.mc;
+		float_t rad = mShapes[it->shapeMatching.descriptor].radius;
+		if (glm::intersectRaySphere(ray.origin, ray.direction,
+					center, rad, ip, nr)) {
 			descr = std::distance(mDescriptors.begin(), it);
 			break;
 		}
 	}
-	if (descr == -1) {
-		ERR("Object not managed by solver!");
+	if (descr == -1)
 		return;
+
+	// narrow phase
+	for(int i = mDescriptors[descr].baseIdx;
+			i < mDescriptors[descr].baseIdx + mDescriptors[descr].count; i++)
+	{
+		if (glm::intersectRaySphere(ray.origin, ray.direction,
+					mPositions[i], radius, ip, nr)) {
+			mGrabbing.particles.push_back(i);
+		}
 	}
+
+	DBG("Grabbed %ld paricles", mGrabbing.particles.size());
+
+	mGrabbing.dragPlane.origin = mDescriptors[descr].shapeMatching.mc;
+	mGrabbing.dragPlane.normal = - ray.direction;
 	mGrabbing.descriptor = descr;
 	mGrabbing.enabled = true;
-	mGrabbing.destination = dest;
 	mGrabbing.stiffness = stifness;
 
-	FOREACH_R(p, indexes)
-		mGrabbing.particles.push_back(*p + mDescriptors[descr].baseIdx);
+	GrabUpdate(ray);
 }
 
-void CPUSoftBodySolver::GrabUpdate(SoftBody *b, glm::vec3 dest)
+void CPUSoftBodySolver::GrabUpdate(Ray &ray)
 {
+	float_t dist;
 	if (mGrabbing.enabled) {
-		mGrabbing.destination = dest;
+		if (intersectRayPlane(ray.origin, ray.direction,
+			mGrabbing.dragPlane.origin, mGrabbing.dragPlane.normal, dist))
+		{
+			mGrabbing.destination = ray.origin + dist * ray.direction;
+		}
 	}
 }
 

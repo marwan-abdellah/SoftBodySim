@@ -6,8 +6,8 @@
 struct Plane {
 	Plane(void) {}
 
-	glm::vec3 m_normal;
-	glm::vec3 m_origin;
+	glm::vec3 normal;
+	glm::vec3 origin;
 };
 
 

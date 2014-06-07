@@ -12,7 +12,6 @@
 #include "engine/solver/CPUSoftBodySolver.h"
 
 #include <iostream>
-#include <glm/gtx/intersect.hpp>
 #include <glm/gtc/constants.hpp>
 
 using namespace std;
@@ -45,7 +44,7 @@ private:
 	Material mMat;
 	bool cudaSolver;
 	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
-	glm::vec3 GetWoorldCoordinates(int x, int y);
+	Ray GetWoorldCoordinates(int x, int y);
 	float_t mSpringness;
 	bool mCameraMotion;
 	SoftBody *b;
@@ -197,7 +196,7 @@ void Demo::OnKeyboard(int key, int action)
 	}
 }
 
-glm::vec3 Demo::GetWoorldCoordinates(int x, int y)
+Ray Demo::GetWoorldCoordinates(int x, int y)
 {
 	glm::vec3 ret;
 	// gl output coords
@@ -214,8 +213,8 @@ glm::vec3 Demo::GetWoorldCoordinates(int x, int y)
 	pos[3] = 0.0f;
 
 	pos = glm::inverse(mCamera.getCameraMatrix()) * pos;
-	glm::vec3 p1 = pos.xyz();
-	return glm::normalize(p1);
+
+	return Ray(mCamera.GetEyePosition(), pos.xyz());
 }
 
 void Demo::OnMouseClick(int type, int state, int x, int y)
@@ -232,22 +231,8 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 		mMousePressed = false;
 
 	if (!mCameraMotion && state == GLFW_PRESS) { 
-		glm::vec3 dir = GetWoorldCoordinates(x, y);
-		const glm::vec3 eye = mCamera.GetEyePosition();
-		softbodyList_t &bodies = mSolver->GetBodies();
-		glm::vec3 ip, nr;
-		FOREACH_R(it, bodies) {
-			const Sphere &s = (*it)->GetBoundingSphere();
-			if (glm::intersectRaySphere(eye, dir, s.mCenter, s.mRadius, ip, nr)) {
-				ERR("intersect: %f %f %f", ip[0], ip[1], ip[2]);
-				ERR("%p IN!!!", *it);
-			}
-		}
-		indexArray_t p;
-		p.push_back(3);
-		p.push_back(1);
-		p.push_back(2);
-		mSolver->GrabStart(b, p, glm::vec3(5.0, 1.0, -1.5f), 160.1f);
+		Ray ray = GetWoorldCoordinates(x, y);
+		mSolver->GrabStart(ray, 0.5f, 120.0f);
 		mGrabb = true;
 	}
 	if (!mCameraMotion && state == GLFW_RELEASE) { 
@@ -277,7 +262,8 @@ void Demo::OnMouseMove(int x, int y)
 			mCamera.moveDown(-angle * dy);
 	}
 	if (mGrabb) {
-		// notign
+		Ray ray = GetWoorldCoordinates(x, y);
+		mSolver->GrabUpdate(ray);
 	}
 
 	mMouseLastX = x;
