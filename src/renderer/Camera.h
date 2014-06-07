@@ -15,6 +15,7 @@ class Camera {
 		void moveIn(float in);
 		void moveOut(float out);
 		const glm::mat4 &getCameraMatrix(void);
+		const glm::vec3 &GetEyePosition(void) { return _position; }
 		~Camera() {}
 	private:
 		glm::vec3	_position;

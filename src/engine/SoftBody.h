@@ -1,10 +1,6 @@
 #ifndef SOFTBODY_H
 #define SOFTBODY_H
 
-//define gl math default precision as float - not 
-#define GLM_PRECISION_MEDIUMP_FLOAT
-#define GLM_PRECISION_MEDIUMP_UINT
-
 #include "geometry/Arrays.h"
 #include "Constraints.h"
 #include "Body.h"
@@ -25,7 +21,6 @@ public:
 
 	float_t GetSpringness(void) { return mSpringiness; }
 	void SetSpringness(float_t val) { mSpringiness = val; }
-	const Sphere &GetBoundingSphere(void) { return mBoundingSphere; }
 
 private:
     vec3Array_t                 mParticles;

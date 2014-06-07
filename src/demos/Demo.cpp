@@ -1,3 +1,4 @@
+#define GLM_SWIZZLE
 #include "common.h"
 #include "GLFWApplication.h"
 #include "engine/model/MeshData.h"
@@ -9,16 +10,14 @@
 #include "engine/solver/CPUSoftBodySolver.h"
 
 #include <iostream>
-#include <glm/glm.hpp>
+#include <glm/gtx/intersect.hpp>
 
 using namespace std;
-using namespace glm;
 
 #define SIZE(x) (sizeof(x)/sizeof(x[0]))
 
 const int width = 800;
 const int height = 600;
-
 
 class Demo : public GLFWApplication
 {
@@ -43,19 +42,20 @@ private:
 	Material mMat;
 	bool cudaSolver;
 	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
+	glm::vec3 GetWoorldCoordinates(int x, int y);
 	float_t mSpringness;
-	bool mMouseMotion;
+	bool mCameraMotion;
 	SoftBody *b;
 	bool mGrabb;
 };
 
 Demo::Demo(int argc, char **argv) :
 	GLFWApplication("DemoApp", width, height),
-	mCamera(vec3(0,0,28), vec3(0,-8,0), vec3(0,1,0)),
+	mCamera(glm::vec3(0,0,28), glm::vec3(0,0,0), glm::vec3(0,1,0)),
 	mPaused(false),
 	cudaSolver(0),
 	mSpringness(0.03),
-	mMouseMotion(false),
+	mCameraMotion(false),
 	b(0),
 	mGrabb(0)
 {
@@ -68,7 +68,7 @@ Demo::Demo(int argc, char **argv) :
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
-	mWorldParams.gravity = vec3(0, -10.0, 0);
+	mWorldParams.gravity = glm::vec3(0, -10.0, 0);
 	mWorldParams.leftWall = -15.0f;
 	mWorldParams.rightWall = 15.0f;
 	mWorldParams.backWall = -15.0f;
@@ -118,9 +118,9 @@ void Demo::OnKeyboard(int key, int action)
 
 	if (key == GLFW_KEY_LEFT_SHIFT) {
 		if (action == GLFW_RELEASE)
-			mMouseMotion = false;
+			mCameraMotion = false;
 		else if (action == GLFW_PRESS)
-			mMouseMotion = true;
+			mCameraMotion = true;
 	}
 
 	if (action == GLFW_RELEASE) return;
@@ -153,7 +153,7 @@ void Demo::OnKeyboard(int key, int action)
 	}
 	if (key == GLFW_KEY_T) {
 		b = new SoftBody(1, mSpringness, 1.0,md1);
-		b->SetColor(vec3(1.0, 1.0, 0.0f));
+		b->SetColor(glm::vec3(1.0, 1.0, 0.0f));
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_Y) {
@@ -162,7 +162,7 @@ void Demo::OnKeyboard(int key, int action)
 	}
 	if (key == GLFW_KEY_U) {
 		b = new SoftBody(1.0f, mSpringness, 1.0f, md3);
-		b->SetColor(vec3(0.0, 0.0, 1.0f));
+		b->SetColor(glm::vec3(0.0, 0.0, 1.0f));
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_N)
@@ -194,6 +194,41 @@ void Demo::OnKeyboard(int key, int action)
 	}
 }
 
+glm::vec3 Demo::GetWoorldCoordinates(int x, int y)
+{
+	glm::vec3 ret;
+	// gl output coords
+	// (-1,1)  ..... (1,1)
+	//         .....
+	// (-1,-1) ..... (1, -1)
+	ret[0] = (2.0f * x) / width - 1.0f;
+	ret[1] = 1.0f - (2.0 * y) / height;
+	ret[2] = 1.0f; // place ray always in front of eye
+	ERR("NDC: %f %f %f", ret[0], ret[1], ret[2]);
+
+	glm::vec4 pos = glm::vec4(ret, 1.0);
+	pos = glm::inverse(renderer.GetProjectionMatrix()) * pos;
+	pos[2] = -1.0f;
+	pos[3] = 0.0f;
+
+	pos = glm::inverse(mCamera.getCameraMatrix()) * pos;
+	glm::vec3 p1 = pos.xyz();
+	ERR("far %f %f %f", p1[0], p1[1], p1[2]);
+	//ERR("pos: %f %f %f %f", pos[0], pos[1], pos[2], pos[3]);
+/*
+	ret[2] = -1.0;
+	pos = glm::vec4(ret, 1.0);
+	pos = invMVP * pos;
+	ERR("pos: %f %f %f %f", pos[0], pos[1], pos[2], pos[3]);
+
+	glm::vec3 p2 = glm::vec3(pos[0]/pos[3], pos[1]/pos[3], pos[2]/pos[3]);
+	ERR("near %f %f %f", p2[0], p2[1], p2[2]);
+
+	return normalize(p1 - p2);
+	*/
+	return glm::normalize(p1);
+}
+
 void Demo::OnMouseClick(int type, int state, int x, int y)
 {
 	if (type != GLFW_MOUSE_BUTTON_1)
@@ -207,19 +242,31 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 	else if (state == GLFW_RELEASE)
 		mMousePressed = false;
 
-	if (!mMouseMotion && state == GLFW_PRESS) { 
+	if (!mCameraMotion && state == GLFW_PRESS) { 
+		glm::vec3 dir = GetWoorldCoordinates(x, y);
+		const glm::vec3 eye = mCamera.GetEyePosition();
+		ERR("eye: %f %f %f", eye[0], eye[1], eye[2]);
+		ERR("dir: %f %f %f", dir[0], dir[1], dir[2]);
+		softbodyList_t &bodies = mSolver->GetBodies();
+		glm::vec3 ip, nr;
+		FOREACH_R(it, bodies) {
+			const Sphere &s = (*it)->GetBoundingSphere();
+			ERR("Sphere: %f %f %f r:%f", s.mCenter[0], s.mCenter[1], s.mCenter[2], s.mRadius);
+			if (glm::intersectRaySphere(eye, dir, s.mCenter, s.mRadius, ip, nr)) {
+				ERR("intersect: %f %f %f", ip[0], ip[1], ip[2]);
+				ERR("%p IN!!!", *it);
+			}
+		}
 		indexArray_t p;
 		p.push_back(3);
 		p.push_back(1);
 		p.push_back(2);
-		mSolver->GrabStart(b, p, vec3(5.0, 1.0, -1.5f), 160.1f);
+		mSolver->GrabStart(b, p, glm::vec3(5.0, 1.0, -1.5f), 160.1f);
 		mGrabb = true;
-		DBG("Grab start");
 	}
-	if (!mMouseMotion && state == GLFW_RELEASE) { 
+	if (!mCameraMotion && state == GLFW_RELEASE) { 
 		mSolver->GrabStop();
 		mGrabb = false;
-		DBG("Grab stop");
 	}
 }
 
@@ -228,12 +275,12 @@ void Demo::OnMouseMove(int x, int y)
 	if (!mMousePressed)
 		return;
 
-	if (mMouseMotion) {
+	if (mCameraMotion) {
 		static float angle = 0.2f;
 		int dx = x - mMouseLastX;
 		int dy = y - mMouseLastY;
 
-		vec3 np;
+		glm::vec3 np;
 		if (dx > 0)
 			mCamera.moveRight(angle * dx);
 		else
