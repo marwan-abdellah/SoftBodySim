@@ -125,6 +125,7 @@ void CPUSoftBodySolver::SolveGroundWallCollisions(void)
 	}
 }
 
+#define ADAPTIVE_SH
 #ifdef ADAPTIVE_SH
 void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 {
@@ -154,13 +155,19 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 			A -=  reg->mass * outerProduct(mc, reg->mc0);
 			mat3 B = transpose(A) * A;
 
+			/*
 			if (glm::determinant(A) < 0.0f) {
 				ERR("det A < 0");
 				A[0][2] = -A[0][2];
 				A[1][2] = -A[1][2];
 				A[2][2] = -A[2][2];
 			}
+			*/
 
+			if (glm::determinant(A) < 0.0f)
+				ERR("Negative det(A)");
+
+			// check if points are co-planar
 			if (glm::determinant(A) == 0.0f)
 				ERR("Sim unstable: det(A) == 0");
 
