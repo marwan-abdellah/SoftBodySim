@@ -125,7 +125,6 @@ void CPUSoftBodySolver::SolveGroundWallCollisions(void)
 	}
 }
 
-#define ADAPTIVE_SH
 #ifdef ADAPTIVE_SH
 void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 {
@@ -154,6 +153,15 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 			// region transform matrix
 			A -=  reg->mass * outerProduct(mc, reg->mc0);
 			mat3 B = transpose(A) * A;
+
+			if (glm::determinant(A) < 0.0f) {
+				ERR("det A < 0");
+				A[0][2] = -A[0][2];
+				A[1][2] = -A[1][2];
+				A[2][2] = -A[2][2];
+			}
+
+			SB_ASSERT(glm::determinant(A) != 0.0f);
 
 			// B is symmetrix matrix so it is diagonizable
 			vec3 eig = eigenvalues_jacobi(B, 10, E);
@@ -214,9 +222,25 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 				outerProduct(mProjections[it->baseIdx + i],
 						mShapes[it->shapeMatching.descriptor].initPos[i]);
 		}
+		vec3 mc0 = mShapes[it->shapeMatching.descriptor].mc0;
+		//DBG("Mass center: %f %f %f", mc[0], mc[1], mc[2]);
+		//DBG("Mass center0: %f %f %f", mc0[0], mc0[1], mc0[2]);
 		A -= mShapes[it->shapeMatching.descriptor].massTotal *
 			outerProduct(mc, mShapes[it->shapeMatching.descriptor].mc0);
 		mat3 B = transpose(A) * A;
+
+		if (glm::determinant(A) < 0.0f) {
+			ERR("negating column");
+			A[0][2] = -A[0][0];
+			A[1][2] = -A[1][0];
+			A[2][2] = -A[2][0];
+		}
+
+		if (glm::determinant(A) < 0.0f)
+			ERR("det A < 0");
+
+		// check if points are non co-planar
+		SB_ASSERT(glm::determinant(A) != 0.0f);
 
 		// B is symmetrix matrix so it is diagonizable
 		vec3 eig = eigenvalues_jacobi(B, 10, E);

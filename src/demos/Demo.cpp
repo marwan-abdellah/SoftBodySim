@@ -41,6 +41,8 @@ private:
 	bool mPaused;
 	MeshData *md, *md1, *md2, *md3;
 	Material mMat;
+	Material mMat2;
+	Material mMat3;
 	bool cudaSolver;
 	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
 	Ray GetWoorldCoordinates(int x, int y);
@@ -60,14 +62,24 @@ Demo::Demo(int argc, char **argv) :
 	b(0),
 	mGrabb(0)
 {
+	const float_t groundLevel = -12.0;
+
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
 	if (res) ERR("Texture loading failed!");
-	const float_t groundLevel = -12.0;
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
 	md->material = &mMat;
+
 	md1 = MeshData::CreateFromObj("src/demos/frog.obj");
+	res = mMat2.LoadTextureFromBmp("src/demos/frog.bmp");
+	if (res) ERR("Texture loading failed!");
+	md1->material = &mMat2;
+
+	md3 = MeshData::CreateFromObj("src/demos/Dino2.obj");
+	res = mMat3.LoadTextureFromBmp("src/demos/Dino_512.bmp");
+	if (res) ERR("Texture loading failed!");
+	md3->material = &mMat3;
+
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
-	md3 = MeshData::CreatePlane(2.0, 2.0, 4, 4);
 
 	mWorldParams.gravity = glm::vec3(0, -10.0, 0);
 	mWorldParams.leftWall = -15.0f;
