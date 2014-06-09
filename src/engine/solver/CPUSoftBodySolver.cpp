@@ -161,7 +161,8 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 				A[2][2] = -A[2][2];
 			}
 
-			SB_ASSERT(glm::determinant(A) != 0.0f);
+			if (glm::determinant(A) == 0.0f)
+				ERR("Sim unstable: det(A) == 0");
 
 			// B is symmetrix matrix so it is diagonizable
 			vec3 eig = eigenvalues_jacobi(B, 10, E);
@@ -222,25 +223,16 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 				outerProduct(mProjections[it->baseIdx + i],
 						mShapes[it->shapeMatching.descriptor].initPos[i]);
 		}
-		vec3 mc0 = mShapes[it->shapeMatching.descriptor].mc0;
-		//DBG("Mass center: %f %f %f", mc[0], mc[1], mc[2]);
-		//DBG("Mass center0: %f %f %f", mc0[0], mc0[1], mc0[2]);
 		A -= mShapes[it->shapeMatching.descriptor].massTotal *
 			outerProduct(mc, mShapes[it->shapeMatching.descriptor].mc0);
 		mat3 B = transpose(A) * A;
 
-		if (glm::determinant(A) < 0.0f) {
-			ERR("negating column");
-			A[0][2] = -A[0][0];
-			A[1][2] = -A[1][0];
-			A[2][2] = -A[2][0];
-		}
-
 		if (glm::determinant(A) < 0.0f)
-			ERR("det A < 0");
+			ERR("Negative det(A)");
 
-		// check if points are non co-planar
-		SB_ASSERT(glm::determinant(A) != 0.0f);
+		// check if points are co-planar
+		if (glm::determinant(A) == 0.0f)
+			ERR("Sim unstable: det(A) == 0");
 
 		// B is symmetrix matrix so it is diagonizable
 		vec3 eig = eigenvalues_jacobi(B, 10, E);
