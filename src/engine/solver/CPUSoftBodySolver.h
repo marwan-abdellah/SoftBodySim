@@ -75,7 +75,9 @@ private:
 	void SolveShapeMatchConstraint(void);
 	void SolveFreezedParticlesConstraints();
 	void GetRegion(int idx, const MeshData::neighboursArray_t &nei, int max, indexArray_t &out);
+	void SolveVolumeConstraint();
 	bool mInitialized;
+	void CalculateMassCenters();
 };
 
 struct CPUSoftBodySolver::SoftBodyDescriptor {
@@ -101,6 +103,7 @@ struct CPUSoftBodySolver::ShapeDescriptor {
 	float_t radius; // maximum distance between mass center and particle;
 	float_t massTotal; // object total mass
 	shapeRegionsArray_t regions; // shape regions
+	float_t volume; // initial shape volume
 };
 
 struct CPUSoftBodySolver::ShapeRegion {

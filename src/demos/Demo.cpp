@@ -57,7 +57,7 @@ Demo::Demo(int argc, char **argv) :
 	mCamera(glm::vec3(0,0,28), glm::vec3(0,-8.0f,0), glm::vec3(0,1,0)),
 	mPaused(false),
 	cudaSolver(0),
-	mSpringness(0.03),
+	mSpringness(0.9),
 	mCameraMotion(false),
 	b(0),
 	mGrabb(0)
@@ -192,14 +192,14 @@ void Demo::OnKeyboard(int key, int action)
 		}
 	}
 	if (key == GLFW_KEY_MINUS) {
-		mSpringness -= 0.001;
+		mSpringness -= 0.01;
 		DBG("Springness : %f", mSpringness);
 		softbodyList_t &list = mSolver->GetBodies();
 		FOREACH_R(it, list)
 			(*it)->SetSpringness(mSpringness);
 	}
 	if (key == GLFW_KEY_EQUAL) {
-		mSpringness += 0.001;
+		mSpringness += 0.01;
 		DBG("Springness : %f", mSpringness);
 		softbodyList_t &list = mSolver->GetBodies();
 		FOREACH_R(it, list)

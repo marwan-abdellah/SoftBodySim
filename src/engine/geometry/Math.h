@@ -11,5 +11,7 @@
  */
 glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &m);
 
+void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S);
+
 
 #endif

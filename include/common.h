@@ -16,6 +16,8 @@
 
 #define SB_ASSERT(expr) assert(expr)
 
+#define SB_WARNING(expr, msg) do {if (expr) WRN("%s", msg); } while(0);
+
 //add swizzle operators
 #define GLM_SWIZZLE
 

@@ -12,6 +12,41 @@
 using namespace glm;
 
 static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n);
+static float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, uint_t *accum, int n);
+
+static inline float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
+{
+	glm::vec3 ab = b - a;
+	glm::vec3 ac = c - a;
+	return 0.5f * glm::length(cross(ab, ac));
+}
+
+static float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, uint_t *accum, int n)
+{
+	double ret = 0.0f;
+	glm::vec3 norm;
+
+	for(int i = 0; i < n; i++) {
+		glm::vec3 v0 = pos[triangles[i][0]];
+		glm::vec3 v1 = pos[triangles[i][1]];
+		glm::vec3 v2 = pos[triangles[i][2]];
+		norm = normalize(glm::cross(v1 - v0, v2 - v0));
+		float_t area = triangle_area(v0, v1, v2);
+		ret += area * glm::dot(v0 + v1 + v2, norm);
+
+		if (norms) {
+			norm = area * norm;
+			norms[triangles[i][0]] += norm;
+			norms[triangles[i][1]] += norm;
+			norms[triangles[i][2]] += norm;
+			accum[triangles[i][0]]++;
+			accum[triangles[i][1]]++;
+			accum[triangles[i][2]]++;
+		}
+	}
+
+	return (float_t)ret / 3.0f;
+}
 
 CPUSoftBodySolver::CPUSoftBodySolver()
 {
@@ -104,7 +139,8 @@ void CPUSoftBodySolver::IntegrateSystem(float dt)
 {
 	REP(i, mPositions.size()) {
 		mVelocities[i] = (mProjections[i] - mPositions[i]) / dt;
-		mPositions[i] = mProjections[i];
+		//mPositions[i] = mProjections[i];
+		mPositions[i] = mPositions[i] + dt * mVelocities[i];
 	}
 }
 
@@ -129,7 +165,7 @@ void CPUSoftBodySolver::SolveGroundWallCollisions(void)
 #ifdef ADAPTIVE_SH
 void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 {
-	mat3 E;
+	mat3 R, S;
 	vec3 mc;
 	FOREACH_R(it, mDescriptors) {
 		// clear accumulator(s)
@@ -142,6 +178,8 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		FOREACH_R(reg, mShapes[it->shapeMatching.descriptor].regions) {
 			mat3 A(0);
 			mc = vec3(0,0,0);
+
+			// calculate regular particles
 			FOREACH_R(k, reg->indexes) {
 				mc += mProjections[it->baseIdx + *k] *
 					mInvMasses[it->baseIdx + *k];
@@ -149,42 +187,13 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 					outerProduct(mProjections[it->baseIdx + *k],
 							mShapes[it->shapeMatching.descriptor].initPos[*k]);
 			}
+
 			// current region mass center
-			mc = mc / reg->mass;
-			// region transform matrix
-			A -=  reg->mass * outerProduct(mc, reg->mc0);
-			mat3 B = transpose(A) * A;
-
-			/*
-			if (glm::determinant(A) < 0.0f) {
-				ERR("det A < 0");
-				A[0][2] = -A[0][2];
-				A[1][2] = -A[1][2];
-				A[2][2] = -A[2][2];
-			}
-			*/
-
-			if (glm::determinant(A) < 0.0f)
-				ERR("Negative det(A)");
-
-			// check if points are co-planar
-			if (glm::determinant(A) == 0.0f)
-				ERR("Sim unstable: det(A) == 0");
-
-			// B is symmetrix matrix so it is diagonizable
-			vec3 eig = eigenvalues_jacobi(B, 10, E);
-
-			mat3 D = diagonal3x3(eig);
-
-			// calculate squere root of diagonal matrix
-			D[0][0] = sqrt(D[0][0]);
-			D[1][1] = sqrt(D[1][1]);
-			D[2][2] = sqrt(D[2][2]);
-			
-			B = inverse(E) * D * E;
+			mc = mc / (reg->mass);
+			A -= reg->mass * outerProduct(mc, reg->mc0);
 
 			// calculate Rotation matrix
-			mat3 R = A * inverse(B);
+			polar_decomposition(A, R, S);
 
 			// accumulate newly calculated positions
 			FOREACH_R(idx, reg->indexes) {
@@ -198,16 +207,10 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		// update particles position by taking average from region transform
 		float_t sping = it->body->mSpringiness;
 		REP(i, it->count) {
-			SB_ASSERT(it->accumulatorCounter[i] != 0);
 			vec3 g = it->posAccumulator[i] / (float_t)it->accumulatorCounter[i];
 			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * sping;
 		}
 
-		mc = calculateMassCenter(&mProjections[it->baseIdx],
-								 &mInvMasses[it->baseIdx],
-								 it->count);
-		it->shapeMatching.mc = mc;
-		it->body->mBS.mCenter = mc;
 	}
 }
 
@@ -215,14 +218,9 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 {
 	vec3 mc;
-	mat3 A, R;
-	mat3 E;
+	mat3 A, R, S;
 	float_t sping;
 	FOREACH_R(it, mDescriptors) {
-		// calculate mass center after pojection
-		mc = calculateMassCenter(&mProjections[it->baseIdx],
-								 &mInvMasses[it->baseIdx],
-								 it->count);
 		// calculate A = sum(mi * (xi - mc) * (x0i - mc0))
 		A = mat3(0.0f);
 		REP(i, it->count) {
@@ -232,28 +230,8 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		}
 		A -= mShapes[it->shapeMatching.descriptor].massTotal *
 			outerProduct(mc, mShapes[it->shapeMatching.descriptor].mc0);
-		mat3 B = transpose(A) * A;
 
-		if (glm::determinant(A) < 0.0f)
-			ERR("Negative det(A)");
-
-		// check if points are co-planar
-		if (glm::determinant(A) == 0.0f)
-			ERR("Sim unstable: det(A) == 0");
-
-		// B is symmetrix matrix so it is diagonizable
-		vec3 eig = eigenvalues_jacobi(B, 10, E);
-
-		mat3 D = diagonal3x3(eig);
-		// calculate squere root of diagonal matrix
-		D[0][0] = sqrt(D[0][0]);
-		D[1][1] = sqrt(D[1][1]);
-		D[2][2] = sqrt(D[2][2]);
-		
-		B = inverse(E) * D * E;
-
-		// calculate Rotation matrix
-		R = A * inverse(B);
+		polar_decomposition(A, R, S);
 
 		// calculate target positions and multiply it be constraint stiffness
 		sping = it->body->mSpringiness;
@@ -269,13 +247,50 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 }
 #endif
 
+void CPUSoftBodySolver::CalculateMassCenters()
+{
+	vec3 mc;
+	FOREACH_R(it, mDescriptors) {
+		// calculate mass center after pojection
+		mc = calculateMassCenter(&mProjections[it->baseIdx],
+								 &mInvMasses[it->baseIdx],
+								 it->count);
+		it->shapeMatching.mc = mc;
+		it->body->mBS.mCenter = mc;
+	}
+}
+
+void CPUSoftBodySolver::SolveVolumeConstraint()
+{
+	float_t current_volume, rest_volume;;
+
+	FOREACH_R(it, mDescriptors) {
+		REP(k, it->count) {
+			it->accumulatorCounter[k] = 0;
+			it->posAccumulator[k] = vec3(0,0,0);
+		}
+		rest_volume = mShapes[it->shapeMatching.descriptor].volume;
+
+		// calculate current volume and normals sum
+		current_volume = calculateVolume(&mPositions[it->baseIdx], &(it->body->mTriangles[0]), &(it->posAccumulator[0]), &(it->accumulatorCounter[0]), it->body->mTriangles.size());
+		float_t diff = (current_volume - rest_volume) / rest_volume;
+		if (diff > -0.01f) return;
+		ERR("Volume diff: %f %", diff);
+		// update positions
+		REP(k, it->count)
+			mProjections[it->baseIdx + k] -= 0.1f * diff * it->posAccumulator[k] / (float_t)it->accumulatorCounter[k];
+	}
+}
+
 void CPUSoftBodySolver::ProjectSystem(float_t dt)
 {
 	if (!mInitialized) return;
 
 	PredictMotion(dt);
 
+	CalculateMassCenters();
 	SolveShapeMatchConstraint();
+	SolveVolumeConstraint();
 	SolveGroundWallCollisions();
 
 	IntegrateSystem(dt);
@@ -382,24 +397,32 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 	REP(i, obj->mParticles.size()) {
 		ShapeRegion reg;
 		mass = 0.0f;
+		vec3 mc(0,0,0);
+		float_t len = 0.0f;
+		vec3 norm(0,0,0);
 
 		GetRegion(i, na, distance, reg.indexes);
+
 		len += reg.indexes.size();
 		if (smin > reg.indexes.size())
 			smin = reg.indexes.size();
 		if (smax < reg.indexes.size())
 			smax = reg.indexes.size();
 
-		vec3 mc(0,0,0);
 		FOREACH_R(it, reg.indexes) {
 			mass += obj->mMassInv[*it];
 			mc += obj->mParticles[*it] * obj->mMassInv[*it];
 		}
-		reg.mc0 = mc / mass;
-		reg.mass = mass;
+		FOREACH_R(it, reg.indexes)
+			len += obj->mMassInv[*it] * glm::length(obj->mParticles[*it] - mc);
 
+		reg.mass = mass;
+		reg.mc0 = mc / mass;
 		ret.regions.push_back(reg);
 	}
+
+	ret.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
+	ERR("Rest Volume :%f", ret.volume);
 
 	WRN("Regions total: %ld", ret.regions.size());
 	WRN("Average region size: %f", (float)len / ret.regions.size());

@@ -1,6 +1,8 @@
 #include "Math.h"
 #include "common.h"
 
+#include <glm/ext.hpp>
+
 using namespace glm;
 
 static void inline rotate(mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
@@ -53,4 +55,51 @@ vec3 eigenvalues_jacobi(mat3 &mat, int max_iter, mat3 &E)
 		if (!changed) break;
 	}
 	return ret;
+}
+
+/**
+ * Function for getting polar decomposition for well-defined inversable
+ * matrixes (det(A) > 0)
+ *
+ * Polar decomposition is given as:
+ * A = R * S,
+ * where R is rotation matrix and S is a scale matrix along orthogonal axis.
+ *
+ * by definition 
+ * R = A * S^-1
+ * S = sqrt(A' * A)
+ */
+void polar_decomposition(const mat3 &A, mat3 &R, mat3 &S)
+{
+	mat3 E;
+
+	mat3 B = transpose(A) * A;
+
+	// B is symmetrix matrix so it is diagonizable
+	vec3 eig = eigenvalues_jacobi(B, 10, E);
+
+	// add delta value to eigenvalues to overcome det(A) == 0 problem
+	eig += vec3(0.001f, 0.001f, 0.001f);
+
+	S = glm::diagonal3x3(eig);
+
+	// calculate squere root of diagonal matrix
+	S[0][0] = sqrt(S[0][0]);
+	S[1][1] = sqrt(S[1][1]);
+	S[2][2] = sqrt(S[2][2]);
+
+	// calcuate squre root of B matrix
+	B = inverse(E) * S * E;
+
+	// calculate rotation matrix
+	R = A * inverse(B);
+
+	float_t det = glm::determinant(R);
+	if (det != det) {
+		ERR("det(A): %f", glm::determinant(A));
+		ERR("det(R): %f", det);
+		ERR("%f %f %f", A[0][0], A[0][1], A[0][2]);
+		ERR("%f %f %f", A[1][0], A[1][1], A[1][2]);
+		ERR("%f %f %f", A[2][0], A[2][1], A[2][2]);
+	}
 }
