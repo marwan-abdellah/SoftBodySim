@@ -1,5 +1,5 @@
-#ifndef SB_SPHERE_H
-#define SB_SPHERE_H
+#ifndef SB_ENGINE_SPHERE_H_
+#define SB_ENGINE_SPHERE_H_
 
 #include <glm/glm.hpp>
 

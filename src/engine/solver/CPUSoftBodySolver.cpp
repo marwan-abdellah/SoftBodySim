@@ -30,7 +30,10 @@ static float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 
 		glm::vec3 v0 = pos[triangles[i][0]];
 		glm::vec3 v1 = pos[triangles[i][1]];
 		glm::vec3 v2 = pos[triangles[i][2]];
-		norm = normalize(glm::cross(v1 - v0, v2 - v0));
+		norm = glm::cross(v1 - v0, v2 - v0);
+		if (norm != vec3(0,0,0)) {
+			norm = glm::normalize(norm);
+		}
 		float_t area = triangle_area(v0, v1, v2);
 		ret += area * glm::dot(v0 + v1 + v2, norm);
 
@@ -275,7 +278,6 @@ void CPUSoftBodySolver::SolveVolumeConstraint()
 		current_volume = calculateVolume(&mPositions[it->baseIdx], &(it->body->mTriangles[0]), &(it->posAccumulator[0]), &(it->accumulatorCounter[0]), it->body->mTriangles.size());
 		float_t diff = (current_volume - rest_volume) / rest_volume;
 		if (diff > -0.01f) return;
-		ERR("Volume diff: %f %", diff);
 		// update positions
 		REP(k, it->count)
 			mProjections[it->baseIdx + k] -= 0.1f * diff * it->posAccumulator[k] / (float_t)it->accumulatorCounter[k];

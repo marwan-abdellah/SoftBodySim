@@ -1,10 +1,9 @@
-#ifndef SB_BODY_H
-#define SB_BODY_H
+#ifndef SB_ENGINE_BODY_H_
+#define SB_ENGINE_BODY_H_
 
 #include "geometry/Sphere.h"
 #include "model/MeshData.h"
 #include "VertexBuffer.h"
-
 
 /**
  * @class Abstract class 

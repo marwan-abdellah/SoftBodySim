@@ -1,6 +1,7 @@
 #include "Math.h"
 #include "common.h"
 
+#include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
 using namespace glm;
@@ -101,5 +102,6 @@ void polar_decomposition(const mat3 &A, mat3 &R, mat3 &S)
 		ERR("%f %f %f", A[0][0], A[0][1], A[0][2]);
 		ERR("%f %f %f", A[1][0], A[1][1], A[1][2]);
 		ERR("%f %f %f", A[2][0], A[2][1], A[2][2]);
+		SB_ASSERT(false);
 	}
 }

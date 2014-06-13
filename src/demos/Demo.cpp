@@ -243,7 +243,7 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 
 	if (!mCameraMotion && state == GLFW_PRESS) { 
 		Ray ray = GetWoorldCoordinates(x, y);
-		mSolver->GrabStart(ray, 1.0f, 120.0f);
+		mSolver->GrabStart(ray, 0.5f, 120.0f);
 		mGrabb = true;
 	}
 	if (!mCameraMotion && state == GLFW_RELEASE) { 

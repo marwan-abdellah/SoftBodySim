@@ -1,5 +1,5 @@
-#ifndef SB_PLANE_H
-#define SB_PLANE_H
+#ifndef SB_ENGINE_PLANE_H_
+#define SB_ENGINE_PLANE_H_
 
 #include <glm/glm.hpp>
 

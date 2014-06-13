@@ -1,7 +1,7 @@
-#ifndef MATH_H_
-#define MATH_H_
+#ifndef SB_ENGINE_MATH_H_
+#define SB_ENGINE_MATH_H_
 
-#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
 
 /**
  * Diagonize matrix using Jacobi rotations. 

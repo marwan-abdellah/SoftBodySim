@@ -1,7 +1,7 @@
-#ifndef ARRAYS_H
-#define ARRAYS_H
+#ifndef SB_ENGINE_ARRAYS_H_
+#define SB_ENGINE_ARRAYS_H_
   
-#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
 #include <vector>
 
 typedef std::vector<glm::vec3>                  vec3Array_t;

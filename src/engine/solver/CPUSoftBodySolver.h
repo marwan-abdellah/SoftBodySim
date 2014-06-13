@@ -1,8 +1,7 @@
-#ifndef CPU_SOFT_BODY_SOLVER_H
-#define CPU_SOFT_BODY_SOLVER_H
+#ifndef SB_ENGINE_CPU_SOLVER_H_
+#define SB_ENGINE_CPU_SOLVER_H_
 
 #include <set>
-
 #include "engine/solver/SoftBodySolver.h"
 
 class CPUSoftBodySolver : public SoftBodySolver {

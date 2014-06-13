@@ -1,5 +1,5 @@
-#ifndef RAY_H
-#define RAY_H
+#ifndef SB_ENGINE_RAY_H_
+#define SB_ENGINE_RAY_H_
 
 #include <glm/fwd.hpp>
 

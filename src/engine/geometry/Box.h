@@ -1,7 +1,7 @@
-#ifndef SB_BOX_H
-#define SB_BOX_H
+#ifndef SB_ENGINE_BOX_H_
+#define SB_ENGINE_BOX_H_
 
-#include <glm/glm.hpp>
+#include <glm/fwd.hpp>
 
 /*
  * @brief Creates an Box aligned with x, y, z axis

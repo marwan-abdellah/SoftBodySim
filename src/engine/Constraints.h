@@ -1,5 +1,5 @@
-#ifndef SB_CONSTRAINTS_H
-#define SB_CONSTRAINTS_H
+#ifndef SB_ENGINE_CONSTRAINTS_H_
+#define SB_ENGINE_CONSTRAINTS_H
 
 #include <glm/glm.hpp>
 #include <vector>
