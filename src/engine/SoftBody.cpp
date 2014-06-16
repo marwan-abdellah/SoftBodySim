@@ -6,12 +6,11 @@ using namespace glm;
 using namespace std;
 
 
-SoftBody::SoftBody(float_t mass, float_t springness, float_t damping, 
+SoftBody::SoftBody(float_t mass, float_t springness, 
 				   MeshData *mesh) :
 	Body(mesh)
 {
 	mSpringiness = springness;
-	mDamping = damping;
 	mParticles = mesh->nodes;
 	mTriangles = mesh->nodesTriangles;
 	mMeshVertexParticleMapping = mesh->vertexesNodes;
@@ -20,6 +19,8 @@ SoftBody::SoftBody(float_t mass, float_t springness, float_t damping,
 	mVelocities.resize(mParticles.size());
 	mForces.resize(mParticles.size());
 	mLinks.resize(mesh->nodesLinks.size());
+
+	mMesh = mesh;
 
 	mass = 1.0 / mass;
 	FOREACH(it, &mMassInv)

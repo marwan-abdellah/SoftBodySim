@@ -165,15 +165,15 @@ void Demo::OnKeyboard(int key, int action)
 		mSolver->Initialize();
 	}
 	if (key == GLFW_KEY_T) {
-		b = new SoftBody(1, mSpringness, 1.0,md1);
+		b = new SoftBody(1, mSpringness, md1);
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_Y) {
-		b = new SoftBody(1.0f, mSpringness, 1.0f, md);
+		b = new SoftBody(1.0f, mSpringness, md);
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_U) {
-		b = new SoftBody(1.0f, mSpringness, 1.0f, md3);
+		b = new SoftBody(1.0f, mSpringness, md3);
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_N)

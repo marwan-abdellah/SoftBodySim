@@ -61,12 +61,8 @@ typedef std::vector<CollisionConstraint>        collisionArray_t;
 
 class SoftBody : public Body {
 public:
-    static SoftBody *New(glm::float_t mass, glm::float_t springness,
-             vec3Array_t &particles);
-    SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
+    SoftBody(glm::float_t mass, glm::float_t springness,
              MeshData *mesh);
-    SoftBody(glm::float_t mass, glm::float_t springness, glm::float_t damping,
-             vec3Array_t &particles);
     ~SoftBody(void) {}
 
 	float_t GetSpringness(void) { return mSpringiness; }
@@ -102,7 +98,6 @@ private:
     vec3Array_t                 mForces;
 // inverted mass of every particle
     floatArray_t				mMassInv;
-    glm::float_t                mDamping;
     glm::float_t                mSpringiness;
 
     // constraints in soft body
@@ -114,6 +109,7 @@ private:
 	Sphere                      mBoundingSphere;
 
     // drawing data
+	MeshData                    *m_Mesh;
     indexArray_t                mMeshVertexParticleMapping; /* Needed for updating mesh
 															   vertex buffer */
 
