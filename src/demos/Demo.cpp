@@ -7,7 +7,7 @@
 #include "engine/model/Material.h"
 #include "engine/renderer/Renderer.h"
 #include "engine/renderer/Camera.h"
-#include "engine/SoftBody.h"
+#include "engine/model/SoftBody.h"
 #include "engine/solver/CUDASoftBodySolver.h"
 #include "engine/solver/CPUSoftBodySolver.h"
 

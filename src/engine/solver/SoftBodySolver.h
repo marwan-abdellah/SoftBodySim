@@ -1,7 +1,7 @@
 #ifndef SB_ENGINE_SOLVER_H_
 #define SB_ENGINE_SOLVER_H_
 
-#include "engine/SoftBody.h"
+#include "engine/model/SoftBody.h"
 #include "engine/geometry/Ray.h"
 #include <list>
 

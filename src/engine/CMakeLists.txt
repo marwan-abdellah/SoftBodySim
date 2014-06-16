@@ -1,5 +1,5 @@
 set (COMMON_SRCS
-		SoftBody.cpp
+		model/SoftBody.cpp
 		model/MeshData.cpp
 		model/OBJLexer.cpp
 		model/Material.cpp

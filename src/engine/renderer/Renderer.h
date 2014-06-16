@@ -11,7 +11,7 @@
 #include <list>
 
 #include "Shader.h"
-#include "engine/SoftBody.h"
+#include "engine/model/SoftBody.h"
 #include "engine/solver/SoftBodySolver.h"
 
 typedef enum SoftBodyRenderMethod {
