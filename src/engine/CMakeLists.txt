@@ -1,8 +1,6 @@
-set (SRCS
+set (COMMON_SRCS
 		Body.cpp
 		SoftBody.cpp
-		CUDASoftBodySolver.cu
-		CUDASoftBodySolverKernel.cu
 		VertexBuffer.cpp
 		model/MeshData.cpp
 		model/OBJLexer.cpp
@@ -15,19 +13,33 @@ set (SRCS
         renderer/Camera.cpp
 	)
 
-find_package(CUDA REQUIRED)
+set (GPU_SRCS
+		CUDASoftBodySolver.cu
+		CUDASoftBodySolverKernel.cu
+	)
 
-list(APPEND CUDA_NVCC_FLAGS "-g")
-list(APPEND CUDA_NVCC_FLAGS "-G")
-list(APPEND CUDA_NVCC_FLAGS "-arch sm_30")
+add_subdirectory(geometry)
+
+find_package(CUDAU QUIET)
+find_library(OPENGL_LIBRARY GL)
 
 include_directories(.)
 include_directories(${CMAKE_SOURCE_DIR}/src/)
-include(FindCUDA)
 
-find_library(OPENGL_LIBRARY GL)
+if (CUDA_FOUND)
+	MESSAGE(building softbody-engine w/o CUDA support.)
+	list(APPEND CUDA_NVCC_FLAGS "-g")
+	list(APPEND CUDA_NVCC_FLAGS "-G")
+	list(APPEND CUDA_NVCC_FLAGS "-arch sm_30")
+	include(FindCUDA)
+	set (SRCS ${COMMON_SRCS} ${GPU_SRCS})
+	cuda_add_library(softbody-engine SHARED ${SRCS})
+else (CUDA_FOUND)
+	add_definitions(-g)
+	add_definitions(-Wall)
+	add_definitions(-DENABLE_DEBUG=1)
+	set (SRCS ${COMMON_SRCS})
+	add_library(softbody-engine SHARED ${SRCS})
+endif ()
 
-cuda_add_library(softbody-engine SHARED ${SRCS})
 target_link_libraries(softbody-engine ${OPENGL_LIBRARY})
-
-add_subdirectory(geometry)

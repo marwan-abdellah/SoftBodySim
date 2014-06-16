@@ -149,8 +149,8 @@ void Demo::OnKeyboard(int key, int action)
 		delete mSolver;
 		cudaSolver = !cudaSolver;
 		if (cudaSolver) {
-			mSolver = new CUDASoftBodySolver();
-			mSolver->SetWorldParameters(mWorldParams);
+		//	mSolver = new CUDASoftBodySolver();
+		//	mSolver->SetWorldParameters(mWorldParams);
 			DBG("CUDA Solver enabled");
 		}
 		else {
