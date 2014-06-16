@@ -1,7 +1,9 @@
+#include "common.h"
 #include "VertexBuffer.h"
+
+#include <glm/glm.hpp>
 #include <cstring>
 #include <cstddef>
-#include "common.h"
 
 using namespace glm;
 

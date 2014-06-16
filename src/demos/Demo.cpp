@@ -166,7 +166,6 @@ void Demo::OnKeyboard(int key, int action)
 	}
 	if (key == GLFW_KEY_T) {
 		b = new SoftBody(1, mSpringness, 1.0,md1);
-		b->SetColor(glm::vec3(1.0, 1.0, 0.0f));
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_Y) {
@@ -175,7 +174,6 @@ void Demo::OnKeyboard(int key, int action)
 	}
 	if (key == GLFW_KEY_U) {
 		b = new SoftBody(1.0f, mSpringness, 1.0f, md3);
-		b->SetColor(glm::vec3(0.0, 0.0, 1.0f));
 		mSolver->AddSoftBody(b);
 	}
 	if (key == GLFW_KEY_N)

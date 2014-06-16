@@ -1,4 +1,5 @@
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
+
 #include "SoftBody.h"
 
 #define MAX_LINKS 128

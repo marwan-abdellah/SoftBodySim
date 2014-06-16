@@ -41,6 +41,9 @@ public:
 	virtual void AddSoftBody(SoftBody *body);
 	virtual void RemoveSoftBody(SoftBody *body);
 
+	virtual void OutputToVertexBuffer(const SoftBody *b, GLint vbo, int offset, int stride, indexArray_t *layout) {}
+	virtual void OutputToVertexBufferAsync(const SoftBody *b, GLint vbo, int offset, int stride, indexArray_t *layout) {}
+
 protected:
 	softbodyList_t   mBodies;
 	int 			 mSolverSteps;

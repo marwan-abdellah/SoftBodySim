@@ -1,6 +1,7 @@
-#include "glm/glm.hpp"
-#include "CUDASoftBodySolverKernel.h"
 #include "common.h"
+
+#include <glm/glm.hpp>
+#include "CUDASoftBodySolverKernel.h"
 
 __device__ glm::uint_t hash(glm::uint_t id)
 {

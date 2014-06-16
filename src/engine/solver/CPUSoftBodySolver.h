@@ -3,6 +3,7 @@
 
 #include <set>
 #include "engine/solver/SoftBodySolver.h"
+#include "engine/geometry/Plane.h"
 
 class CPUSoftBodySolver : public SoftBodySolver {
 public:

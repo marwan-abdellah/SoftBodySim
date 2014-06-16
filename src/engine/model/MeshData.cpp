@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <glm/glm.hpp>
 #include <glm/gtx/constants.hpp>
 
 using namespace glm;

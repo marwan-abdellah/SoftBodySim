@@ -2,7 +2,6 @@
 #define SB_MESH_DATA_H
 
 #include "engine/geometry/Arrays.h"
-#include "engine/geometry/Plane.h"
 #include "engine/model/Material.h"
 
 #include <vector>
@@ -95,7 +94,6 @@ public:
 	 * @brief Indexes of nodes creating a mesh triangle.
 	 *
 	 * Might differ from faces array when vertexes and nodes differ.
-	 * FIXME can be sharead accross meshes of same type
 	 */
 	index3Array_t nodesTriangles;
 
