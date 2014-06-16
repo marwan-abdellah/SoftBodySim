@@ -10,6 +10,9 @@ set (SRCS
 		solver/SoftBodySolver.cpp
 		solver/CPUSoftBodySolver.cpp
 		geometry/Math.cpp
+		renderer/Shader.cpp
+        renderer/Renderer.cpp
+        renderer/Camera.cpp
 	)
 
 find_package(CUDA REQUIRED)
