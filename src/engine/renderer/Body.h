@@ -1,8 +1,8 @@
 #ifndef SB_ENGINE_BODY_H_
 #define SB_ENGINE_BODY_H_
 
-#include "geometry/Sphere.h"
-#include "model/MeshData.h"
+#include "engine/geometry/Sphere.h"
+#include "engine/model/MeshData.h"
 #include "VertexBuffer.h"
 
 /**

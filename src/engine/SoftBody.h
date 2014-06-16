@@ -2,7 +2,7 @@
 #define SOFTBODY_H
 
 #include "geometry/Arrays.h"
-#include "Body.h"
+#include "renderer/Body.h"
 #include "model/MeshData.h"
 
 class SoftBody;

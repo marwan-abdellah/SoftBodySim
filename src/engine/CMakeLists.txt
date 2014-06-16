@@ -1,7 +1,5 @@
 set (COMMON_SRCS
-		Body.cpp
 		SoftBody.cpp
-		VertexBuffer.cpp
 		model/MeshData.cpp
 		model/OBJLexer.cpp
 		model/Material.cpp
@@ -11,6 +9,8 @@ set (COMMON_SRCS
 		renderer/Shader.cpp
         renderer/Renderer.cpp
         renderer/Camera.cpp
+		renderer/VertexBuffer.cpp
+		renderer/Body.cpp
 	)
 
 set (GPU_SRCS
