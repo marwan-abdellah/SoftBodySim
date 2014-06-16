@@ -8,7 +8,7 @@
 #include "engine/renderer/Renderer.h"
 #include "engine/renderer/Camera.h"
 #include "engine/SoftBody.h"
-#include "engine/CUDASoftBodySolver.h"
+#include "engine/solver/CUDASoftBodySolver.h"
 #include "engine/solver/CPUSoftBodySolver.h"
 
 #include <iostream>
