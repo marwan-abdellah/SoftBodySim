@@ -463,7 +463,7 @@ void CPUSoftBodySolver::AddSoftBody(SoftBody *b)
 	descr.posAccumulator.resize(descr.count);
 	descr.accumulatorCounter.resize(descr.count);
 
-	AddShapeDescriptor(b, 2);
+	AddShapeDescriptor(b, 3);
 
 	b->mBS.mCenter = mShapes[descr.shapeMatching.descriptor].mc0;
 	b->mBS.mRadius = mShapes[descr.shapeMatching.descriptor].radius;
