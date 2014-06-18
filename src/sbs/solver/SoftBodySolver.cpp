@@ -1,4 +1,4 @@
-#include "engine/solver/SoftBodySolver.h"
+#include "sbs/solver/SoftBodySolver.h"
 #include "common.h"
 
 using namespace glm;

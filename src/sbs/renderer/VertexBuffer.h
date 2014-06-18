@@ -1,8 +1,8 @@
 #ifndef VERTEX_BUFFER_H
 #define VERTEX_BUFFER_H
 
-#include "engine/geometry/Arrays.h"
-#include "engine/model/MeshData.h"
+#include "sbs/geometry/Arrays.h"
+#include "sbs/model/MeshData.h"
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>

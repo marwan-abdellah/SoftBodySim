@@ -1,7 +1,7 @@
 #ifndef SB_ENGINE_CUDA_SOLVER_H_
 #define SB_ENGINE_CUDA_SOLVER_H_
 
-#include "engine/solver/SoftBodySolver.h"
+#include "sbs/solver/SoftBodySolver.h"
 
 class CUDAContext;
 

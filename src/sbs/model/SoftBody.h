@@ -1,8 +1,8 @@
 #ifndef SOFTBODY_H
 #define SOFTBODY_H
 
-#include "engine/geometry/Arrays.h"
-#include "engine/renderer/Body.h"
+#include "sbs/geometry/Arrays.h"
+#include "sbs/renderer/Body.h"
 #include "MeshData.h"
 
 class SoftBody;

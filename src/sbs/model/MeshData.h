@@ -1,9 +1,9 @@
 #ifndef SB_MESH_DATA_H
 #define SB_MESH_DATA_H
 
-#include "engine/geometry/Arrays.h"
-#include "engine/model/Material.h"
-#include "engine/model/OBJLexer.h"
+#include "sbs/geometry/Arrays.h"
+#include "sbs/model/Material.h"
+#include "sbs/model/OBJLexer.h"
 
 #include <vector>
 #include <set>

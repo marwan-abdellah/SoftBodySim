@@ -1,5 +1,5 @@
-#include "engine/solver/CPUSoftBodySolver.h"
-#include "engine/geometry/Math.h"
+#include "sbs/solver/CPUSoftBodySolver.h"
+#include "sbs/geometry/Math.h"
 #include "common.h"
 
 #include <queue>

@@ -11,8 +11,8 @@
 #include <list>
 
 #include "Shader.h"
-#include "engine/model/SoftBody.h"
-#include "engine/solver/SoftBodySolver.h"
+#include "sbs/model/SoftBody.h"
+#include "sbs/solver/SoftBodySolver.h"
 
 typedef enum SoftBodyRenderMethod {
     SB_RENDER_FACES,

@@ -1,8 +1,8 @@
 #ifndef SB_ENGINE_SOLVER_H_
 #define SB_ENGINE_SOLVER_H_
 
-#include "engine/model/SoftBody.h"
-#include "engine/geometry/Ray.h"
+#include "sbs/model/SoftBody.h"
+#include "sbs/geometry/Ray.h"
 #include <list>
 
 typedef std::list<SoftBody*> softbodyList_t; 

@@ -2,8 +2,8 @@
 #define SB_ENGINE_CPU_SOLVER_H_
 
 #include <set>
-#include "engine/solver/SoftBodySolver.h"
-#include "engine/geometry/Plane.h"
+#include "sbs/solver/SoftBodySolver.h"
+#include "sbs/geometry/Plane.h"
 
 class CPUSoftBodySolver : public SoftBodySolver {
 public:

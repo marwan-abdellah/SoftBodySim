@@ -3,13 +3,13 @@
 #include "common.h"
 
 #include "GLFWApplication.h"
-#include "engine/model/MeshData.h"
-#include "engine/model/Material.h"
-#include "engine/renderer/Renderer.h"
-#include "engine/renderer/Camera.h"
-#include "engine/model/SoftBody.h"
-#include "engine/solver/CUDASoftBodySolver.h"
-#include "engine/solver/CPUSoftBodySolver.h"
+#include "sbs/model/MeshData.h"
+#include "sbs/model/Material.h"
+#include "sbs/renderer/Renderer.h"
+#include "sbs/renderer/Camera.h"
+#include "sbs/model/SoftBody.h"
+#include "sbs/solver/CUDASoftBodySolver.h"
+#include "sbs/solver/CPUSoftBodySolver.h"
 
 #include <iostream>
 #include <glm/gtc/constants.hpp>
