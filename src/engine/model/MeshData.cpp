@@ -30,7 +30,6 @@ public:
 	}
 };
 
-typedef unordered_map<uvec3, unsigned int, Index3Hasher> vertex3Map_t;
 typedef unordered_map<uvec2, unsigned int, Index2Hasher> vertex2Map_t;
 typedef unordered_set<uvec2, Index2Hasher> linksSet_t;
 typedef unordered_set<uvec3, Index3Hasher> trianglesSet_t;
@@ -398,7 +397,7 @@ int ParseFaceVertexes(OBJLexer &lexer, index3Array_t &out)
 	return 0;
 }
 
-static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md)
+bool MeshData::ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md)
 {
 	// valid faces definitions:
 	// f 1 2

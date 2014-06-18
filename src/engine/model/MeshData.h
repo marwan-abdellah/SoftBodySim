@@ -3,35 +3,27 @@
 
 #include "engine/geometry/Arrays.h"
 #include "engine/model/Material.h"
+#include "engine/model/OBJLexer.h"
 
 #include <vector>
 #include <set>
+#include <unordered_map>
+
+class Index3Hasher;
+typedef std::unordered_map<glm::uvec3, unsigned int, Index3Hasher> vertex3Map_t;
 
 /**
  * @brief MeshData class 
  *
  * @brief Class containing information about model mesh: vertexes, normals,
  * texture and indexes creating faces.
+ * Class also collects additional information required to construct 
+ * paticle systems like unique node positions 
  */
 class MeshData {
 public:
 	typedef std::vector< std::set<int> > neighboursArray_t;
 
-	/**
-	 * @brief Constructor
-	 */
-	MeshData(void) : material(0) {}
-
-	/**
-	 * @brief Copy constructor
-	 */
-	MeshData(const MeshData &m) :
-		nodes(m.nodes),
-		nodesLinks(m.nodesLinks),
-		vertexes(m.vertexes),
-		vertexesNodes(m.vertexesNodes),
-		faces(m.faces),
-		material(m.material) {}
 
 	/**
 	 * @brief Creates plane mesh aligned to xy axis.
@@ -83,37 +75,67 @@ public:
 	 * vertexes depending on normal and texture coordinates attached to
 	 * vertex.
 	 */
-	vec3Array_t nodes;
+	const vec3Array_t &GetNodes(void) { return nodes; }
 
 	/**
 	 * @brief Connections between nodes.
 	 */
-	index2Array_t nodesLinks;
+	const index2Array_t &GetNodesConnections(void) { return nodesLinks; }
 
 	/**
 	 * @brief Indexes of nodes creating a mesh triangle.
 	 *
 	 * Might differ from faces array when vertexes and nodes differ.
 	 */
-	index3Array_t nodesTriangles;
+	const index3Array_t &GetNodesTriangles(void) { return nodesTriangles; }
 
 	// vertexes
-	vec3Array_t    vertexes;
-	vec3Array_t    normals;
-	vec2Array_t    textureCoords;
-	indexArray_t   vertexesNodes;
+	const vec3Array_t &GetVertexes(void) { return vertexes; }
 
-	index3Array_t  faces;
-	index2Array_t  edges;
-	Material       *material;
+	const vec3Array_t &GetNormals(void) { return normals; }
+
+	const vec2Array_t &GetTextureCoords(void) { return textureCoords; }
+
+	const indexArray_t &GetNodesLayout(void) { return vertexesNodes; }
+
+	const index3Array_t &GetFaces(void) { return faces; }
+
+	const index2Array_t &GetLines(void) { return edges; }
+
+	void SetMaterial(const Material &m) { material = &m; }
+	const Material *GetMaterial(void) const { return material; }
 
 	const neighboursArray_t &GetNeighboursArray(void);
 private:
+	/**
+	 * @brief Do not create empty mesh
+	 */
+	MeshData(void) {}
+
+	/**
+	 * @brief Do not copy mesh around
+	 */
+	MeshData(const MeshData &m) {}
+
+	vec3Array_t nodes;
+	index2Array_t nodesLinks;
+	index3Array_t nodesTriangles;
+	vec3Array_t    vertexes;
+	indexArray_t   vertexesNodes;
+	vec3Array_t    normals;
+	vec2Array_t    textureCoords;
+	index2Array_t  edges;
+	index3Array_t  faces;
+
+	const Material       *material;
+
 	/**
 	 * @brief Generates nodesTriangles data from faces.
 	 */
 	void GenerateTriangles(void);
 	neighboursArray_t neighbours;
+
+	static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md);
 };
 
 #endif

@@ -146,8 +146,8 @@ void SoftBodyRenderer::initialize(int width, int height)
     mLighting.setUniform("projMatrix", mProjectionMat);
 
 	MeshData *mesh = MeshData::CreateSphere(vec3(0,0,0), SPHERE_RADIUS, 20, 20);
-	mSphere = new VertexBuffer(mesh->vertexes.size(), VertexBuffer::STATIC);
-	mSphere->SetVertexes(mesh->vertexes);
+	mSphere = new VertexBuffer(mesh->GetVertexes().size(), VertexBuffer::STATIC);
+	mSphere->SetVertexes(mesh->GetVertexes());
 	delete mesh;
 
     mCurrent = &mLighting;
@@ -200,6 +200,7 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
 	const MeshData *mesh;
 	mat4 modelView = camMat * obj->GetModelMatrix();
 	const Sphere &bs = obj->GetBoundingSphere();
+	const Material *material;
 
 	float_t fac = bs.mRadius / SPHERE_RADIUS;
 	mat4 camTrans = translate(camMat, bs.mCenter);
@@ -212,8 +213,8 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
 
 	mCurrent->useShader();
 	mesh = obj->GetMesh();
-	if (mesh->material)
-		mesh->material->Bind();
+	material = mesh->GetMaterial();
+	if (material) material->Bind();
 
     mCurrent->setUniform("modeViewMatrix", modelView);
 
@@ -231,6 +232,5 @@ void SoftBodyRenderer::renderBody(Body *obj, const glm::mat4 &camMat)
     }
 	ebuff->Draw();
     buff->Unbind();
-	if (mesh->material)
-		mesh->material->Unbind();
+	if (material) material->Unbind();
 }

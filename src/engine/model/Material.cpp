@@ -15,7 +15,7 @@ Material::~Material()
 	glDeleteTextures(1, &mDiffuseTexture);
 }
 
-void Material::Bind(void)
+void Material::Bind(void) const
 {
 	if (!mDiffuseTexture) return;
 	glBindTexture(GL_TEXTURE_2D, mDiffuseTexture);
@@ -25,7 +25,7 @@ void Material::Bind(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void Material::Unbind(void)
+void Material::Unbind(void) const
 {
 	if (!mDiffuseTexture) return;
 	glBindTexture(GL_TEXTURE_2D, 0);

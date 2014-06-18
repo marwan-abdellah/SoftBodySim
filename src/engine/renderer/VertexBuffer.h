@@ -37,14 +37,14 @@ public:
     GLint GetVBO() const { return mVBO; }
 	size_t GetVertexCount(void) const { return mVertexCount; }
 
-	void SetVertexes(vec3Array_t &vertexes);
-	void SetVertexes(glm::vec3 *vertexes);
+	void SetVertexes(const vec3Array_t &vertexes);
+	void SetVertexes(const glm::vec3 *vertexes);
 
-	void SetNormals(vec3Array_t &vertexes);
-	void SetNormals(glm::vec3 *vertexes);
+	void SetNormals(const vec3Array_t &vertexes);
+	void SetNormals(const glm::vec3 *vertexes);
 
-	void SetTextureCoords(vec2Array_t &coords);
-	void SetTextureCoords(glm::vec2 *coords);
+	void SetTextureCoords(const vec2Array_t &coords);
+	void SetTextureCoords(const glm::vec2 *coords);
 
     void Bind(int attr) const;
     void Unbind(void) const;
@@ -63,14 +63,14 @@ private:
 
 class ElementBuffer {
 public:
-	ElementBuffer(index2Array_t &array);
-	ElementBuffer(index3Array_t &array);
+	ElementBuffer(const index2Array_t &array);
+	ElementBuffer(const index3Array_t &array);
 	~ElementBuffer();
 
     DrawType getDataType(void) { return mDataType;}
 
-	void setData(index2Array_t &array);
-	void setData(index3Array_t &array);
+	void setData(const index2Array_t &array);
+	void setData(const index3Array_t &array);
 
     void Draw(void) const;
 

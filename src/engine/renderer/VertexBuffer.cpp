@@ -47,7 +47,7 @@ VertexBuffer::~VertexBuffer(void)
     glDeleteVertexArrays(1, &mVAO);
 }
 
-void VertexBuffer::SetNormals(vec3Array_t &vertexes)
+void VertexBuffer::SetNormals(const vec3Array_t &vertexes)
 {
 	if (!mNormalsOffset) return;
 	if (mVertexCount != vertexes.size()) {
@@ -61,7 +61,7 @@ void VertexBuffer::SetNormals(vec3Array_t &vertexes)
 	glBindVertexArray(0);
 }
 
-void VertexBuffer::SetVertexes(glm::vec3 *vertexes)
+void VertexBuffer::SetVertexes(const glm::vec3 *vertexes)
 {
 	glBindVertexArray(mVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, mVBO);
@@ -70,7 +70,7 @@ void VertexBuffer::SetVertexes(glm::vec3 *vertexes)
 	glBindVertexArray(0);
 }
 
-void VertexBuffer::SetVertexes(vec3Array_t &vertexes)
+void VertexBuffer::SetVertexes(const vec3Array_t &vertexes)
 {
 	if (mVertexCount != vertexes.size()) {
 		ERR("Invalid normal array size. Should match vertex array.");
@@ -83,7 +83,7 @@ void VertexBuffer::SetVertexes(vec3Array_t &vertexes)
 	glBindVertexArray(0);
 }
 
-void VertexBuffer::SetTextureCoords(vec2Array_t &coords)
+void VertexBuffer::SetTextureCoords(const vec2Array_t &coords)
 {
 	if (!mTextureOffset) return;
 	if (mVertexCount != coords.size()) {
@@ -129,13 +129,13 @@ void VertexBuffer::Unbind(void) const
     glBindVertexArray(0);
 }
 
-ElementBuffer::ElementBuffer(index2Array_t &array)
+ElementBuffer::ElementBuffer(const index2Array_t &array)
 {
     glGenBuffers(1, &mBuffer);
 	setData(array);
 }
 
-ElementBuffer::ElementBuffer(index3Array_t &array)
+ElementBuffer::ElementBuffer(const index3Array_t &array)
 {
     glGenBuffers(1, &mBuffer);
 	setData(array);
@@ -146,7 +146,7 @@ ElementBuffer::~ElementBuffer(void)
     glDeleteBuffers(1, &mBuffer);
 }
 
-void ElementBuffer::setData(index2Array_t &array)
+void ElementBuffer::setData(const index2Array_t &array)
 {
 	mElementsCount = array.size();
 	mDataType = LINES;
@@ -156,7 +156,7 @@ void ElementBuffer::setData(index2Array_t &array)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void ElementBuffer::setData(index3Array_t &array)
+void ElementBuffer::setData(const index3Array_t &array)
 {
 	mElementsCount = array.size();
 	mDataType = TRIANGLES;

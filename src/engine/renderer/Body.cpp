@@ -6,16 +6,17 @@ using namespace glm;
 Body::Body(MeshData *mesh) :
 	mColor(glm::vec3(1.0,1.0,1.0))
 {
-	bool haveN = mesh->normals.size() == mesh->vertexes.size();
-	bool haveT = mesh->textureCoords.size() == mesh->vertexes.size();
-	mVertexes = new VertexBuffer(mesh->vertexes.size(), VertexBuffer::DYNAMIC,
+	bool haveN = mesh->GetNormals().size() > 0;
+	bool haveT = mesh->GetTextureCoords().size() > 0;
+	mVertexes = new VertexBuffer(mesh->GetVertexes().size(),
+			VertexBuffer::DYNAMIC,
 			haveN, haveT);
-	mVertexes->SetVertexes(mesh->vertexes);
-	if (haveN) mVertexes->SetNormals(mesh->normals);
-	if (haveT) mVertexes->SetTextureCoords(mesh->textureCoords);
+	mVertexes->SetVertexes(mesh->GetVertexes());
+	if (haveN) mVertexes->SetNormals(mesh->GetNormals());
+	if (haveT) mVertexes->SetTextureCoords(mesh->GetTextureCoords());
 
-	mFaces = new ElementBuffer(mesh->faces);
-	mEdges = new ElementBuffer(mesh->edges);
+	mFaces = new ElementBuffer(mesh->GetFaces());
+	mEdges = new ElementBuffer(mesh->GetLines());
 	mMesh = mesh;
 	mModelMatrix = mat4(1.0f);
 }

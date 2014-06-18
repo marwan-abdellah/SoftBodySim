@@ -67,17 +67,17 @@ Demo::Demo(int argc, char **argv) :
 	int res = mMat.LoadTextureFromBmp("src/demos/mrcrabs2.bmp");
 	if (res) ERR("Texture loading failed!");
 	md = MeshData::CreateFromObj("src/demos/crab.obj");
-	md->material = &mMat;
+	md->SetMaterial(mMat);
 
 	md1 = MeshData::CreateFromObj("src/demos/frog.obj");
 	res = mMat2.LoadTextureFromBmp("src/demos/frog.bmp");
 	if (res) ERR("Texture loading failed!");
-	md1->material = &mMat2;
+	md1->SetMaterial(mMat2);
 
 	md3 = MeshData::CreateFromObj("src/demos/Dino2.obj");
 	res = mMat3.LoadTextureFromBmp("src/demos/Dino_512.bmp");
 	if (res) ERR("Texture loading failed!");
-	md3->material = &mMat3;
+	md3->SetMaterial(mMat3);
 
 	md2 = MeshData::CreatePlane(50.0, 50.0, 2, 2);
 

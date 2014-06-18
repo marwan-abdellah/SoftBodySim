@@ -9,8 +9,8 @@ public:
 	Material(void);
 	~Material(void);
 	int LoadTextureFromBmp(const char *path);
-	void Bind(void);
-	void Unbind(void);
+	void Bind(void) const;
+	void Unbind(void) const;
 private:
 	GLuint mDiffuseTexture;
 };
