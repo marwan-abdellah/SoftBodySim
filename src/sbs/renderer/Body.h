@@ -1,5 +1,5 @@
-#ifndef SB_ENGINE_BODY_H_
-#define SB_ENGINE_BODY_H_
+#ifndef SBS_RENDERER_BODY_H_
+#define SBS_RENDERER_BODY_H_
 
 #include "sbs/geometry/Sphere.h"
 #include "sbs/model/MeshData.h"

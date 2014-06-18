@@ -1,5 +1,5 @@
-#ifndef SB_MESH_DATA_H
-#define SB_MESH_DATA_H
+#ifndef SBS_MODEL_MESH_DATA_H
+#define SBS_MODEL_MESH_DATA_H
 
 #include "sbs/geometry/Arrays.h"
 #include "sbs/model/Material.h"

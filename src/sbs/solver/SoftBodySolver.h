@@ -1,5 +1,5 @@
-#ifndef SB_ENGINE_SOLVER_H_
-#define SB_ENGINE_SOLVER_H_
+#ifndef SBS_SOLVER_SOLVER_H_
+#define SBS_SOLVER_SOLVER_H_
 
 #include "sbs/model/SoftBody.h"
 #include "sbs/geometry/Ray.h"

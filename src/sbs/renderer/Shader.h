@@ -1,5 +1,5 @@
-#ifndef __SHADER_H
-#define __SHADER_H
+#ifndef SBS_RENDERER_SHADER_H_
+#define SBS_RENDERER_SHADER_H_
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>

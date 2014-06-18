@@ -1,5 +1,7 @@
-#include <glm/glm.hpp>
+#ifndef SBS_SOLVER_SOLVER_H_
+#define SBS_SOLVER_SOLVER_H_
 
+#include <glm/fwd.hpp>
 #include "SoftBody.h"
 
 #define MAX_LINKS 128
@@ -85,4 +87,6 @@ __global__ void calculateSpatialHash(
 		glm::float_t cellSize,
 		CellID *cellIds,
 		glm::uint_t max_idx);
+#endif
+
 #endif

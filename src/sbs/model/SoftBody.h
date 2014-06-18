@@ -1,5 +1,5 @@
-#ifndef SOFTBODY_H
-#define SOFTBODY_H
+#ifndef SBS_MODEL_SOFTBODY_H
+#define SBS_MODEL_SOFTBODY_H
 
 #include "sbs/geometry/Arrays.h"
 #include "sbs/renderer/Body.h"

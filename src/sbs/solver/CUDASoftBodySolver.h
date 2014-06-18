@@ -1,5 +1,5 @@
-#ifndef SB_ENGINE_CUDA_SOLVER_H_
-#define SB_ENGINE_CUDA_SOLVER_H_
+#ifndef SBS_SOLVER_CUDA_SOLVER_H_
+#define SBS_SOLVER_CUDA_SOLVER_H_
 
 #include "sbs/solver/SoftBodySolver.h"
 

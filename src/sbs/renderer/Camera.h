@@ -1,5 +1,5 @@
-#ifndef __CAMERA_H
-#define __CAMERA_H
+#ifndef SBS_RENDERER_CAMERA_H_
+#define SBS_RENDERER_CAMERA_H_
 
 #include <glm/fwd.hpp>
 

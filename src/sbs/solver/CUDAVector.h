@@ -1,5 +1,5 @@
-#ifndef CUDA_VECTOR_H
-#define CUDA_VECTOR_H
+#ifndef SBS_SOLVER_CUDA_VECTOR_H_
+#define SBS_SOLVER_CUDA_VECTOR_H_
 
 #include "common.h"
 

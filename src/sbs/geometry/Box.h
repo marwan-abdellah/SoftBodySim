@@ -1,5 +1,5 @@
-#ifndef SB_ENGINE_BOX_H_
-#define SB_ENGINE_BOX_H_
+#ifndef SBS_ENGINE_BOX_H_
+#define SBS_ENGINE_BOX_H_
 
 #include <glm/fwd.hpp>
 

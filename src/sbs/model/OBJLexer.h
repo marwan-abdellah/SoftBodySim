@@ -1,5 +1,5 @@
-#ifndef OBJ_LEXER_H
-#define OBJ_LEXER_H
+#ifndef SBS_MODEL_OBJ_LEXER_H
+#define SBS_MODEL_OBJ_LEXER_H
 
 #include <string>
 #include <fstream>

@@ -1,5 +1,5 @@
-#ifndef VERTEX_BUFFER_H
-#define VERTEX_BUFFER_H
+#ifndef SBS_RENDERER_VERTEX_BUFFER_H_
+#define SBS_RENDERER_VERTEX_BUFFER_H_
 
 #include "sbs/geometry/Arrays.h"
 #include "sbs/model/MeshData.h"

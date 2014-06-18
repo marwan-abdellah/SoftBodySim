@@ -1,5 +1,5 @@
-#ifndef MATERIAL_H_
-#define MATERIAL_H_
+#ifndef SBS_MODEL_MATERIAL_H_
+#define SBS_MODEL_MATERIAL_H_
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
