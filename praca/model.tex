@@ -1,16 +1,16 @@
-\chapter{Symulacja}
+\chapter{Wybrany model ciała miękkiego}
 
-\section{Uzasadnienie wyboru metody}
+\section{Kryteria wyboru modelu}
 
 Wybór metody symulacji uzależniony jest od zakresu zjawisk fizycznych które mają
-być symulowane. Dlatego też zanim przedstawiona zostanie wybrana metoda
-przytoczone będą kryteria którymi kierowałem się szukając odpowiedniej metody.
-Pragnę też zaznaczyć, że wybór nastąpił w głównej mierze metodami prób i błędów,
+być jej przedmiotem. Zanim przedstawiona zostanie wybrana metoda symulacji
+wymienione będą kryteria którymi kierowałem się przy wyborze.
+Pragnę też zaznaczyć, że wybór nastąpił w głównej mierze metodami empirycznymi,
 większość z poznanym metod została zaimplementowana i w przypadku niemożności
 uzyskania porządanych efektów wizualnych lub wydajnościowych wyszukiwana była
 inna.
 
-Pierwszym kryterium jakim kierowałem się przy wyborze metody symulacji było
+Pierwszym kryterium jakim kierowałem się przy wyborze metody było
 zawężenia przedmiotu symulacji do ciał posiadających objętość. Wiele z
 metod ukierunkowanych na symulację włosów czy materiałów musiały zostać odrzucone ze
 względu na posiadane przez nie własności niestosowalne w
@@ -106,13 +106,18 @@ możliwe jest pełne wykorzystanie procesora graficznego, co w połączeniu z
 techniką redukcji złożoności algorytmu zaproponowaną przez autorów, czyni ją
 idealną do zastosowania w symulacjach czasu rzeczywistego.
 
-\section{Dopasowanie kształtu}
+\section{Zachowanie kształtu}
 Dopasowanie kształtu (ang. Shape Matching) jest geometryczną techniką
-zaproponowaną po raz pierwszy przez Mullera \cite{shape} w 2005 r. Zasadniczą
-cechą różniącą ją do Systemu Sprężyn jest zastąpienie energii
-potencjalnych sprężyn geometrycznymi ograniczeniami. Siły występujące w wyniku
-zmiany długości sprężyn odpowiadają wektorom różnić pomiędzy aktualną pozycją cząstki
-a jego docelową pozycją wynikającą z pozycji cząstki w stanie wyjściowym.
+zaproponowaną po raz pierwszy w 2005 r. przez Muller'a \cite{shape}. Służy ona do
+symulowania sił wewnętrznych ciała poddanemu deformacji. Metoda ta zamiast
+generować siły działające na cząstki, tak jak to ma miejsce w przypadku
+sprężyn w modelu Systemu Sprężyn, definiuje docelowe pozycje cząstek - $g_i$.
+Pozycje te powstają w wyniku próby dopasowania konfiguracji 
+pozycji cząstek ciała w stanie niezdeformowanym do aktualnej.
+
+Wyliczone docelowe pozycje $g_i$ wykorzystywane są w symulacji do "przyciągania"
+aktualnych pozycji cząstek. W przypadku gdy docelowe pozycje cząstek stają się
+natychmiastowo aktualnymi uzyskamy efekt dynamiki ciała sztywnego.
 
 \begin{figure}[ht]
 \centering
@@ -123,111 +128,172 @@ a jego docelową pozycją wynikającą z pozycji cząstki w stanie wyjściowym.
 
 Ideę shape matching przedstawia rysunek \ref{shape-matching}. Punkty w stanie
 niezdeformowanym $x^0_i$ są dopasowywane do zdeformowanych pozycji $x_i$ za
-pomocą macierzy rotacji i wektorów translacji. Uzyskane w ten sposób punkty docelowe
-$g_i$ są następnie używane do wyznaczenia nowych pozycji punktów $x_i$ w
-kolejnym kroku symulacji. 
-
-Formalnie koncepcję Shape Matchingu autorzy w \cite{shape} zdefiniowali
-jako problem minimalizacji funkcji:
+pomocą macierzy rotacji i wektorów translacji. 
+Formalnie koncepcję Shape Matchingu autorzy w \cite{shape} zdefiniowali jako problem minimalizacji
+funkcji:
 \begin{equation}
-E^2 = \sum_{i} m_i ||R (\vec{x}^0_i - t^0) - (x_i - t) ||^2,
+E^2 = \sum_{i} m_i ||R (x^0_i - t^0) - (x_i - t) ||^2,
 \label{min}
 \end{equation}
 gdzie $t^0$ i $t_i$ są wektorami translacji, a $R$ jest macierzą
 rotacji.
 
-Problem przedstawiony w równaniu \ref{min} sprowadza się
-się do minimalizacji błędu średniokwadratowego. Wyrażenie z \ref{min} można przedstawić
-jako funkcję trzech zmiennych:
-\begin{equation}
-\phi(R, t, t^0) = \sum_{i} m_i ||R (\vec{x}^0_i - t^0) - (x_i - t) ||^2,
-\end{equation}
+Przedstawiony w problem sprowadza się do minimalizacji błędu średniokwadratowego.
+Wyrażenie z \ref{min} można przedstawić jako funkcję trzech zmiennych:
+\begin{equation*}
+\phi(R, t, t^0) = \sum_{i} m_i ||R (x^0_i - t^0) - (x_i - t) ||^2,
+\end{equation*}
 
-Najpierw rozwiązany zostanie problem minimalizacji funkcji $\phi$ według zmiennych $t, t^0$.
-Przyjmujące że $f: R^n \to R^m$, $g: R^n \to R^m$ i $h = f^T g$, gdzie $h: R^n
-\to R^1$. Gradient funkcji $h$ wyraża się wzorem:
-\begin{equation}
+Okazuje się, że znalezienie wartości wektorów $t$ i $t^0$ w
+wyrażeniu \ref{min} jest możliwe. Muller \cite{shape} podaje, że optymalnymi
+wektorami translacji $t^0$ i $t$ są odpowiednio środek masy obiektu
+niezdeformowanego (konfiguracja spoczynkowa) i środek masy
+ciała w aktualnej konfiguracji. Pokazanie tego rozwiązania polega na
+wyliczeniu gradientów funkcji $\phi$ po zmiennych $t$ i $t^0$ i przyrównaniu ich
+do zera.
+
+Zanim zostanie przedstawiony dowód że środki mas są optymalnymi wektorami
+translacji, przypomniane zostaną wzory na pochodne cząstkowe wraz z ich
+wektorowymi odpowiednikami. Zakładając że dane mamy funkcje $f: R^n \to R^m$,
+$g: R^n \to R^m$ i $h = f^T g$, gdzie $h: R^n \to R^1$. Gradient
+funkcji $h$ wyraża się wzorem:
+\begin{equation*}
 \partial h = f^T \partial g + g^T \partial f
-\end{equation}
+\end{equation*}
 gdzie $\partial f$ to macierz Jacobiego (pochodnych cząstkowych), a $f^T$ jest
 oznaczeniem transpozycji funkcji.
 
-W przypadku gdy funkcje $f$ i $g$ są takie same, gradient ma postać:
+W przypadku gdy funkcje $f = g$, gradient ma postać:
 \begin{equation}
 \partial h = 2 f^T \partial f,
 \label{part}
 \end{equation}
 
-Przyjmując, że $v = R (\vec{x}^0_i - t^0) - (x_i - t)$ oraz $\phi = \sum_i m_i
-v^T v$ i uwzględniając własność \ref{part}, gradient funkcji $\phi$ względem
-zmiennej $t^0$ i $t$ zapiszemy:
-\begin{eqnarray}
+Wprowadzając nowe oznaczenia:
+$$ v = R (x^0_i - t^0) - (x_i - t)$$
+$$ \phi = \sum_i m_i v^T v$$ 
+i uwzględniając własność \ref{part}, gradient funkcji $\phi$ po
+zmiennych $t^0$ i $t$ zapiszemy:
+\begin{eqnarray*}
 \nabla_{t^0} \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)^T (-R)\\
 \nabla_{t} \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)^T\\
-\end{eqnarray}
+\end{eqnarray*}
 
 Transponując obie strony otrzymujemy:
-\begin{eqnarray}
+\begin{eqnarray*}
 \nabla_{t^0}^T \phi = -2 \sum_i m_i R^T (R (x^0_i - t^0) + t - x_i)\\
 \nabla_{t}^T \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)\\
-\end{eqnarray}
+\end{eqnarray*}
 
 W celu wyliczenia wartości $t$ i $t^0$ przyrównujemy gradient do zera:
 \begin{eqnarray}
 \label{d1}
-\phi_{t^0} = 0 \Leftrightarrow \sum_i m_i R^T (R (x^0_i - t^0) + t - x_i) = 0\\
+\nabla \phi_{t^0} = 0 \Leftrightarrow \sum_i m_i R^T (R (x^0_i - t^0) + t - x_i) = 0\\
 \label{d2}
-\phi_{t} = 0 \Leftrightarrow \sum_i m_i R (x^0_i - t^0) + t - x_i = 0\\
+\nabla \phi_{t} = 0 \Leftrightarrow \sum_i m_i R (x^0_i - t^0) + t - x_i = 0
 \end{eqnarray}
 
 Można łatwo zauważyć że równania \ref{d1} oraz \ref{d2} są od siebie liniowo
-zależne. Rozwiązaniem wg 
+zależne. Przekształcając równanie \ref{d2} otrzymujemy:
 
-\begin{eqnarray}
+\begin{eqnarray*}
 \sum_i m_i (R (x^0_i - t^0) + t - x_i) = 0\\
 \sum_i m_i R x^0_i - \sum_i m_i R t^0 + \sum_i m_i t - \sum_i m_i x_i = 0\\
 R \sum_i m_i t^0 - \sum_i m_i t = R \sum_i m_i x^0_i - \sum_i m_i x_i\\
+\end{eqnarray*}
+Ostatecznie równanie spełniające warunek optymalizacji \ref{min} dla wektorów $t$
+i $t^0$ możemy zapisać jako:
+\begin{equation}
+\label{tt0}
 R t^0 - t = R \frac{\sum_i m_i x^0_i}{\sum_i m_i} - \frac{\sum_i m_i
 	x_i}{\sum_i m_i}
-\end{eqnarray}
+\end{equation}
 
+Z równania \ref{tt0} wynikają następujące wnioski. Nie istnieje unikalna para
+wektorów
+$t$ i $t^0$ spełniająca warunek minimalizacji wyrażenia \ref{min}. Rozwiązaniem
+trywialnym \ref{tt0} jest $t = \frac{\sum_i m_i x_i}{\sum_i m_i}$
+i $t^0 = \frac{\sum_i m_i x^0_i}{\sum_i m_i}$,
+	co dowodzi tezy postawionej w \cite{shape}. Przyjęcie środków mas jako
+	wektorów translacji sprawia, że wartości $t$ i $t^0$ minimalizujące
+	\ref{min} są niezależne od wartości macierzy rotacji $R$.
 
-\begin{eqnarray}
-\vec{x}_{cm}^0 = \frac{1}{M} \sum_i m_i \vec{x}_i^0,\\
-\vec{x}_{cm} = \frac{1}{M} \sum_i m_i \vec{x}_i,\\
+Ostatnim elementem niezbędnym do wyliczenia docelowych pozycji $g_i$ jest
+macierz obrotu $R$. W tym celu musimy wprowadzić następujące oznaczenia:
+\begin{eqnarray*}
+x_{cm}^0 = \frac{1}{M} \sum_i m_i x_i^0,\\
+x_{cm} = \frac{1}{M} \sum_i m_i x_i,\\
 M = \sum_i m_i,\\
-\vec{q}_i^0 = \vec{x}_i^0 - \vec{x}_{cm}^0,\\
-\vec{q}_i = \vec{x}_i - \vec{x}_{cm}.
-\end{eqnarray}
-problem minimalizacyjny \ref{min} może być zapisany następująco:
+\vec{q}_i = x_i^0 - x_{cm}^0,\\
+\vec{p}_i = x_i - x_{cm}.
+\end{eqnarray*}
+Używając powyższych oznaczeń i uwzględniając fakt, że wybrane wektory translacji
+są niezależne od R wyrażenie \ref{min} może być zapisane następująco:
+\begin{equation*}
+\phi(R) = \sum_i m_i || R\vec{q}_i - \vec{p}_i||^2
+\end{equation*}
+
+Wyznaczenie macierzy R odbywa się analogicznie jak w przypadku wektorów
+translacji, z jedyną kompilacją, że gradient wyznaczony jest teraz po macierzy.
+Muller \cite{shape} przy wyliczaniu macierzy $R$, uchyla założenie, że macierz ta
+jest tylko macierzą rotacji, a przyjmuje, że jest to macierz transformacji
+liniowej. W celu odróżnienia tych dwóch różnych problemów zdefiniujmy problem
+ponownie jako:
 \begin{eqnarray}
-E^2 = \sum_i m_i || R\vec{q}_i^0 - \vec{q}_i||^2 \\
+\phi(A) = \sum_i m_i || A \vec{q}_i - \vec{p}_i||^2
 \end{eqnarray}
 
-\begin{eqnarray}
-E^2 = \sum_i m_i || A \vec{q}_i^0 - \vec{q}_i||^2 \\
-\end{eqnarray}
+Rozwiązaniem minimalizującym funkcję $\phi$ jest macierz:\cite{shape}
+\begin{equation}
+A = (\sum_i m_i \vec{p}_i \vec{q}^T_i)(\sum_i m_i \vec{q}_i \vec{q}^T_i)^{-1}
+= A_{pq} A_{qq}^{-1}
+\end{equation}
 
+Ostatnim krokiem niezbędnym do estymacji punktów docelowych $g_i$ jest
+dekompozycja macierz $A$ i uzyskanie jest składowej rotacji. Jest to możliwe dzięki
+użyciu metod takich jak Rozkład Biegunowy (Polar Decomposition) czy Rozkład
+według wartości osobliwych (Singular Value Decomposition). Warto też nadmienić,
+	że macierz $A_{qq}$ jest macierzą symetryczną i zawiera w sobie tylko
+	informacje o skalowaniu, a cała informacja o rotacji jest obecna w
+	macierzy $A_{pq}$
+
+Zakładając że macierz $A_{pq}$ jest macierzą odwracalną, używając Rozkładu
+Biegunowego możemy macierz zapisać jako:
 \begin{equation}
-A = (\sum_i m_i \vec{q}_i \vec{q}_i^0)(\sum_i m_i \vec{q}_i \vec{q}_i)^-1 = A_pq A_qq\\
+A_{pq} = RS
 \end{equation}
-\begin{equation}
-A_pq = RS \\
-\end{equation}
-\begin{equation}
-S = \sqrt[2]{A^T_pq A_pq} \\
-\end{equation}
-\begin{equation}
-R = A_pq S^-1 \\
-\end{equation}
+gdzie:
+\begin{eqnarray*}
+S = \sqrt[2]{A^T_{pq} A_{pq}}\\
+R = A_{pq} S^{-1}
+\end{eqnarray*}
 
 %Formalnie pozycję $g_i$ wyraża się wzorem:
+Pozycje docelowe $g_i$ można obliczyć wykorzystując wzór:
 \begin{equation}
-\vec{g}_i = R (\vec{x}_i^o - \vec{x_cm^0}) -  \vec{x_cm}
+g_i = R(x_i^0 - x^0_cm) + x_cm
 \end{equation}
 
+\subsection{Modyfikacje}
+Shape Matching w swojej podstawowej formie dokonuje optymalizacji dopasowania
+globalnie dla wszystkich punktów symulowanego ciała. Powoduje to jego zbytnie
+usztywnienie i dopuszcza tylko wąski zakres deformacji.
+
+Aby rozwiązać powyższe problemy Diziol \cite{diziol} stworzył lokalny
+shape-matching.  Unika globalnego dopasowania poprzez predefiniowanie małych
+zbiorów sąsiadujących punktów w ramach których będzie stosowany shape-matching.
+W przypadku gdy cząstka należy do wielu regionów, jako ostateczna docelowa
+pozycja $g_i$ używana jest średnia z dopasowania z poszczególnych regionów.
+
 \section{Zachowanie objętości}
-%$$\iiint\limits_{\Omega} f(z,y,z)\,\dd x\dd y\dd z$$
+$$\iiint\limits_V \nabla \dot f(x) dx = \iint\limits_{\partial V} f(x)^T n(x) dx,$$
+
+$$\iiint\limits_V \nabla \dot x dx = \iint\limits_{\partial V} x^T n(x) dx = 3 V,$$
+
+$$ \iint\limits_{\partial V} x^T n(x) dx = \frac{1}{3} \sum_i^m A_i (a_i + b_i +
+		c_i)^T n_i,$$
+$$ \frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i = \frac{1}{3}\sum_i^n x_i^T
+\tilde{n}_i,$$
 \section{Dynamika bazująca na pozycji}
 
 Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
