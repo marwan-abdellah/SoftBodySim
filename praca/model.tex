@@ -1,0 +1,434 @@
+\chapter{Symulacja}
+
+\section{Uzasadnienie wyboru metody}
+
+Wybór metody symulacji uzależniony jest od zakresu zjawisk fizycznych które mają
+być symulowane. Dlatego też zanim przedstawiona zostanie wybrana metoda
+przytoczone będą kryteria którymi kierowałem się szukając odpowiedniej metody.
+Pragnę też zaznaczyć, że wybór nastąpił w głównej mierze metodami prób i błędów,
+większość z poznanym metod została zaimplementowana i w przypadku niemożności
+uzyskania porządanych efektów wizualnych lub wydajnościowych wyszukiwana była
+inna.
+
+Pierwszym kryterium jakim kierowałem się przy wyborze metody symulacji było
+zawężenia przedmiotu symulacji do ciał posiadających objętość. Wiele z
+metod ukierunkowanych na symulację włosów czy materiałów musiały zostać odrzucone ze
+względu na posiadane przez nie własności niestosowalne w
+symulacji obiektów z objętości - np. podatność na marszczenie. Nie oznacza to
+natomiast, że nie istnieją metody mogące symulować oba zjawiska - przykładem
+jest chociażby System Sprężyn omawiany w rozdziale 2.
+
+Kolejnym kryterium, a właściwie uproszczeniem było założenie, że
+symulowany obiekt będzie jednorodny pod względem wypełnienia, czy inaczej,
+materiału z którego jest zbudowany. Pozwala to na
+uniknięcia modelowania, często nietrywialnego, właściwości fizycznych modelu, co z pewności
+wykroczyłoby poza temat tej pracy. 
+
+% złożone obiekty o skomplikowanej siatce
+Innym istotnym wymaganiem jest umożliwienie symulowania obiektów
+przygotowanych w programach do modelowania 3D. Obiekty takie często składają się
+wielu tysięcy wierzchołków, które posiadają własne współrzędne teksturowania,
+czy normalne. Implikacją tego założenia jest fakt, że poszukiwana metoda musi być
+metodą Lagrange'a symulującą dynamikę wierzchołków trójwymiarowego modelu.
+Dodatkowe informacje związane z modelem, takie jak połączenia między
+wierzchołkami czy wierzchołki tworzące trójkąty mogły być wykorzystane w
+symulacji.
+
+% zakres degeneracji
+Każde symulowane ciało miękkie poddane działaniu sił może zostać odkształcone
+tylko w zdefiniowanym zakresie. W przypadku gdy siły zewnętrzne przestają działać
+na ciało, siły wewnętrzne powinny sprowadzić obiekt do formy nieodkształconej.
+Takie założenie upraszcza symulację gdyż wyklucza trwałą degenerację siatki
+obiektu.
+
+% przeznaczona do symulacji czasu rzeczywistego stabilna do zastosowań
+Najważniejszym wymaganiem jakie brane było pod przy wyborze metody jest możliwość
+zastosowania do symulacji czasu rzeczywistego. Metody złożone obliczeniowo takie
+jak przytaczane w rozdziale 2 Metody Continuum nie spełniają tego kryterium.
+Również metody wymagające zaawansowanej obróbki modelu - takie jak np. System
+Sprężyn wymagają zdefiniowania wewnętrznej struktury obiektu, co wiąże się z
+generowaniem znacznej ilości cząstek poddanych symulacji. 
+
+Z moich eksperymentów z wypełnianiem modelu sześcienną siatką i użyciem Systemu Sprężyn wynika, że
+gęste wypełnienie średniej złożoności modelu punktami wewnętrznymi powoduje
+zbytnie usztywnienie obiektu i znacząco spowalnia symulację. W przeciwieństwie,
+gdy wnętrze modelu jest rzadko wypełnione cząstkami wewnętrznymi wyjściowa
+siatka modelu podlega znacznej degeneracji. Znalezienie optymalnej gęstości
+siatki odbywało się drogą eksperymentów.
+
+% skalowana do gpu
+Tematem tej pracy jest poznanie i zastosowanie technologii CUDA. Dlatego też
+ostatnim kryterium jakie brane było pod uwagę przy wyborze metody symulacji jest
+możliwość wykorzystania GPU do obliczeń. Wymaga to aby
+przetwarzanie danych w wybranej metodzie odbywało się możliwie lokalnie, co
+pozwoli na zrównoleglenie obliczeń i uzyskanie wzrostu wydajności.
+
+% skad wzialem metode czyja to, kiedy skad
+Jako źródło informacji o dostępnych metodach wykorzystywany był głównie
+internet. Jak to zostało wcześniej napisane, nie są znane mi żadne książki
+poruszające tematykę symulacji ciał miękkich w grafice komputerowej. Mimo
+niedostępności poszukiwanego kompendium wiedzy dostępne są trzy bardzo dobre
+artykuły stanowiące przekrój przez szereg opublikowanych metod: \cite{TR97-19},
+	\cite{pbdo}, \cite{survey}. Cennym źródłem informacji są też materiały
+	publikowane konferencyjne publikowane na stronie \textit{www.siggraph.org}.
+
+% klasyfikacja tej metody - Lagrange geometryczno fizyczny
+Zaimplementowana w tej pracy metoda bazuje głównie na artykule \textit{Robust
+	Real-Time Deformation of Incompressible Surface Meshes}\cite{diziol},
+opublikowanym na konferencji SIGGRAPH w 2011r. Wybrana metoda jest wg
+klasyfikacji z rozdziału 2 metodą Lagrange'a posiadająca zarówno elementy
+fizyczne jak i niefizyczne. Elementami fizycznymi jest pojawianie się sił w
+momencie gdy obiekt zmienia swoją objętość oraz siły grawitacji. Za część
+niefizyczną, uznany jest tzw. \textit{Shape Matching}, czyli metoda geometryczna
+oddziałująca na cząstki modelu w taki sposób aby zminimalizować ich odchylenie
+ich położeń od stanu wejściowego.
+
+% dlaczego powinna byc szybka nie potrzeba wypelniac obiektu puntkami - operuje bezposrednio na powierzchni siatki
+Ważniejszą jednak zaletą wybranego modelu jest fakt, że w przeciwieństwie do
+Systemu Sprężyn symulowane obiekty nie muszę mieć
+zdefiniowanej struktury wewnętrznej. Pozwala to znacząco przyspieszyć symulację
+unikając generowania znacznej ilość cząstek, które odpowiadają tylko za
+utrzymanie fizycznych właściwości obiektu. Metoda ta operuje bezpośrednio na
+trójkątnej siatce, co pozawala wczytać obiekt bezpośrednio z formatu modeli
+3D.
+
+% dlaczego powinna byc stabilna - brak sil, dynamika z constraintami
+Kolejną zaletą użytej techniki symulacji jest jej stabilność. Wynika ona z
+operowania metody bezpośrednio na pozycjach cząstek zamiast na siłach. Pozwala
+to na bardzo prostą implementację reakcji na zderzenia z innymi obiektami czy
+samym sobą. Dokładniejszy opis schematu symulacji układu w czasie będzie w
+dalszej części tego rozdziału.
+
+% dlaczego jest dobra na gpu
+Ostatnią zaletą jest też możliwość efektywnej implementacji wybranej metody na
+procesorach graficznych. Dobra lokalność przetwarzanych danych sprawia, że
+możliwe jest pełne wykorzystanie procesora graficznego, co w połączeniu z
+techniką redukcji złożoności algorytmu zaproponowaną przez autorów, czyni ją
+idealną do zastosowania w symulacjach czasu rzeczywistego.
+
+\section{Dopasowanie kształtu}
+Dopasowanie kształtu (ang. Shape Matching) jest geometryczną techniką
+zaproponowaną po raz pierwszy przez Mullera \cite{shape} w 2005 r. Zasadniczą
+cechą różniącą ją do Systemu Sprężyn jest zastąpienie energii
+potencjalnych sprężyn geometrycznymi ograniczeniami. Siły występujące w wyniku
+zmiany długości sprężyn odpowiadają wektorom różnić pomiędzy aktualną pozycją cząstki
+a jego docelową pozycją wynikającą z pozycji cząstki w stanie wyjściowym.
+
+\begin{figure}[ht]
+\centering
+\input{images/shape_matching}
+\caption{Geometryczne dopasowanie kształtu do zdeformowanych punktów w Shape Matching.}
+\label{shape-matching}
+\end{figure}
+
+Ideę shape matching przedstawia rysunek \ref{shape-matching}. Punkty w stanie
+niezdeformowanym $x^0_i$ są dopasowywane do zdeformowanych pozycji $x_i$ za
+pomocą macierzy rotacji i wektorów translacji. Uzyskane w ten sposób punkty docelowe
+$g_i$ są następnie używane do wyznaczenia nowych pozycji punktów $x_i$ w
+kolejnym kroku symulacji. 
+
+Formalnie koncepcję Shape Matchingu autorzy w \cite{shape} zdefiniowali
+jako problem minimalizacji funkcji:
+\begin{equation}
+E^2 = \sum_{i} m_i ||R (\vec{x}^0_i - t^0) - (x_i - t) ||^2,
+\label{min}
+\end{equation}
+gdzie $t^0$ i $t_i$ są wektorami translacji, a $R$ jest macierzą
+rotacji.
+
+Problem przedstawiony w równaniu \ref{min} sprowadza się
+się do minimalizacji błędu średniokwadratowego. Wyrażenie z \ref{min} można przedstawić
+jako funkcję trzech zmiennych:
+\begin{equation}
+\phi(R, t, t^0) = \sum_{i} m_i ||R (\vec{x}^0_i - t^0) - (x_i - t) ||^2,
+\end{equation}
+
+Najpierw rozwiązany zostanie problem minimalizacji funkcji $\phi$ według zmiennych $t, t^0$.
+Przyjmujące że $f: R^n \to R^m$, $g: R^n \to R^m$ i $h = f^T g$, gdzie $h: R^n
+\to R^1$. Gradient funkcji $h$ wyraża się wzorem:
+\begin{equation}
+\partial h = f^T \partial g + g^T \partial f
+\end{equation}
+gdzie $\partial f$ to macierz Jacobiego (pochodnych cząstkowych), a $f^T$ jest
+oznaczeniem transpozycji funkcji.
+
+W przypadku gdy funkcje $f$ i $g$ są takie same, gradient ma postać:
+\begin{equation}
+\partial h = 2 f^T \partial f,
+\label{part}
+\end{equation}
+
+Przyjmując, że $v = R (\vec{x}^0_i - t^0) - (x_i - t)$ oraz $\phi = \sum_i m_i
+v^T v$ i uwzględniając własność \ref{part}, gradient funkcji $\phi$ względem
+zmiennej $t^0$ i $t$ zapiszemy:
+\begin{eqnarray}
+\nabla_{t^0} \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)^T (-R)\\
+\nabla_{t} \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)^T\\
+\end{eqnarray}
+
+Transponując obie strony otrzymujemy:
+\begin{eqnarray}
+\nabla_{t^0}^T \phi = -2 \sum_i m_i R^T (R (x^0_i - t^0) + t - x_i)\\
+\nabla_{t}^T \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)\\
+\end{eqnarray}
+
+W celu wyliczenia wartości $t$ i $t^0$ przyrównujemy gradient do zera:
+\begin{eqnarray}
+\label{d1}
+\phi_{t^0} = 0 \Leftrightarrow \sum_i m_i R^T (R (x^0_i - t^0) + t - x_i) = 0\\
+\label{d2}
+\phi_{t} = 0 \Leftrightarrow \sum_i m_i R (x^0_i - t^0) + t - x_i = 0\\
+\end{eqnarray}
+
+Można łatwo zauważyć że równania \ref{d1} oraz \ref{d2} są od siebie liniowo
+zależne. Rozwiązaniem wg 
+
+\begin{eqnarray}
+\sum_i m_i (R (x^0_i - t^0) + t - x_i) = 0\\
+\sum_i m_i R x^0_i - \sum_i m_i R t^0 + \sum_i m_i t - \sum_i m_i x_i = 0\\
+R \sum_i m_i t^0 - \sum_i m_i t = R \sum_i m_i x^0_i - \sum_i m_i x_i\\
+R t^0 - t = R \frac{\sum_i m_i x^0_i}{\sum_i m_i} - \frac{\sum_i m_i
+	x_i}{\sum_i m_i}
+\end{eqnarray}
+
+
+\begin{eqnarray}
+\vec{x}_{cm}^0 = \frac{1}{M} \sum_i m_i \vec{x}_i^0,\\
+\vec{x}_{cm} = \frac{1}{M} \sum_i m_i \vec{x}_i,\\
+M = \sum_i m_i,\\
+\vec{q}_i^0 = \vec{x}_i^0 - \vec{x}_{cm}^0,\\
+\vec{q}_i = \vec{x}_i - \vec{x}_{cm}.
+\end{eqnarray}
+problem minimalizacyjny \ref{min} może być zapisany następująco:
+\begin{eqnarray}
+E^2 = \sum_i m_i || R\vec{q}_i^0 - \vec{q}_i||^2 \\
+\end{eqnarray}
+
+\begin{eqnarray}
+E^2 = \sum_i m_i || A \vec{q}_i^0 - \vec{q}_i||^2 \\
+\end{eqnarray}
+
+\begin{equation}
+A = (\sum_i m_i \vec{q}_i \vec{q}_i^0)(\sum_i m_i \vec{q}_i \vec{q}_i)^-1 = A_pq A_qq\\
+\end{equation}
+\begin{equation}
+A_pq = RS \\
+\end{equation}
+\begin{equation}
+S = \sqrt[2]{A^T_pq A_pq} \\
+\end{equation}
+\begin{equation}
+R = A_pq S^-1 \\
+\end{equation}
+
+%Formalnie pozycję $g_i$ wyraża się wzorem:
+\begin{equation}
+\vec{g}_i = R (\vec{x}_i^o - \vec{x_cm^0}) -  \vec{x_cm}
+\end{equation}
+
+\section{Zachowanie objętości}
+%$$\iiint\limits_{\Omega} f(z,y,z)\,\dd x\dd y\dd z$$
+\section{Dynamika bazująca na pozycji}
+
+Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
+ciał miękkich. Pierwsze propozycje takiego podejścia przedstawione zostało w
+2001 r.\cite{jak}, natomiast uogólniona wersja, będąca bazą kolejnych
+iteracji modelu, została oficjalnie opublikowana w 2006 r.\cite{pbdyn}. Metody te
+szybko stały się popularne w obszarze grafiki komputerowej i są dzisiaj
+implementowane w profesjonalnych silnikach fizycznych, takich jak PhysX czy
+Bullet.
+
+Model przedstawiony w tej pracy jest fizycznym modelem Lagrange'a. Termin
+bazujący na pozycji oznacza, że w odróżnieniu od symulacji bazujących na siłach, to pozycje
+wszystkich punktów materialnych symulowanego ciała podlegają w symulacji pewnym
+regułom. Zastosowania reguł, czy jak to będzie zwane później ograniczeń, na
+punkty modelu skutkuje poprawą stabilności symulacji oraz ułatwia jej
+implementację. Do najważniejszych zalet modeli bazujących na pozycji należą:
+\begin{itemize}
+	\item bezpośrednia kontrola nad całkowaniem równań ruchu, pozwala rozwiązań
+	problemy z niestabilnością model.
+	\item punkty materialne mogą być bezpośrednio manipulowane, bez użycia sił.
+	\item model ograniczeń bazujących na pozycji może być wykorzystany do
+	symulowania szerokiego zakresu zdarzeń fizycznych.
+	\item system rozwiązujący ograniczenia w modelu jest łatwy w implementacji.
+\end{itemize}
+
+\subsection{Definicja}
+Model zakłada, że każdy obiekt deformowalny jest przedstawiony jako zbiór $N$
+punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ ograniczeń
+zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek modelu posiada
+następujące atrybuty:
+
+\centering
+\begin{tabular}{|r|l|}
+\hline
+$x_i$ & pozycja w $R^3$ \\
+\hline
+$v_i$ & prędkość \\
+\hline
+$m_i$ & masa\\
+\hline
+\end{tabular}
+
+\raggedright
+Natomiast j-te ograniczenie posiada następujące atrybuty:
+
+\centering
+\begin{tabular}{|r|l|}
+\hline
+$n_j$ & liczność ograniczenia \\
+\hline
+$C_j$ & funkcja $R^{3n_j} -> R$\\
+\hline
+${i_1, ..., i_{n_j}}, i_k \in [1,..N]$ & zbiór indeksów\\
+\hline
+$k_j \in [0.. 1]$ & sztywność\\
+\hline
+typ & równość lub nierówność\\
+\hline
+\end{tabular}
+
+\raggedright
+Dane j-te ograniczenie typu równości jest spełnione wtedy gdy $C_j(x_{i_1},...,
+		x_{i_{n_j}}) = 0$, natomiast typu nierówności wtedy gdy $C_j(x_{i_1},...,
+		x_{i_{n_j}}) > 0$. Parametr $k_j$ definiuje siłę ograniczenia w
+		przedziale od $0...1$, gdzie 0 oznacza ograniczenie, które nie powoduje
+		przemieszczenia symulowanych wierzchołków, natomiast 1 oznacza, że
+		wierzchołki muszę tak zostać przesunięte aby spełnić ograniczenie w
+		danym kroku symulacji.
+
+\paragraph{Algorytm}
+
+Mając dany model $\{X_N, C_M, \Delta t \} $ każda iteracja symulacji przebiega
+następująco:
+\begin{enumerate}
+\item \textbf{for} $i = 1:N$
+\item \hspace{1cm} $x_i = x_i^0, v_i = v_i^0, w_i = 1/m_i$
+\item \textbf{end for}
+\item \textbf{loop}
+\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $v_i \leftarrow v_i + \Delta t w_i f_{ext}(x_i)$
+\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $p_i \leftarrow x_i + \Delta t v_i$
+\item \hspace{1cm} \textbf{for} $j = 1:liczbaIteracjiSolwera$
+\item \hspace{2cm} $rozwiazOgrnaiczenia(C_1,..., C_{M}, p_1, ..., p_N)$
+\item \hspace{1cm} \textbf{end for}
+\item \hspace{1cm} \textbf{for} $i = 1:N$
+\item \hspace{2cm} $v_i = (p_i - x_i) / \Delta t$
+\item \hspace{2cm} $x_i = p_i$
+\item \hspace{1cm}\textbf{end for}
+\item \textbf{end loop}
+
+\end{enumerate}
+
+W zaproponowanej przez Mullera symulacji bazującej na pozycji, najważniejszą częścią stanowią są
+fragmenty (6), (8), (11-12). W linii (6) następuje całkowanie równania ruchu za 
+pomocą metody Eulera, ustala się w ten sposób predykcję pozycji $p_i$. Następnie
+wszystkie predykcje są rzutowane w taki sposób aby spełniły wszystkie
+ograniczenia $C_M$. Ostatnim krokiem symulacji jest ponowne wyliczenie
+prędkości oraz przypisane zrzutowanej predykcji do pozycji wierzchołka.
+
+Model pozwala do włączenia do symulacji sił zewnętrznych $f_{ext}$, którymi na ogół jest
+grawitacja. W celu symulowania innych sił działających na symulowane ciało
+operuje się bezpośrednio na prędkościach wierzchołków, które mogę zostać
+zmienione pomiędzy liczeniem predykcji, (między 5-6) oraz po
+zaktualizowaniu pozycji oraz prędkości (13-14).
+
+Przedstawiona symulacja jest bezwarunkowo stabilna ponieważ nowe pozycje nie są
+ekstrapolacją wynikająca z kroku całkowania (6), tyko pewnym rzutowaniem na
+stabilne konfiguracje systemu wyliczane podczas iteracji solwera (8). Jedynym
+źródłem niestabilności jest sam solwer, którym używa metody Newtona do wyliczenia
+stabilnej konfiguracji. Jednakże niestabilność nie zależy od przyjętego kroku
+całkowania systemu $\Delta t$, tylko od samej funkcji danego
+ograniczenia\cite{pbdyn}.
+
+\subsection{Rozwiązywanie układu ograniczeń}
+Problem rozwiązania ograniczeń $C_1, .., C_M$ dla projekcji układu $p_1, ..., p_N$
+jest podobny do problemu rozwiązania układu równań. Do rozwiązania takiego
+układu możemy się posłużyć metodami Jacobiego oraz Gaussa-Seidela. 
+
+Niestety, w modelu funkcje ograniczeń mają też postać nierówności, a
+najczęściej spotykane funkcje ograniczeń mają charakter nieliniowy. Powoduje to,
+że niemożliwe jest użycie klasycznych wersji w/w metod. Muller proponuje
+zmodyfikowana metodę, w której to każde równanie (lub nierówność) będzie rozwiązane
+oddzielnie metodą Newtona, a następnie otrzymane rozwiązanie zostanie użyte w
+następnej iteracji solwera. Zmodyfikowana metoda Gaussa-Seidela dodatkowo używa
+poprzedniego rozwiązania równania do estymacji następnego co skutkuje szybszą
+zbieżnością metody\cite{pbdyn}.
+
+\subsection{Przykłady ograniczeń}
+Ograniczenia mają za cel rzutowanie wyliczonej projekcji $p_i$ do przestrzeni
+rozwiązań możliwych. Spełnienie warunków ograniczenia oznacza w 
+modelu pozycyjnym przemieszczenie danej projekcji wierzchołka o wektor $\Delta p$.
+Jeżeli dane ograniczenie modeluje zależności między punktami należącymi do
+obiektu to przesunięcie $\Delta p$ powinno posiadać
+pewne pożądane z punktu widzenia symulacji własności: zachowanie pędu oraz
+momentu pędu.
+
+Pęd jest zachowane jeśli przesunięcie $\Delta p$ posiada własność:
+$$ \sum_i m_i \Delta p_i = 0$$
+Natomiast moment pędu jest zachowany gdy:
+$$ \sum_i r_i \times m_i p_i = 0$$, gdzie $r_i$ jest odległością $p_i$ do punktu
+rotacji.
+
+Nie spełnienie w/w równości skutkuje powstawaniem dodatkowych sił, które
+oddziałują na punkty obiektu tak jak siły zewnętrzne. Jeżeli dane ograniczenie
+nie dotyczy zewnętrznych właściwości (np. odległości od punktu kolizji),
+własności te nie muszą być zachowane\cite{pbdyn}.
+
+Muller proponuje następujący wzór na obliczanie przemieszczenie $\Delta d$ dla
+ograniczeń, których funkcja jest niezależna od translacji i obrotu punktów.
+Jeżeli $p = [ p_1^T, p_2^T, ..., p_K^T]^T$, gdzie $K$ jest licznością
+ograniczenia $C$:
+\begin{equation} \label{con_eq}
+\Delta p = - \frac{C(p)}{\mid \nabla_p C(p) \mid^2}\nabla_p C(p)
+\end{equation}
+,gdzie $\nabla_p C(p)$ jest gradientem dla ograniczenia $C$ w $p$
+
+Przemieszczenie dla poszczególnego wierzchołka wyraża się wzorem:
+$$\Delta p_i = -s w_i\nabla_{p_i}C(p_1, ..., p_K)$$ 
+$$ s = \frac{C(p_1, ..., p_K)}{\sum_j w_j\mid \nabla_{p_j}C(p_1, ..., p_K)
+	\mid^2}$$
+
+,gdzie $w_i = 1 / m_i$
+
+Przedstawiona powyżej projekcja jest przeprowadzana w kroku (8) głównego
+algorytmu dla każdego ograniczenia $C_i$ o typie równość.
+W przypadku gdy typ ograniczenia jest nierównością przemieszczenie $p$
+o wyliczony wektor wektorów $\Delta p$ następuje tylko wtedy gdy $C(p_1, ...,
+		p_k) < 0$.
+
+Ostatnią istotną własnością każdego ograniczenia jest jej parametr sztywności
+$k$, Informuje on jaka część korekty $\Delta p$ może być dodana do obecnych
+predykcji $p$. Ma to na celu uniemożliwienie powrotu układu do jego konfiguracji
+stabilnej, tzn. takiej gdzie spełnione są wszystkie ograniczenia, w jednej
+iteracji głównego algorytmu. Jeżeli $k$ równałoby się jedności dla wszystkich
+ograniczeń modelu, to symulowany obiekt byłby zbyt usztywniony co nie byłoby
+pożądanym efektem.
+
+\paragraph{Dystans między punktami}
+Ograniczenie w dystansie między punktami pozwala symulować efekt rozciągania
+ciała. W swojej podstawowej wersji funkcja ograniczenia dana jest wzorem:
+$$ C(p_1, p_2) = \mid p_1 - p_2 \mid - d$$, gdzie $d$ jest wartością
+spoczynkową, czyli odległością między punktami $p_1$ i $p_2$ w stabilnej
+konfiguracji.
+
+Funkcja ograniczenia spełnia warunku dla wzoru \ref{con_eq}, czyli jest
+niezależna od translacji i obrotu punktów. Dlatego też wzór na korektę dla
+ograniczenia dystansu jest równy:
+
+$$\Delta p_1 = - \frac{w_1}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
+	p_2}{\mid p_1 - p_2 \mid}$$
+
+$$\Delta p_2 = + \frac{w_2}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
+	p_2}{\mid p_1 - p_2 \mid}$$
+
+Aby otrzymać ostateczną korektę projekcji $p_1$ i $p_2$ w danym kroku solwera,
+	trzeba otrzymane wartości $\Delta _1$ oraz $\Delta p_2$ pomnożyć przez
+	sztywność ograniczenia $k$, gdzie $k \in (0, 1)$. 
+	$$ p_i = p_i + k * \Delta p_i$$
+	Powyższe równanie ma jedną niepożądaną własność, ostatecznie przesunięcie
+	$\Delta p_i$ jest zależne od ilości iteracji solwera układu ograniczeń
+	. Efekt po $n_s$ iteracjach na ostateczne przesunięcie $\Delta p$
+	będzie nieliniowy i równy $\Delta p_0 k^n$. Aby pozbyć się zależności od
+	liczby iteracji, parametr $k$ musi być funkcją $n_s$, czyli:
+	$$ k' = 1 - (1 - k)^{1/n_s}$$
+

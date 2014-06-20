@@ -4,22 +4,22 @@
 
 W literaturze przedmiotu odnaleźć można szereg metod opisujących symulacje komputerowe ciał
 miękkich. Metody te, mimo faktu, że potrafią symulować ten sam zakres zjawisk
-fizycznych potrafią znacząco się różnić w zależności od zakresu ich zastosowań.
-Symulacje fizyczne ciał miękkich będą zatem ukierunkowane na otrzymanie wyników
+fizycznych potrafią znacząco się różnić w zależności od ich zastosowań.
+Symulacje fizyczne ciał miękkich mogą być zatem ukierunkowane na otrzymanie wyników
 zbieżnych do obserwowanych doświadczalnie, natomiast te używane w grafice
 komputerowej będą stawiały za cel stworzenie przyjemnego dla oka efektu
 wizualnego oraz stabilność i responsywność symulacji.
 
-Rozdział ten ma za zadanie łagodnie wprowadzić czytelnika w bogaty świat metod symulacji
+Rozdział ten ma za zadanie wprowadzić czytelnika w bogaty świat metod symulacji
 ciał miękkich. Zostaną podjęte próby usystematyzowania dotychczasowych
 osiągnięć w tej dziedzinie oraz pokazania w jakich obszarach stosowane są
 dane typy symulacji. Rozdział ten nie ma jednak na celu dokładnego omówienia sposobów 
-działania wszystkich metod, lecz tylko pobieżnym omówieniu aktualnego stanu
-wiedzy a skupienie się na wybranych metodach.
+działania wszystkich metod, lecz tylko pobieżne omówienie aktualnego stanu
+wiedzy i skupienie się na wybranych metodach.
 
 Przedstawione zostaną też prawa fizyki mające zastosowanie w opisie ciał deformowalnych. Ze
 względu jednak na obszerność tego zagadnienia, 
-niemożliwe będzie jego wyczerpujące opisanie. Zamiast tego nacisk
+niemożliwe będzie ich wyczerpujące opisanie. Zamiast tego nacisk
 zostanie położony na omówienie praw fizycznych mających zastosowanie w
 konkretnych modelach opisanych w dalszej części tego rozdziału.
 
@@ -29,7 +29,7 @@ relatywnie prostą implementacją. Pomimo prostoty przedstawione w pracy
 metody są podstawą współczesnych symulacji ciał
 miękkich i stanowią bazę do tworzenia bardziej skomplikowanych i 
 wyspecjalizowanych modeli używanych w zaawansowanych silnikach graficznych
-takich jak PhysiX czy Bullet.
+takich jak NVIDIA PhysX czy Bullet.
 
 \section{Kategoryzacja symulacji}
 
@@ -38,8 +38,8 @@ iteracyjny. Po stworzeniu nowej metody powstają jej modyfikacje, inni badacze
 poprawiają jej parametry, upraszczają,
 uszczegóławiają lub nawet łączą ją z innymi znanymi technikami tworząc w ten
 sposób nowe rozwiązania. W połączeniu z bardzo dynamicznym rozwojem technologii 
-skutkuje to wypieraniem pewnych metod przez inne lepiej dopasowanych do obecnego
-stanu wiedzy i elektroniki.
+skutkuje to wypieraniem pewnych metod przez inne, lepiej dopasowane do obecnego
+stanu wiedzy i sprzętu komputerowego.
 
 Mnogość zastosowań symulacji ciał miękkich sprawiła też, że tematyką tą
 zainteresowali są badacze z różnych dziedzin. W efekcie tego obszar modelowania ciał
@@ -51,7 +51,7 @@ Bardzo zmienne środowisko, relatywnie młody wiek dziedziny czy jej
 interdyscyplinarny charakter sprawia
 że obszar wiedzy na temat komputerowej symulacji ciał deformowalnych relatywnie
 trudno opisać.
-Jak dotąd znane są autorowi pracy tylko 2 próby usystematyzowania osiągnięć
+Jak dotąd znane są mi tylko 2 próby usystematyzowania osiągnięć
 tej dziedzinie podjęte w przeciągu ostatnich 30 lat, odnoszące się wyłącznie do
 ciał miękkich.
 
@@ -65,15 +65,15 @@ wnikliwszej analizy w tej pracy. Do modeli niefizycznych zaliczyć można natomi
 krzywe parametryczne oparte na krzywych Breziera czy deformacje brył sztywnych (Free-Form Deformations).\cite{pbdo}
 
 Metody niefizyczne znajdują zastosowanie w obszarach, w których właściwości
-fizyczne czy też symulacja w czasie obiektu nie ma zastosowania. Przykładem
+fizyczne czy też symulacja zmian w czasie obiektu nie jest celowa. Przykładem
 takiego obszaru jest projektowanie komputerowe w programach typu CAD, gdzie
 projektowany obiekt musi być przekształcony ze stanu A do B zachowując określone
 własności. Nie dziwi zatem fakt, że wszystkie metody niefizyczne są także 
 nazywane technikami geometrycznymi.
 
-Do kategorii modeli fizycznych Sarah i Gibson zliczyli następujące klasy modeli:
+Do kategorii modeli fizycznych Sarah i Gibson zaliczyli następujące klasy modeli:
 \begin{itemize}
-\item System Sprężyn
+\item System Sprężyn (Mass-Spring System)
 \item Metody ciągłe (Continuum Models)
 \end{itemize}
 
@@ -83,39 +83,39 @@ modelu, który obejmuje głównie grafikę komputerową oraz szeroko rozumianą
 inżynierię biomedyczną. System sprężyn ze względu na swoje właściwości 
 często jest wykorzystywany do symulacji tkanek ciała, gdyż pozwala łatwo łączyć ze
 sobą ośrodki o potencjalnie różnych własnościach fizycznych. Dodatkowo symulacje
-systemu sprężyn nie są kosztowne obliczeniowo co pozwala na stosowanie ich w
+systemu sprężyn nie są kosztowne obliczeniowo, co pozwala na stosowanie ich w
 interaktywnych aplikacjach.
 
-Drugą wymienioną w 'Survey of Deformable Modelling in Computer Graphics' jest
-klasa modeli wywodząca się z teorii ośrodków ciągłych czy też mechaniki ośrodków
+Druga wymieniona w artykule \textit{Survey of Deformable Modelling in Computer Graphics}
+klasa modeli wywodzi się z mechaniki ośrodków
 ciągłych. Oznacza to, że symulowany obiekt przedstawiany jest jako ciągły
 fragment przestrzeni (tzw. continuum) i wykorzystuje równania różniczkowe do
 opisania deformacji obiektu. Metody te znajdują zastosowanie w symulacjach
-tkanek, analizie obrazów.\cite{TR97-19}
+tkanek czy analizie obrazów.\cite{TR97-19}
 
 Metody bazujące na modelu continuum są bardziej fizycznie poprawne niż model
-systemu sprężyn\cite{TR97-19}. Jednak posiadają one pewne niepożądane cechy.
+systemu sprężyn\cite{TR97-19}, jednak posiadają pewne niepożądane cechy.
 Pierwszą jest fakt, że nie zawsze daje się znaleźć analityczne rozwiązanie
 równań różniczkowych opisujących deformację ciała. Dlatego też w celu
 przeprowadzenia symulacji ciała w czasie trzeba dokonać numerycznego rozwiązania
-układu równań różniczkowych co wiąże się z dyskretyzacją całego modelu.
+układu równań różniczkowych, co wiąże się z dyskretyzacją całego modelu.
 
-Rozwiązaniem problemu brak analitycznego rozwiązania układów równań opisujących
+Rozwiązaniem problemu braku analitycznego rozwiązania układów równań opisujących
 deformację ciała są metody pozwalające na numeryczne rozwiązanie układu. Do
-metody tych zaliczamy: Metodę Elementów Skończonych (Finite Element Method),
- Metody Aproksymacyjne (Approximate Continuum Method), Metoda Róznic Skończonych
- (Method of Finite Differencies, Metoda Skończonych Objętości (Method of Finite
+metod tych zaliczamy: metodę elementów skończonych (Finite Element Method),
+ metody aproksymacyjne (Approximate Continuum Method), metoda róznic skończonych
+ (Method of Finite Differencies), metoda skończonych objętości (Method of Finite
  Volumes). Istotną wadą modeli continuum jest ich duża złożoność obliczeniowa
-czyniąca je trudnymi, lub wręcz niemożliwym do zastosowania w symulacjach czasu
+czyniąca je trudnymi lub wręcz niemożliwym do zastosowania w symulacjach czasu
 rzeczywistego.
 
 \subsection{Metody Lagrange'a i Eulera}
 
 Drugim opracowaniem starającym się usystematyzować zagadnienia związane z
-ciałami miękkimi jest 'Physically Based Deformable Models in Computer
-Graphics' opublikowany w 2005 r. Według autorów sposoby modelowania ciał miękkich można
-podzielić na dwie główne kategoria ze względu na sposób dyskretyzacji
-obiektu w celu przeprowadzenia jego numerycznej symulacji.
+ciałami miękkimi jest \textit{Physically Based Deformable Models in Computer
+Graphics} opublikowany w 2005 r. Według autorów sposoby modelowania ciał miękkich można
+podzielić na dwie główne grupy ze względu na sposób dyskretyzacji
+obiektu w celu przeprowadzenia jego numerycznej symulacji:
 
 \begin{itemize}
 \item Metody Lagrange'a
@@ -139,30 +139,31 @@ obiektu w celu przeprowadzenia jego numerycznej symulacji.
 \end{itemize}
 
 Metody Lagrange'a przedstawiają ciało miękkie jako zbiór punktów mogących
-przemieszać się w czasie. Każdy punkt modelu posiada własności
-charakterystyczne dla symulowanego materiału, które ewoluują wraz z ruchem
-modelu\cite{pbdo}. Do definiowania ciał miękkich w metodach Lagrange'a
-używane są siatki modeli, takie jak np. wykorzystywane w grafice komputerowej. 
-Ze względu na użycie siatki modele Lagrange'a dzielą się na te zdefiniowane na
-siatce oraz nie. Do metod zdefiniowanych na siatce zaliczamy omawiane wcześniej 
-metody ciągłe oraz system sprężyn. Metody nieoparte na siatkach to przede
-wszystkich systemy szeroko rozumianych cząstek.
+przemieszać się w czasie. Każdy punkt modelu, nazywany też w tym kontekście cząstką,
+posiada charakterystyczne dla symulowanego ciała własności, które ewoluują wraz z jego ruchem
+\cite{pbdo}. Aby dokonać podziału ciała miękkiego na cząstki należy
+dokonać jego dyskretyzacji. W przypadku modeli dwuwymiarowych oznacza to
+najczęściej podział obiektu na trójkąty, w którym wierzchołki stanowią
+cząstki które będą przedmiotem symulacji. Analogicznie, w przypadku obiektów
+trójwymiarowych,
+do dyskretyzacji używane będą siatki składające się z czworościanów.
 
-Systemy cząstek aplikowane są głównie do symulacji rozmytych obiektów takich jak
+Istnieją też metody Lagrange'a dla których dyskretyzacja obiektu nie jest
+potrzebna. Są to systemy cząstek aplikowane do symulacji rozmytych obiektów takich jak
 chmury, woda, piasek, czy w ogólności do obiektów o niezdefiniowanej
 powierzchni. Powstały one na potrzeby filmowych efektów specjalnych i do dzisiaj
-są w tym obszarze powszechnie używane. System cząstek składa się obiektów cząstek,
-reprezentowanych przez prymitywy takie jak punkt czy sfera. Każda cząstka
-rozpoczyna swój cykl życia, od generacji, która łączy się z generowaniem 
-jej unikalnych parametrów takich jak pozycja, prędkość, temperatura czy długość życia.
-Następną fazą symulacji cząstki jest faza dynamiki, w której parametry cząstki
+są w tym obszarze powszechnie używane. System cząstek składa się z obiektów cząstek,
+reprezentowanych przez punkty czy sfery. Każda cząstka
+rozpoczyna swój cykl życia od generacji, w której ustalane są 
+jej unikalne parametry takie jak pozycja, prędkość, temperatura czy długość życia.
+Następną fazą symulacji jest faza dynamiki czątek, w której wygenerowane parametry
 są aktualizowane względem czasu symulacji. Ostatecznie każda cząstka po
 przekroczeniu swojej długości życie zostaje zniszczona i usunięta z modelu.
 Wielką zaletą systemu cząstek jest jej nieskomplikowana budowa, co pozwala na
-symulację bardzo dużych systemów cząstek. 
+symulację bardzo dużych systemów. 
 
 Drugą techniką modelowania ciał miękkich są metody Eulera. Zasadniczą różnicą
-pomiędzy przytoczonymi wcześniej metodami Lagrange'a jest fakt, że nie skupiają 
+pomiędzy nimi a przytoczonymi wcześniej metodami Lagrange'a jest fakt, że nie skupiają 
 się one na symulacji punktów ciała miękkiego, lecz definiują zbiór arbitralnie
 określonych punktów w których wyliczane są parametry symulowanego materiału.
 
@@ -170,21 +171,20 @@ Typowym schematem modelowania płynów technikami Eulera jest podział przestrze
 której rozpatrywana jest symulacja na regularną siatkę voxeli i użycie równań Naviera-Stokes'a do
 obliczenia parametrów symulacji takich jak objętość płynu w każdym voxelu,
  prędkość płynu zdefiniowana na ścianie voxela, czy ciśnienie w centrum voxela.
-
 Metody Eulera najczęściej wykorzystywane są do symulacji płynów oraz gazów.
 
 \section{Podstawy fizyczne}
 \subsection{Prawo Hooka}
 Jest jednym z pierwszych odkrytych praw fizycznych formalnie opisujących deformację ciał pod wpływam
 działających na nie sił. Zostało ono odkryte w 1660 r. przez Roberta Hooka i 
-stanowi bazę dzisiejszej teorii Elastyczności\cite{elast}.
+stanowi bazę dzisiejszej teorii elastyczności\cite{elast}.
 
-Prawo Hooka jest prawem mechaniki określającym, że odkształcenie ciała jest
+Prawo Hooka jest prawem mechaniki określającym, że w pewnym zakresie odkształcenie ciała jest
 proporcjonalne do sił działających na ciało,
-Zakładając najprostszy wariant statycznego rozciągania pręta, prawo to definiuje
+Zakładając najprostszy wariant statycznego rozciągania pręta w jednym wymiarze, prawo to definiuje
 się:
-$$\delta = \frac{F}{S} = E\frac{\Delta l}{l}$$
-$$\Delta l = \frac{lF}{SE}$$
+$$\delta = \frac{F}{S} = E\frac{\Delta l}{l},$$
+$$\Delta l = \frac{lF}{SE}.$$
 gdzie:
 F - siła działająca na pręt,
 S - pole przekroju,
@@ -195,20 +195,19 @@ $E$ - moduł Younga
 W tym miejscu zdefiniować trzeba też dwa pojęcia ważne z punktu widzenia teorii
 ciał deformowalnych:
 \begin{itemize}
-\item naprężenie $\delta = \frac{F}{S}$ wyrażana w $Pa$,
+\item naprężenie $\delta = \frac{F}{S}$ wyrażana w jedn. ciśnienia
 \item odkształcenie względne $\varepsilon = \frac{\Delta l}{l}$
 \end{itemize}
  
 W symulacji komputerowej prawo Hooka wykorzystywane jest najczęściej do określenia sił
 działających na model w wyniku jego deformacji. Takie podejście wykorzystywane
-jest np. w omawianym w kolejnym podrozdziale tej pracy, modelu systemu
-sprężyn, w którym to siły działająca na model próbują sprowadzić go do stanu
-równowagi w którym naprężenia zgodne z w/w prawem nie występują.
+jest np. w omawianym w kolejnym podrozdziale tej pracy modelu systemu
+sprężyn.
 
 \subsection{Moduł Younga}
 Moduł Younga jest współczynnikiem proporcjonalności liniowej określającym
 sprężystość materiałów. Określa on charakterystyczną dla danego materiału
-zależność względnego między względnym odkształceniem liniowym $\varepsilon$, a
+zależność między względnym odkształceniem liniowym $\varepsilon$, a
 naprężeniem $\delta$.
 
 Tak jak w fizyce, moduł Younga w symulacji komputerowej ma określać fizyczne
@@ -222,17 +221,27 @@ pozycyjnej, modelują właściwości materiałów poprzez wprowadzenia parametru
 sztywności (stiffness) określającego tempo zbieżności danej deformacji ciała do jego
 spoczynkowego stanu.
 
-\section{Wybrane modele ciał miękkich}
+\section{System Sprężyn}
 
+\subsection{Postać podstawowa}
 
-\subsection{System Sprężyn}
+Jedną z najczęściej wykorzystywanych technik służących do symulacji ciała
+miękkiego jest operowanie na siłach działających na ciało. Schemat takiej
+symulacji można uogólnić, zakładając, że ciało miękkie przedstawiamy jako zbiór
+punktów, na które mogą działać siły. W każdym kroku akumulowane są siły
+zewnętrzne i wewnętrzne działające na każdy punkt modelu. Jako siły wewnętrzne
+najczęściej wymieniane są siły sprężystości czy ciśnienia, jako siły zewnętrzne
+siła grawitacji czy siły powstałe w następstwie kolizji z innymi obiektami.
+Następnie w każdym kroku symulacji z sił wyliczane jest przyspieszenie punktów
+zgodnie z drugim prawem dynamiki Newtona. W kolejnych krokach, wykorzystując
+dowolną metodę, całkujemy otrzymany układ sił obliczając prędkości, a następnie
+nowe pozycje punktów modelu.\cite{pbdyn}
 
-Jedną z najczęściej wykorzystywanych technik służących do symulacji ciała miękkiego jest operowanie na siłach działających na ciało. Schemat takiej symulacji można uogólnić, zakładając, że ciało miękkie przedstawiamy jako zbiór punktów na które mogą działać siły. W każdym kroku akumulowane są siły zewnętrzne i wewnętrzne działające na każdy punkt modelu. Jako siły wewnętrzne najczęściej wymieniane są siły sprężystości czy ciśnienia, jako siły zewnętrzne siła grawitacji czy siły powstałe w następstwie kolizji z innymi obiektami. Następnie w każdym kroku symulacji z sił wyliczane jest przyspieszenie punktów zgodnie z drugim prawem dynamiki Newtona. W kolejnych krokach, wykorzystując dowolną metodę, całkujemy otrzymany układ sił obliczając prędkości, a następnie nowe pozycje punktów modelu.\cite{pbdyn}
-
-W tym rozdziale zostanie scharakteryzowana zostanie jedna z najpowszechniejszych
-fizycznych metod Lagrange'a. Jak wskazuje nazwa modelu składa się on z systemu dwóch podstawowych elementów:
+W tym rozdziale zostanie opisana jedna z najczęściej używanych
+fizycznych metod Lagrange'a - System Sprężyn. Jak wskazuje nazwa modelu składa
+się on z systemu dwóch podstawowych elementów:
 \begin{itemize}
-\item  Punkt Masy - punkt w przestrzeni posiadające masę, na który mogą oddziaływać siły.
+\item Punktów Masy - punkt w przestrzeni posiadające masę, na który mogą oddziaływać siły.
 \item Sprężyna - rozciągnięta pomiędzy dwoma punktami masy, posiada swoją normalną długość, nie posiada masy.
 
 \end{itemize} 
@@ -241,62 +250,83 @@ fizycznych metod Lagrange'a. Jak wskazuje nazwa modelu składa się on z systemu
 \begin{figure}[ht]
 \centering
 \input{images/massspringsys}
-\caption{Zbiór punktów masy z przykładowym układem połączeń}
+\caption{Zbiór punktów masy z przykładowym układem sprężyn.}
 \end{figure}
 
 %
 % Równanie ogólne siły działającej na punkt masy
 %
 \begin{equation}
-F_{i} = \sum_{j} g_{ij} + f^{d}_i + f^{ex}_{i}
+\vec{F}_{i} = \sum_{j} \vec{g}_{ij} + \vec{f}^{d}_i + \vec{f}^{ex}_{i}.
 \end{equation}
 
 W powyższym równaniu na punkt masy w danej chwili $t$ działają siły:
 \begin{itemize}
-\item  Sprężystości $g_{ji}$ generowane przez sprężyny zawieszone między sąsiadującymi punktami.
+\item  Sprężystości $\vec{g}_{ji}$ generowane przez sprężyny zawieszone między sąsiadującymi punktami.
 
 \begin{equation}
-g_{ij} = k_s (| x_{ij}| - l_{ij})\frac{x_{ij}}{|x_{ij}|}
+\vec{g}_{ij} = k_s (|\vec{x}_{ij}| - l_{ij})\frac{\vec{x}_{ij}}{|\vec{x}_{ij}|},
 \end{equation}
-,gdzie $x_{ij} = x_i - x_j$, jest wektorem różnicy położeń między sąsiadującymi punktami masy. Siła sprężystości w modelu jest zgodna z prawem Hook'a, czyli jest proporcjonalna do odchylenia sprężyny od jej spoczynkowej długości $l_{ij}$. Współczynnik $k_s$ jest współczynnikiem sprężystości i z założenia jest zależny od materiału z którego składa się symulowane ciało.
+gdzie $\vec{x}_{ij} = \vec{x}_i - \vec{x}_j$, jest wektorem różnicy położeń między sąsiadującymi punktami masy. Siła sprężystości w modelu jest zgodna z prawem Hook'a, czyli jest proporcjonalna do odchylenia sprężyny od jej spoczynkowej długości $l_{ij}$. Współczynnik $k_s$ jest współczynnikiem sprężystości i z założenia jest zależny od materiału z którego składa się symulowane ciało.
 
-\item Tłumienia $f^{d}_i$ wynikająca z faktu, iż symulowanie ciało nie jest doskonale elastyczne i nie zachowuje energii układu. (Tzn. energia mechaniczna jest transformowana w energię wewnętrzną ciała, jednak z punktu widzenia symulacji energia nie jest zachowana.)
+\item Siła tłumienia $f^{d}_i$ wynikająca z faktu, iż symulowanie ciało nie jest doskonale elastyczne i nie zachowuje energii układu. (Tzn. energia mechaniczna jest transformowana w energię wewnętrzną ciała, jednak z punktu widzenia symulacji energia nie jest zachowana.)
 
 \begin{equation}
-f^{d}_i = k_d(v_j - v_i)
+\vec{f}^{d}_i = k_d(\vec{v}_j - \vec{v}_i),
 \end{equation}
-,gdzie $v_i$ i $v_j$ są wektorami prędkości dwóch punktów masy połączony sprężynami, a $ k_d$ jest współczynnikiem tłumienia charakterystycznym dla symulowanego materiału.
+gdzie $\vec{v}_i - \vec{v}_j$ jest wektorem prędkości względnej dwóch punktów
+masy połączonych sprężynami, a $k_d$ jest współczynnikiem tłumienia charakterystycznym dla symulowanego materiału.
 
-\item Zewnętrzne $f^{ex}_{i}$ działające na punkt materialny, takie jak np. grawitacja.
+\item Siły zewnętrzne $\vec{f}^{ex}_{i}$ działające na punkt materialny, takie jak np. grawitacja.
 \end{itemize}. 
 
-Zdefiniowany model jest w istocie równaniem różniczkowym drugiego rzędu i może
-być rozwiązany jednym z wielu algorytmów numerycznych. Jedną z najczęściej
-wykorzystywanych metod jest algorytm Verleta, który cechuje się prostotą, dając
-jednocześnie wystarczająco dokładne rozwiązania. Badania przeprowadzone w \cite{var} pokazały, że algorytm Verleta okazał się najwydajniejszy w porównaniu z innymi metodami numerycznymi, dlatego też będzie stosowany w niniejszej pracy.
+Ewolucja modelu opisana jest równaniem różniczkowym drugiego rzędu:
+\begin{equation}
+\ddot{\vec{x}} = \frac{\vec{F}}{m},
+\end{equation}
+i może być rozwiązany jednym z wielu algorytmów numerycznych.
+Jedną z najczęściej wykorzystywanych metod jest algorytm Verleta, który cechuje się prostą
+implementacją, dając jednocześnie wystarczająco dokładne rozwiązania. Badania
+przeprowadzone w \cite{var} pokazały, że algorytm Verleta okazał się
+najwydajniejszy w porównaniu z innymi metodami numerycznymi, dlatego też będzie
+stosowany w niniejszej pracy.
 
-Wzór na pozycję punku masy w czasie $t + dt$ jest w modelu wyrażona wzorem:
+Wzór na pozycję punku masy $i$ w czasie $t + dt$ jest w modelu wyrażona wzorem:
 
 % Wzór na dynamikę punktu w modelu (Verlet)
 \begin{equation}
-x_i(t + dt) = \frac{F_i(t)}{m} dt^2 + 2x_i(t) - x_i(t - dt)
+\vec{x}_i(t + dt) = \frac{\vec{F}_i(t)}{m} dt^2 + 2\vec{x}_i(t) - \vec{x}_i(t -
+		dt) + O(dt^4)
 \end{equation}
 
-Ze względu na fakt, iż niektóre siły są zależne od poprzednich prędkości punktu masy, do symulacji wykorzystywane będzie też wariant prędkościowy algorytmu Verleta. Jest on zapisany wzorem:
+W podstawowej metodzie Verleta błąd aproksymacji nowych pozycji punktów masy
+jest rzędu $O(dt^4)$. Oznacza to, że przy wyliczaniu nowych pozycji nie jest
+uwzględniany wpływ pochodnych 4 rządu i wyższych z rozwinięcia funcji
+$\vec{x}_i(t)$ w szereg Taylora. Wariant podstawowy metody Verleta posiada
+ jednak wadę - nie wylicza bezpośrednio prędkości, które mogę być potrzebne do
+ wyliczania np. sił działających na ciało. Rozwiązaniem problemu jest inna
+ wersja metody Verleta, zwana prędkościową:
 
 % Wzór na dynamikę punktu w modelu (prędkościowy Verlet)
 \begin{eqnarray}
-x_i(t + dt) = \frac{F_i(t)}{2m} dt^2 + x_i(t) + v_i(t)dt \\
-v_i(t + dt) = \frac{F_i(t + dt) + F_i(t)}{2m}dt + v_i(t)
+\vec{x}_i(t + dt) = \frac{\vec{F}_i(t)}{2m} dt^2 + \vec{x}_i(t) + \vec{v}_i(t)dt
++ O(dt^2)\\
+\vec{v}_i(t + dt) = \frac{\vec{F}_i(t + dt) + \vec{F}_i(t)}{2m}dt + \vec{v}_i(t)
++ O(dt^2)
 \end{eqnarray}
 
 %
 % MODYFIKACJE MODELU
 %
-\subsubsection{Modyfikacje modelu}
+\subsection{Modyfikacje modelu}
 
 \subsubsection{Siła tłumienia}
-Siła tłumienia zdefiniowana jako różnica prędkości między dwoma punktami masy w podstawowym modelu jest rzadko stosowana, ze względu na wiele niepożądanych własności. Tłumi ona np. obrót ciała wokół nieruchomego punktu masy, jak przedstawiono na rys. \ref{tlumienie}.
+Definicja siły tłumienia jako różnicy prędkości między dwoma punktami masy w
+jest rzadko stosowana, ze względu na wiele niepożądanych
+własności. Umożliwia ona np. aby siła tłumienia posiadała wektor różny co do
+kierunku od wektora różnic położeń dwóch punktów masy połączonych spręzyną.
+Efektem tego, jest np. tłumienie obrotu ciała wokół nieruchomego punktu masy, tak jak
+przedstawiono na rys. \ref{tlumienie}.
 
 \begin{figure}[ht]
 \centering
@@ -305,20 +335,26 @@ Siła tłumienia zdefiniowana jako różnica prędkości między dwoma punktami 
 \label{tlumienie}
 \end{figure}
 
-Według \cite{pbdo} przyjęcie prostej różnicy prędkości punktów w przypadku symulacji materiałów tłumi ich pożądane własności, takie jak podatność na gięcie i marszczenie. Dlatego też warunek na siłę tłumienia zdefiniujemy jako:
+Według \cite{pbdo} przyjęcie prostej różnicy prędkości punktów w przypadku
+symulacji materiałów tłumi też ich inne pożądane własności, takie jak podatność na gięcie
+i marszczenie. Dlatego też warunek na siłę tłumienia zdefiniujemy jako:
 \begin{equation}
-f^{d}_i = k_d (\frac{v_{ij}^\intercal x_{ij}}{x_{ij}^\intercal x_{ij}}) x_{ij}
+\vec{f}^{d}_i = k_d (\frac{\vec{v}_{ij} \cdot
+		\vec{x}_{ij}}{\vec{x}_{ij} \cdot \vec{x}_{ij}}) \vec{x}_{ij},
 \end{equation}
 
-,gdzie $v_{ij} = v_i - v_j$. Powyższe równanie wyznacza siłę tłumienia modelu równą iloczynowi współczynnika tłumienia i projekcji różnicy prędkości dwóch punktów masy na wektor ich różnicy położeń. Definicja nakłada zatem ograniczenie, iż siła tłumienia może działać tylko w tym samymi kierunku co wektor różnicy położeń.
+gdzie $v_{ij} = v_i - v_j$, jest prędkością względną, a $\vec{v}_{ij} \cdot \vec{x}_{ij}$ jest 
+składową prędkością względnej w kierunku $\vec{x}_{ij}$. Definicja nakłada zatem
+ograniczenie, iż siła tłumienia może działać tylko w kierunku wyznaczonym przez
+sprężynę.
 
 \subsubsection{Zachowanie objętości}
 Kolejnym, istotnym aspektem symulacji ciała miękkiego jest zachowanie jego
 objętości. System punktów mas i sprężyn nie symuluje obiektów posiadających
 objętość, także często może się zdarzyć, że układ znajdzie się w stanie
 stabilnym, jednak różnym od wyjściowego. W praktyce często oznacza to, że w
-wyniku działania dużych sił elementy modelu zostaną obrócone lub zapadną się w
-swoją własną strukturę. Przykład tego jest przedstawiony na rysunku \ref{stany}.
+wyniku działania dużych sił elementy modelu zostaną obrócone lub zapadną się.
+Przykład tego jest przedstawiony na rysunku \ref{stany}.
 
 \begin{figure}[ht]
 \centering
@@ -328,30 +364,82 @@ swoją własną strukturę. Przykład tego jest przedstawiony na rysunku \ref{st
 \label{stany}
 \end{figure}
 
-Rozwiązaniem problemu przechodzenia układu między stanami stabilnymi okazało się wprowadzenie sztucznej siły, pozwalającej zachować objętość. Takie podejście po raz pierwszy zaproponowano w \cite{rmofa}. Autorzy publikacji pogrupowali znajdujące się w układzie punkty masy w obiekty dla których można było zdefiniować objętość. Następnie w zależności od różnicy pomiędzy objętością spoczynkową a aktualną generowana była siła oddziałująca punkty masy. Kierunek tej siły jest zgodny z działaniem pewnej z góry zdefiniowanej normalnej. W \cite{isodb} autorzy przedstawiają bardziej ogólny przypadek przyjmując, że obiektem posiadającym objętość jest czworościan.Wierzchołki figury są punktami masy, a krawędzie sprężynami. Siła zachowawcza działająca na dany punktu masy $i$ czworościanu, określa się wzorem:
+Rozwiązaniem problemu przechodzenia układu między stanami stabilnymi okazało się
+wprowadzenie sztucznej siły, pozwalającej zachować objętość. Takie podejście po
+raz pierwszy zaproponowano w \cite{rmofa}. Autorzy publikacji pogrupowali
+znajdujące się w układzie punkty masy w obiekty dla których można było
+zdefiniować objętość. Następnie w zależności od różnicy pomiędzy objętością
+spoczynkową a aktualną generowana była siła oddziałująca na punkty masy. Kierunek
+tej siły jest zgodny z działaniem pewnej z góry zdefiniowanej normalnej. W
+\cite{isodb} autorzy przedstawiają bardziej ogólny przypadek przyjmując, że
+obiektem posiadającym objętość jest czworościan.Wierzchołki figury są punktami
+masy, a krawędzie sprężynami. Siła zachowawcza działająca na dany punktu masy
+$i$ czworościanu, określa się wzorem:
 
 \begin{equation}
-F_i^d = d_v ( v - v_0) n_i
+F_i^d = d_v ( v - v_0) n_i,
 \end{equation}
-,gdzie $v$ jest aktualną objętością symulowanego czworościanu, $v_0$ jest jego spoczynkową objętością a $d_v$ jest arbitralnie zdefiniowaną stałą. $n_i$ jest to normalna przeciwległej ściany czworościanu. Podana metoda pozwala uniknąć odwrócenia wierzchołków symulowanego obiektu, ponieważ w takim przypadku obliczona objętość będzie ujemna i powstała, duża siła $F_i^d$ wymusi powrót układu do stanu wejściowego \cite{isodb}.
+gdzie $v$ jest aktualną objętością symulowanego czworościanu, $v_0$ jest jego
+spoczynkową objętością a $d_v$ jest arbitralnie zdefiniowaną stałą. $n_i$ jest
+to normalna przeciwległej ściany czworościanu. Podana metoda pozwala uniknąć
+odwrócenia wierzchołków symulowanego obiektu, ponieważ w takim przypadku
+obliczona objętość będzie ujemna i powstałaby duża siła $F_i^d$, która wymusi powrót
+układu do stanu oryginalnego\cite{isodb}.
 
-\subsubsection{Zależność od topologii}
-W analizowanym modelu topologia połączeń między punktami mas jest z góry zdefiniowana. Można powiedzieć, że jest to kolejny parametrem symulacji, który w istotny sposób decyduje o jej jakości. Takie założenie samo w sobie nie jest błędne, gdyż modelując wewnętrzną strukturę ciała możemy określić jego fizyczną charakterystykę. Na przykład, symulując elastyczny sześcian i dodając dodatkowe połączenia między punktami masy w jednej płaszczyźnie otrzymamy obiekt różnie podatny na odkształcanie w zależności od kierunku działania siły. Taką mechaniczną właściwość ciała nazywany anizotropią. Anizotropia stanowi bardzo ciekawy przykład własności mechanicznej materiału, której implementacji w modelu punktów mas i sprężyn jest często problematyczna. 
+\subsection{Zależność od topologii}
+W analizowanym modelu topologia połączeń punktów mas sprężynami jest z góry
+zdefiniowana. Można powiedzieć, że jest to kolejny parametrem symulacji, który w
+istotny sposób decyduje o jej jakości. Modelując wewnętrzną strukturę ciała możemy określić jego fizyczną
+charakterystykę. Na przykład, symulując elastyczny sześcian i dodając dodatkowe
+połączenia między punktami masy w jednej płaszczyźnie otrzymamy obiekt różnie
+podatny na odkształcanie w zależności od kierunku działania siły. Taką
+mechaniczną właściwość ciała nazywany anizotropią. Anizotropia stanowi bardzo
+ciekawy przykład własności mechanicznej materiału, której implementacji w modelu
+punktów mas i sprężyn jest często problematyczna. 
 
-Idealny model powinien umożliwiać symulowanie materiałów izotropowych (o własnościach mechanicznych niezależnych od kierunki działań siły) jak i anizotropowych. Poprzez możliwość manipulacji rozmieszczeniem punktów materialnych, sposoby ich połączeń sprężynami czy manipulowanie stałymi sprężystości, model dostarcza narzędzi do implementacji tych własności. Nie mniej jednak niektóre własności mogą pojawiać się wbrew wcześniejszym założeniom. Przykład niepożądanej anizotropii, otrzymanej poprzez różne struktury wewnętrzne modelu przedstawiono na rys. \ref{anizotropia}.
+Idealny model powinien umożliwiać symulowanie materiałów izotropowych (o
+		własnościach mechanicznych niezależnych od kierunki działań siły) jak i
+anizotropowych. Poprzez możliwość manipulacji rozmieszczeniem punktów
+materialnych, sposobami połączeń sprężynami czy manipulowaniem stałymi
+sprężystości, model dostarcza narzędzi do implementacji tych własności. Nie
+mniej jednak niektóre własności mogą pojawiać się wbrew wcześniejszym
+założeniom. Przykład niepożądanej anizotropii, otrzymanej poprzez różne
+struktury wewnętrzne modelu przedstawiono na rys. \ref{anizotropia}.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=0.5]{images/anisotropy.png}
-\caption{Porównanie dwóch zastosowanych siatek w obiekcie przytwierdzonym górną podstawą i poddanemu sile grawitacji. Lewo: Anizotropia obserwowana w czworościennej siatce połączeń. Prawo: Brak anizotropii w sześciennej siatce połączeń. Źródło: \cite{ca}}
+\caption{Różnice własności anizotropijne dwóch prostpadłościaów
+	przytwierdzonych górną podstawą i poddanych sile grawitacji. Lewo:
+		Czworościenna siatka połączeń. Prawo: Sześciościenna siatka połączeń. Źródło: \cite{ca}}
 \label{anizotropia}
 \end{figure}
 
-Okazuje się, że kalibracja parametrów modelu nie jest trywialna. W \cite{usa} autorzy proponuję metodę kalibracji poszczególnych stałych sprężystości sprężyn. Ich metoda pozwala na symulację zarówno izotropowych jak i anizotropowych. Jednak jak sami autorzy wskazują jest złożona obliczeniowo,a w publikacji została zaprezentowany tylko przykład dla siatek dwuwymiarowych. Inne podejście w swojej publikacji przedstawili francuscy badacze wykorzystując do estymacji parametrów sprężystości algorytmy genetyczne.\cite{ei}
+Okazuje się, że kalibracja parametrów modelu nie jest trywialna. W \cite{usa}
+autorzy proponują metodę kalibracji poszczególnych stałych sprężystości sprężyn.
+Ich metoda pozwala na symulację zarówno układów izotropowych jak i anizotropowych,
+jednak, jak sami autorzy wskazują jest złożona obliczeniowo,a w publikacji
+został zaprezentowany tylko przykład dla siatek dwuwymiarowych. Inne podejście
+w swojej publikacji przedstawili francuscy badacze wykorzystując do estymacji
+parametrów sprężystości algorytmy genetyczne.\cite{ei}
 
-Alternatywne podejście, odchodzące nieco od klasycznego modelu punktów mas i sprężyn, zostało przedstawione w publikacji D. Bourguignon i M-P. Cani \cite{ca}. Metoda ta, pochodna od systemu punktów mas i sprężyn, pozwala na definiowanie własności mechanicznych symulowanych obiektów niezależnie od przyjętej geometrii czy topologii. Pozwala to na wczytanie do symulacji obiektów utworzonych w programach do modelowania 3D i co ważniejsze, odciążenia grafika z konieczności uwzględnienia podczas pracy fizycznych charakterystyk modelu.\cite{ca}
+Alternatywne podejście, odchodzące nieco od klasycznego modelu punktów mas i
+sprężyn, zostało przedstawione w publikacji D. Bourguignon i M-P. Cani
+\cite{ca}. Metoda ta, pochodna systemu punktów mas i sprężyn, pozwala na
+definiowanie własności mechanicznych symulowanych obiektów niezależnie od
+przyjętej geometrii czy topologii. Pozwala to na użycie do symulacji obiektów
+utworzonych w programach do modelowania 3D i co ważniejsze, odciążenia grafika z
+konieczności uwzględnienia podczas pracy fizycznych charakterystyk
+modelu.\cite{ca}
 
-Metoda zakłada, wszystkie punkty masy w modelu są pogrupowane w tzw. jednostki objętości (volume element), którymi najczęściej są czworościany. Dla każdej jednostki wyznacza się tymczasowe punkty masy położone wzdłuż stałych, predefiniowanych osi. Umiejscowienie osi ma odzwierciedlać mechaniczną charakterystykę obiektu. Z reguły stosuje się standardowo 3 osie, jednak możliwa jest też ich większa ilość \cite{ca}. Sposób wyznaczania punktów przecięcia przedstawiony jest na rysunku \ref{anizotropia-czworoscian}.
+Metoda ta zakłada, że wszystkie punkty masy w modelu są pogrupowane w tzw. jednostki
+objętości (volume element), którymi najczęściej są czworościany. Dla każdej
+jednostki wyznacza się tymczasowe punkty masy położone wzdłuż stałych,
+		  predefiniowanych osi. Umiejscowienie osi ma odzwierciedlać mechaniczną
+		  charakterystykę obiektu. Z reguły stosuje się standardowo 3 osie,
+		  jednak możliwa jest też ich większa ilość \cite{ca}. Sposób
+		  wyznaczania punktów przecięcia przedstawiony jest na rysunku
+		  \ref{anizotropia-czworoscian}.
 
 \begin{figure}[ht]
 \centering
@@ -360,9 +448,19 @@ Metoda zakłada, wszystkie punkty masy w modelu są pogrupowane w tzw. jednostki
 \label{anizotropia-czworoscian}
 \end{figure}
 
-Przedstawiony czworościan posiada zdefiniowane dwie osie. Wyznaczono też dwa punkty przecięcia $P_1$ oraz $P_2$ z osią poziomą figury. W celu zapamiętania pozycji punktów przecięcia wyznacza się współczynniki kombinacji liniowej z wierzchołkami tworzącymi ścianę. $P_1 = \alpha * A + \beta *B + \gamma *C$. Współczynniki te muszą być wyznaczane dla czworościanu znajdującego się w stanie spoczynku. Punkty przecięcia traktowane są odtąd jak nowe punkty masy. Działają na nie siły wewnętrzne i zewnętrzne układu. Dwa punkty (zaznaczonymi na rys. \ref{anizotropia-czworoscian} kolorem niebieskim) zostają w istocie połączone sprężyną.
+Przedstawiony czworościan posiada zdefiniowane dwie osie. Wyznaczono też dwa
+punkty przecięcia $P_1$ oraz $P_2$ z osią poziomą figury. W celu zapamiętania
+pozycji punktów przecięcia wyznacza się współczynniki kombinacji liniowej z
+wierzchołkami tworzącymi ścianę. $P_1 = \alpha * A + \beta *B + \gamma *C$.
+Współczynniki te muszą być wyznaczane dla czworościanu znajdującego się w stanie
+spoczynku. Punkty przecięcia traktowane są odtąd jak nowe punkty masy. Działają
+na nie siły wewnętrzne i zewnętrzne układu. Dwa punkty (zaznaczonymi na rys.
+		\ref{anizotropia-czworoscian} kolorem niebieskim) zostają w istocie
+połączone sprężyną.
 
-Następnie dokonuje się omawianych w poprzednich podrozdziałach obliczeń sił działających na punkt przecięcia. Mając dane współczynniki kombinacji liniowej, wyznaczyć można siły działające na punkty masy $A,B,C$ pierwotnie zdefiniowane w modelu. 
+Następnie dokonuje się omawianych w poprzednich podrozdziałach obliczeń sił
+działających na punkt przecięcia. Mając dane współczynniki kombinacji liniowej,
+	wyznaczyć można siły działające na punkty masy $A,B,C, D$ pierwotnie zdefiniowane w modelu. 
 
 \begin{figure}[ht]
 \centering
@@ -370,207 +468,4 @@ Następnie dokonuje się omawianych w poprzednich podrozdziałach obliczeń sił
 \caption{Porównanie dwóch zastosowanych siatek w obiekcie przytwierdzonym górną podstawą i poddanemu sile grawitacji. W modelu wykorzystano metodę D. Bourguignon i M-P. Cani, Źródło: \cite{ca}}
 \label{anizotropia-czworoscian-fix}
 \end{figure}
-
-\subsection{Metody bazujące na pozycji}
-Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
-ciał miękkich. Pierwsze propozycje takiego podejścia przedstawione zostało w
-roku 2001 r.\cite{jak}, natomiast uogólniona wersja będąca bazą kolejnych
-iteracji modelu, została oficjalnie opublikowana w 2006 r.\cite{pbdyn}. Metody te
-szybko stały się popularne w obszarze grafiki komputerowej i jest dzisiaj
-implementowana w profesjonalnych silnikach fizycznych takich jak PhysiX czy
-Bullet.
-
-Model przedstawiony w tej pracy jest fizycznym modelem Lagrange'a. Termin
-bazujący na pozycji oznacza, że w odróżnieniu od symulacji bazujących na siłach, to pozycje
-wszystkich punktów materialnych symulowanego ciała podlegają w symulacji pewnym
-regułom. Zastosowania reguł, czy jak to będzie zwane później ograniczeń, na
-punkty modelu skutkuje poprawą stabilności symulacji oraz ułatwia jej
-implementację. Do najważniejszych zalet modeli bazujących na pozycji należą:
-\begin{itemize}
-	\item bezpośrednia kontrola nad całkowaniem równań ruchu, pozwala rozwiązań
-	problemy z niestabilnością model.
-	\item punkty materialne mogą być bezpośrednio manipulowane, bez użycia sił.
-	\item model ograniczeń bazujących na pozycji może być wykorzystany do
-	symulowania szerokiego zakresu zdarzeń fizycznych.
-	\item system rozwiązujący ograniczenia w modelu jest łatwy w implementacji.
-\end{itemize}
-
-\subsubsection{Definicja}
-Model zakłada, że każdy obiekt deformowalny jest przedstawiony jako zbiór $N$
-punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ ograniczeń
-zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek modelu posiada
-następujące atrybuty:
-
-\centering
-\begin{tabular}{|r|l|}
-\hline
-$x_i$ & pozycja w $R^3$ \\
-\hline
-$v_i$ & prędkość \\
-\hline
-$m_i$ & masa\\
-\hline
-\end{tabular}
-
-\raggedright
-Natomiast j-te ograniczenie posiada następujące atrybuty:
-
-\centering
-\begin{tabular}{|r|l|}
-\hline
-$n_j$ & liczność ograniczenia \\
-\hline
-$C_j$ & funkcja $R^{3n_j} -> R$\\
-\hline
-${i_1, ..., i_{n_j}}, i_k \in [1,..N]$ & zbiór indeksów\\
-\hline
-$k_j \in [0.. 1]$ & sztywność\\
-\hline
-typ & równość lub nierówność\\
-\hline
-\end{tabular}
-
-\raggedright
-Dane j-te ograniczenie typu równości jest spełnione wtedy gdy $C_j(x_{i_1},...,
-		x_{i_{n_j}}) = 0$, natomiast typu nierówności wtedy gdy $C_j(x_{i_1},...,
-		x_{i_{n_j}}) > 0$. Parametr $k_j$ definiuje siłę ograniczenia w
-		przedziale od $0...1$, gdzie 0 oznacza ograniczenie, które nie powoduje
-		przemieszczenia symulowanych wierzchołków, natomiast 1 oznacza, że
-		wierzchołki muszę tak zostać przesunięte aby spełnić ograniczenie w
-		danym kroku symulacji.
-
-\paragraph{Algorytm}
-
-Mając dany model $\{X_N, C_M, \Delta t \} $ każda iteracja symulacji przebiega
-następująco:
-\begin{enumerate}
-\item \textbf{for} $i = 1:N$
-\item \hspace{1cm} $x_i = x_i^0, v_i = v_i^0, w_i = 1/m_i$
-\item \textbf{end for}
-\item \textbf{loop}
-\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $v_i \leftarrow v_i + \Delta t w_i f_{ext}(x_i)$
-\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $p_i \leftarrow x_i + \Delta t v_i$
-\item \hspace{1cm} \textbf{for} $j = 1:liczbaIteracjiSolwera$
-\item \hspace{2cm} $rozwiazOgrnaiczenia(C_1,..., C_{M}, p_1, ..., p_N)$
-\item \hspace{1cm} \textbf{end for}
-\item \hspace{1cm} \textbf{for} $i = 1:N$
-\item \hspace{2cm} $v_i = (p_i - x_i) / \Delta t$
-\item \hspace{2cm} $x_i = p_i$
-\item \hspace{1cm}\textbf{end for}
-\item \textbf{end loop}
-
-\end{enumerate}
-
-W zaproponowanej przez Mullera symulacji bazującej na pozycji, najważniejszą częścią stanowią są
-fragmenty (6), (8), (11-12). W linii (6) następuje całkowanie równania ruchu za 
-pomocą metody Eulera, ustala się w ten sposób predykcję pozycji $p_i$. Następnie
-wszystkie predykcje są rzutowane w taki sposób aby spełniły wszystkie
-ograniczenia $C_M$. Ostatnim krokiem symulacji jest ponowne wyliczenie
-prędkości oraz przypisane zrzutowanej predykcji do pozycji wierzchołka.
-
-Model pozwala do włączenia do symulacji sił zewnętrznych $f_{ext}$, którymi na ogół jest
-grawitacja. W celu symulowania innych sił działających na symulowane ciało
-operuje się bezpośrednio na prędkościach wierzchołków, które mogę zostać
-zmienione pomiędzy liczeniem predykcji, (między 5-6) oraz po
-zaktualizowaniu pozycji oraz prędkości (13-14).
-
-Przedstawiona symulacja jest bezwarunkowo stabilna ponieważ nowe pozycje nie są
-ekstrapolacją wynikająca z kroku całkowania (6), tyko pewnym rzutowaniem na
-stabilne konfiguracje systemu wyliczane podczas iteracji solwera (8). Jedynym
-źródłem niestabilności jest sam solwer, którym używa metody Newtona do wyliczenia
-stabilnej konfiguracji. Jednakże niestabilność nie zależy od przyjętego kroku
-całkowania systemu $\Delta t$, tylko od samej funkcji danego
-ograniczenia\cite{pbdyn}.
-
-\subsubsection{Rozwiązywanie układu ograniczeń}
-Problem rozwiązania ograniczeń $C_1, .., C_M$ dla projekcji układu $p_1, ..., p_N$
-jest podobny do problemu rozwiązania układu równań. Do rozwiązania takiego
-układu możemy się posłużyć metodami Jacobiego oraz Gaussa-Seidela. 
-
-Niestety, w modelu funkcje ograniczeń mają też postać nierówności, a
-najczęściej spotykane funkcje ograniczeń mają charakter nieliniowy. Powoduje to,
-że niemożliwe jest użycie klasycznych wersji w/w metod. Muller proponuje
-zmodyfikowana metodę, w której to każde równanie (lub nierówność) będzie rozwiązane
-oddzielnie metodą Newtona, a następnie otrzymane rozwiązanie zostanie użyte w
-następnej iteracji solwera. Zmodyfikowana metoda Gaussa-Seidela dodatkowo używa
-poprzedniego rozwiązania równania do estymacji następnego co skutkuje szybszą
-zbieżnością metody\cite{pbdyn}.
-
-\subsubsection{Ograniczenia}
-Ograniczenia mają za cel rzutowanie wyliczonej projekcji $p_i$ do przestrzeni
-rozwiązań możliwych. Spełnienie warunków ograniczenia oznacza w 
-modelu pozycyjnym przemieszczenie danej projekcji wierzchołka o wektor $\Delta p$.
-Jeżeli dane ograniczenie modeluje zależności między punktami należącymi do
-obiektu to przesunięcie $\Delta p$ powinno posiadać
-pewne pożądane z punktu widzenia symulacji własności: zachowanie pędu oraz
-momentu pędu.
-
-Pęd jest zachowane jeśli przesunięcie $\Delta p$ posiada własność:
-$$ \sum_i m_i \Delta p_i = 0$$
-Natomiast moment pędu jest zachowany gdy:
-$$ \sum_i r_i \times m_i p_i = 0$$, gdzie $r_i$ jest odległością $p_i$ do punktu
-rotacji.
-
-Nie spełnienie w/w równości skutkuje powstawaniem dodatkowych sił, które
-oddziałują na punkty obiektu tak jak siły zewnętrzne. Jeżeli dane ograniczenie
-nie dotyczy zewnętrznych właściwości (np. odległości od punktu kolizji),
-własności te nie muszą być zachowane\cite{pbdyn}.
-
-Muller proponuje następujący wzór na obliczanie przemieszczenie $\Delta d$ dla
-ograniczeń, których funkcja jest niezależna od translacji i obrotu punktów.
-Jeżeli $p = [ p_1^T, p_2^T, ..., p_K^T]^T$, gdzie $K$ jest licznością
-ograniczenia $C$:
-\begin{equation} \label{con_eq}
-\Delta p = - \frac{C(p)}{\mid \nabla_p C(p) \mid^2}\nabla_p C(p)
-\end{equation}
-,gdzie $\nabla_p C(p)$ jest gradientem dla ograniczenia $C$ w $p$
-
-Przemieszczenie dla poszczególnego wierzchołka wyraża się wzorem:
-$$\Delta p_i = -s w_i\nabla_{p_i}C(p_1, ..., p_K)$$ 
-$$ s = \frac{C(p_1, ..., p_K)}{\sum_j w_j\mid \nabla_{p_j}C(p_1, ..., p_K)
-	\mid^2}$$
-
-,gdzie $w_i = 1 / m_i$
-
-Przedstawiona powyżej projekcja jest przeprowadzana w kroku (8) głównego
-algorytmu dla każdego ograniczenia $C_i$ o typie równość.
-W przypadku gdy typ ograniczenia jest nierównością przemieszczenie $p$
-o wyliczony wektor wektorów $\Delta p$ następuje tylko wtedy gdy $C(p_1, ...,
-		p_k) < 0$.
-
-Ostatnią istotną własnością każdego ograniczenia jest jej parametr sztywności
-$k$, Informuje on jaka część korekty $\Delta p$ może być dodana do obecnych
-predykcji $p$. Ma to na celu uniemożliwienie powrotu układu do jego konfiguracji
-stabilnej, tzn. takiej gdzie spełnione są wszystkie ograniczenia, w jednej
-iteracji głównego algorytmu. Jeżeli $k$ równałoby się jedności dla wszystkich
-ograniczeń modelu, to symulowany obiekt byłby zbyt usztywniony co nie byłoby
-pożądanym efektem.
-
-\paragraph{Dystans między punktami}
-Ograniczenie w dystansie między punktami pozwala symulować efekt rozciągania
-ciała. W swojej podstawowej wersji funkcja ograniczenia dana jest wzorem:
-$$ C(p_1, p_2) = \mid p_1 - p_2 \mid - d$$, gdzie $d$ jest wartością
-spoczynkową, czyli odległością między punktami $p_1$ i $p_2$ w stabilnej
-konfiguracji.
-
-Funkcja ograniczenia spełnia warunku dla wzoru \ref{con_eq}, czyli jest
-niezależna od translacji i obrotu punktów. Dlatego też wzór na korektę dla
-ograniczenia dystansu jest równy:
-
-$$\Delta p_1 = - \frac{w_1}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
-	p_2}{\mid p_1 - p_2 \mid}$$
-
-$$\Delta p_2 = + \frac{w_2}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
-	p_2}{\mid p_1 - p_2 \mid}$$
-
-Aby otrzymać ostateczną korektę projekcji $p_1$ i $p_2$ w danym kroku solwera,
-	trzeba otrzymane wartości $\Delta _1$ oraz $\Delta p_2$ pomnożyć przez
-	sztywność ograniczenia $k$, gdzie $k \in (0, 1)$. 
-	$$ p_i = p_i + k * \Delta p_i$$
-	Powyższe równanie ma jedną niepożądaną własność, ostatecznie przesunięcie
-	$\Delta p_i$ jest zależne od ilości iteracji solwera układu ograniczeń
-	. Efekt po $n_s$ iteracjach na ostateczne przesunięcie $\Delta p$
-	będzie nieliniowy i równy $\Delta p_0 k^n$. Aby pozbyć się zależności od
-	liczby iteracji, parametr $k$ musi być funkcją $n_s$, czyli:
-	$$ k' = 1 - (1 - k)^{1/n_s}$$
 
