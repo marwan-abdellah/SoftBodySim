@@ -286,14 +286,90 @@ W przypadku gdy cząstka należy do wielu regionów, jako ostateczna docelowa
 pozycja $g_i$ używana jest średnia z dopasowania z poszczególnych regionów.
 
 \section{Zachowanie objętości}
-$$\iiint\limits_V \nabla \dot f(x) dx = \iint\limits_{\partial V} f(x)^T n(x) dx,$$
+Symulacja ciała miękkiego bez obostrzeń na zmiany objętości może
+prowadzić do dużych jej zmian i niepożądanych wizualnie efektów. 
+Aby temu zapobiec do modelu wprowadzona będzie siła wewnętrzna pojawiająca się w
+przypadku gdy objętość ciała jest różna od objętości spoczynkowej oznaczonej
+przez $V_0$.
 
-$$\iiint\limits_V \nabla \dot x dx = \iint\limits_{\partial V} x^T n(x) dx = 3 V,$$
+Powierzchnię ciała o zamkniętej trójkątnej siatce określonej na jego powierzchni definiuje
+się jako: \cite{diziol}
+\begin{equation}
+\label{obj}
+\frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i = 3V
+\end{equation}
+gdzie $m$ jest ilością trójkątów stanowiących siatkę, a punkty $a_i$, $b_i$,
+	  $c_i$ wierzchołkami i-tego trójkąta, $A$ jego powierzchnią, a $n_i$
+	  normalną trójkąta.
 
-$$ \iint\limits_{\partial V} x^T n(x) dx = \frac{1}{3} \sum_i^m A_i (a_i + b_i +
-		c_i)^T n_i,$$
-$$ \frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i = \frac{1}{3}\sum_i^n x_i^T
-\tilde{n}_i,$$
+W pracy \cite{diziol} zdefiniowana jest funkcja ograniczenia nałożona na
+objętość ciała postaci:
+\begin{equation}
+\label{cons}
+C(X) = \frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i - 3V_0 = 0
+\end{equation}
+gdzie $V_0$ jest objętością niezdeformowanego ciała, a $X$ jest zbiorem punktów
+siatki. W przypadku gdy pewna konfiguracja punktów $\tilde{X} = [x_1, x_2,...,
+	x_n] $ ciała generuje
+objętość różną od $V_0$, wtedy należy znaleźć takie przesunięcie punktów $\Delta
+\tilde{X}$, tak by spełniona była równość 
+$$C(\tilde{X} + \Delta \tilde{X}) = 0$$
+
+Funkcja ograniczenia \ref{cons} może zostać aproksymowana przez:
+\begin{equation}
+\label{e1}
+C(X + \Delta X) \approx C(X) + \nabla_X C(X) \Delta X
+\end{equation}
+
+Zakładając, że przesunięcie $\Delta X$ może występować tylko wzdłuż gradientu $\nabla_X
+C(X)$ otrzymujemy dodatkową równość:
+\begin{equation}
+\label{e2}
+\Delta X = \lambda \nabla_X C(X)
+\end{equation}
+
+Rozwiązując układ równań \ref{e1} i \ref{e2} otrzymujemy ostateczną formułę
+opisujące przemieszczenie $\Delta X$ rozwiązujące ograniczenie na objętość:
+\begin{equation*}
+\Delta X = - \frac{C(X)}{||\nabla_p C(X)||^2} \nabla_X C(X)
+\end{equation*}
+
+Indywidualne przemieszczenie $x_i$ mogą zostać wyliczone z formuły:
+\begin{equation}
+\Delta x_i = - \frac{C(X)}{\sum_j ||\nabla_{x_j} C(X)||^2} \nabla_{x_i} C(X)
+\end{equation}
+
+Aby ustalić wartość gradientu przekształcimy wyrażenie \ref{obj} w taki sposób,
+	aby zamiast sumowania po trójkątach sumowała po punktach siatki:
+\begin{equation}
+\label{dd}
+\frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i = \frac{1}{3} \sum_i^n x_i^T
+\tilde{n}_i
+\end{equation}
+gdzie $\tilde{n}_i = \sum_j A_j n_j$.
+
+Diziol \cite{diziol} nie używa dokładnej formuły na gradient wyznaczony z
+\ref{dd}. Zamiast tego proponuje następujące uproszczenie:
+\begin{equation}
+\nabla C(X) \approx \frac{1}{3} [\tilde{n}^T_1, \tilde{n}^T_2, ...,
+	\tilde{n}^T_n]^T
+\end{equation}
+Według \cite{diziol} przybliżony gradient nie zmienia znacząco jego wartości, a
+pozwala na łatwiejsze jego wyliczenia na GPU.
+
+Ostateczną formułą na przesunięcie związane ze zmianą objętości możemy zapisać:
+\begin{equation}
+\delta x_i = \frac{\Delta V}{N} \tilde{n}_i
+\end{equation}
+
+%$$\iiint\limits_V \nabla \dot f(x) dx = \iint\limits_{\partial V} f(x)^T n(x) dx,$$
+
+%$$\iiint\limits_V \nabla \dot x dx = \iint\limits_{\partial V} x^T n(x) dx = 3 V,$$
+
+%$$ \iint\limits_{\partial V} x^T n(x) dx = \frac{1}{3} \sum_i^m A_i (a_i + b_i +
+%		c_i)^T n_i,$$
+%$$ \frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i = \frac{1}{3}\sum_i^n x_i^T
+%\tilde{n}_i,$$
 \section{Dynamika bazująca na pozycji}
 
 Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
