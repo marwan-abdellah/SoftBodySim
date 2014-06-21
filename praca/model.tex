@@ -1,28 +1,30 @@
-\chapter{Wybrany model ciała miękkiego}
+\chapter{Wybrany metoda symulacji ciała miękkiego}
 
 \section{Kryteria wyboru modelu}
 
 Wybór metody symulacji uzależniony jest od zakresu zjawisk fizycznych które mają
-być jej przedmiotem. Zanim przedstawiona zostanie wybrana metoda symulacji
-wymienione będą kryteria którymi kierowałem się przy wyborze.
-Pragnę też zaznaczyć, że wybór nastąpił w głównej mierze metodami empirycznymi,
-większość z poznanym metod została zaimplementowana i w przypadku niemożności
+być jej przedmiotem. Zanim przedstawiona zostanie wybrana metoda wymienione będą
+kryteria którymi kierowałem się przy jej wyborze.  Pragnę też zaznaczyć, że
+wybór ten nastąpił w głównej mierze metodami prób i błędów.  Większość z
+poznanych przeze mnie metod została zaimplementowana i w przypadku niemożności
 uzyskania porządanych efektów wizualnych lub wydajnościowych wyszukiwana była
 inna.
 
-Pierwszym kryterium jakim kierowałem się przy wyborze metody było
-zawężenia przedmiotu symulacji do ciał posiadających objętość. Wiele z
-metod ukierunkowanych na symulację włosów czy materiałów musiały zostać odrzucone ze
-względu na posiadane przez nie własności niestosowalne w
-symulacji obiektów z objętości - np. podatność na marszczenie. Nie oznacza to
-natomiast, że nie istnieją metody mogące symulować oba zjawiska - przykładem
-jest chociażby System Sprężyn omawiany w rozdziale 2.
+Pierwszym kryterium jakim kierowałem się przy wyborze metody było zawężenia
+przedmiotu symulacji do ciał posiadających objętość. Wiele z metod symulacji
+ciała miękkiego ukierunkowana jest na symulację ciał nie posiadających objętości
+- takich jak włosy czy materiały. Metody te zaaplikowane do obiektów
+posiadających objętość często nie dawały oczekiwanych rezultatów (miało to
+		np. miejsce w przypadku omawianej później dyniamiki pozycyjnej w formie
+		zaproponowanej przez jej autorów). Dodatkowo większość z posiadanych przez nie
+własności trzeba było wyeliminować ze względu na charakter symulowanego zjawiska
+- przykładem jest np. efekt marszczenia powierzchni.
 
-Kolejnym kryterium, a właściwie uproszczeniem było założenie, że
-symulowany obiekt będzie jednorodny pod względem wypełnienia, czy inaczej,
-materiału z którego jest zbudowany. Pozwala to na
-uniknięcia modelowania, często nietrywialnego, właściwości fizycznych modelu, co z pewności
-wykroczyłoby poza temat tej pracy. 
+Kolejnym kryterium, a właściwie uproszczeniem było założenie, że symulowany
+obiekt będzie jednorodny pod względem wypełnienia, czy inaczej, materiału z
+którego jest zbudowany. Pozwala to na uniknięcia modelowania, często
+nietrywialnego, właściwości fizycznych modelu, co z pewnością wykroczyłoby poza
+temat tej pracy. 
 
 % złożone obiekty o skomplikowanej siatce
 Innym istotnym wymaganiem jest umożliwienie symulowania obiektów
@@ -31,21 +33,21 @@ wielu tysięcy wierzchołków, które posiadają własne współrzędne teksturo
 czy normalne. Implikacją tego założenia jest fakt, że poszukiwana metoda musi być
 metodą Lagrange'a symulującą dynamikę wierzchołków trójwymiarowego modelu.
 Dodatkowe informacje związane z modelem, takie jak połączenia między
-wierzchołkami czy wierzchołki tworzące trójkąty mogły być wykorzystane w
+wierzchołkami czy wierzchołki tworzące trójkąty mogą być wykorzystane w
 symulacji.
 
 % zakres degeneracji
-Każde symulowane ciało miękkie poddane działaniu sił może zostać odkształcone
-tylko w zdefiniowanym zakresie. W przypadku gdy siły zewnętrzne przestają działać
-na ciało, siły wewnętrzne powinny sprowadzić obiekt do formy nieodkształconej.
-Takie założenie upraszcza symulację gdyż wyklucza trwałą degenerację siatki
-obiektu.
+Kolejnym wymaganiem jest przyjęcie, że symulowane ciało miękkie poddane
+działaniu sił będzie odkształcane tylko w średnim zakresie. W
+przypadku gdy siły zewnętrzne przestają działać na ciało, siły wewnętrzne
+powinny sprowadzić obiekt do formy nieodkształconej. Takie założenie upraszcza
+symulację gdyż wyklucza trwałą degenerację siatki obiektu.
 
 % przeznaczona do symulacji czasu rzeczywistego stabilna do zastosowań
-Najważniejszym wymaganiem jakie brane było pod przy wyborze metody jest możliwość
-zastosowania do symulacji czasu rzeczywistego. Metody złożone obliczeniowo takie
+Najważniejszym wymaganiem jakie brane było pod uwagę przy wyborze metody jest możliwość
+zastosowania jej do symulacji czasu rzeczywistego. Metody złożone obliczeniowo takie
 jak przytaczane w rozdziale 2 Metody Continuum nie spełniają tego kryterium.
-Również metody wymagające zaawansowanej obróbki modelu - takie jak np. System
+Również metody wymagające zaawansowanej obróbki modelu - taka jak np. System
 Sprężyn wymagają zdefiniowania wewnętrznej struktury obiektu, co wiąże się z
 generowaniem znacznej ilości cząstek poddanych symulacji. 
 
@@ -54,14 +56,12 @@ gęste wypełnienie średniej złożoności modelu punktami wewnętrznymi powodu
 zbytnie usztywnienie obiektu i znacząco spowalnia symulację. W przeciwieństwie,
 gdy wnętrze modelu jest rzadko wypełnione cząstkami wewnętrznymi wyjściowa
 siatka modelu podlega znacznej degeneracji. Znalezienie optymalnej gęstości
-siatki odbywało się drogą eksperymentów.
+siatki oraz współczynników sprężystości sprężyn odbywało się drogą eksperymentów.
 
 % skalowana do gpu
-Tematem tej pracy jest poznanie i zastosowanie technologii CUDA. Dlatego też
+Tematem tej pracy jest również poznanie i zastosowanie technologii CUDA. Dlatego też
 ostatnim kryterium jakie brane było pod uwagę przy wyborze metody symulacji jest
-możliwość wykorzystania GPU do obliczeń. Wymaga to aby
-przetwarzanie danych w wybranej metodzie odbywało się możliwie lokalnie, co
-pozwoli na zrównoleglenie obliczeń i uzyskanie wzrostu wydajności.
+możliwość wykorzystania GPU do obliczeń.
 
 % skad wzialem metode czyja to, kiedy skad
 Jako źródło informacji o dostępnych metodach wykorzystywany był głównie
@@ -73,7 +73,7 @@ artykuły stanowiące przekrój przez szereg opublikowanych metod: \cite{TR97-19
 	publikowane konferencyjne publikowane na stronie \textit{www.siggraph.org}.
 
 % klasyfikacja tej metody - Lagrange geometryczno fizyczny
-Zaimplementowana w tej pracy metoda bazuje głównie na artykule \textit{Robust
+Zaimplementowana w tej pracy metoda bazuje na artykule \textit{Robust
 	Real-Time Deformation of Incompressible Surface Meshes}\cite{diziol},
 opublikowanym na konferencji SIGGRAPH w 2011r. Wybrana metoda jest wg
 klasyfikacji z rozdziału 2 metodą Lagrange'a posiadająca zarówno elementy
@@ -81,23 +81,24 @@ fizyczne jak i niefizyczne. Elementami fizycznymi jest pojawianie się sił w
 momencie gdy obiekt zmienia swoją objętość oraz siły grawitacji. Za część
 niefizyczną, uznany jest tzw. \textit{Shape Matching}, czyli metoda geometryczna
 oddziałująca na cząstki modelu w taki sposób aby zminimalizować ich odchylenie
-ich położeń od stanu wejściowego.
+ich położeń od stanu wejściowego oraz technika zachowania objętości. Obie
+techniki będą dokładniej omawiane w rozdziałach \ref{sec:shape} i \ref{sec:vol}
 
 % dlaczego powinna byc szybka nie potrzeba wypelniac obiektu puntkami - operuje bezposrednio na powierzchni siatki
 Ważniejszą jednak zaletą wybranego modelu jest fakt, że w przeciwieństwie do
 Systemu Sprężyn symulowane obiekty nie muszę mieć
 zdefiniowanej struktury wewnętrznej. Pozwala to znacząco przyspieszyć symulację
-unikając generowania znacznej ilość cząstek, które odpowiadają tylko za
+unikając generowania i symulacji znacznej ilość cząstek, które odpowiadają tylko za
 utrzymanie fizycznych właściwości obiektu. Metoda ta operuje bezpośrednio na
 trójkątnej siatce, co pozawala wczytać obiekt bezpośrednio z formatu modeli
 3D.
 
 % dlaczego powinna byc stabilna - brak sil, dynamika z constraintami
-Kolejną zaletą użytej techniki symulacji jest jej stabilność. Wynika ona z
-operowania metody bezpośrednio na pozycjach cząstek zamiast na siłach. Pozwala
-to na bardzo prostą implementację reakcji na zderzenia z innymi obiektami czy
-samym sobą. Dokładniejszy opis schematu symulacji układu w czasie będzie w
-dalszej części tego rozdziału.
+Kolejną zaletą użytej techniki symulacji jest jej stabilność, która wynika z
+nowatorskiego podejścia do rozwiązywania równań ruchu. Nie posiada ona
+wielu typowych źródeł niestabilności typowych dla modelu Systemu Sprężyn.
+Dokładne omówienie symulowania dynamiki wybranej metody nastąpi w rozdziale
+\ref{sec:dyn}.
 
 % dlaczego jest dobra na gpu
 Ostatnią zaletą jest też możliwość efektywnej implementacji wybranej metody na
@@ -276,7 +277,6 @@ g_i = R(x_i^0 - x^0_{cm}) + x_{cm}
 \end{equation}
 
 \subsection{Modyfikacje}
-\label{sec:vol}
 Shape Matching w swojej podstawowej formie dokonuje optymalizacji dopasowania
 globalnie dla wszystkich punktów symulowanego ciała. Powoduje to jego zbytnie
 usztywnienie i dopuszcza tylko wąski zakres deformacji.
@@ -292,6 +292,7 @@ g_i = \frac{1}{K_i} \sum_j^{K_i} R_j (x^0_i - x^0_{cm_j}) + x_{cm_j}
 \end{equation}
 
 \section{Zachowanie objętości}
+\label{sec:vol}
 Symulacja ciała miękkiego bez obostrzeń na zmiany objętości może
 prowadzić do dużych jej zmian i niepożądanych wizualnie efektów. 
 Aby temu zapobiec do modelu wprowadzona będzie siła wewnętrzna pojawiająca się w
@@ -377,6 +378,7 @@ Ostateczną formułą na przesunięcie związane ze zmianą objętości możemy 
 %$$ \frac{1}{3} \sum_i^m A_i (a_i + b_i + c_i)^T n_i = \frac{1}{3}\sum_i^n x_i^T
 %\tilde{n}_i,$$
 \section{Dynamika bazująca na pozycji}
+\label{sec:dyn}
 
 Zastosowanie geometrycznych technik takich jak wymieniony w rozdziale
 \ref{sec:shape} Shape-Matching czy metod zachowujących objętość w \ref{sec:vol}
