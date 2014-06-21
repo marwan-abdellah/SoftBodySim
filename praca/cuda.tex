@@ -1,6 +1,6 @@
 \chapter{Technologia CUDA}
 \section{Współbieżna przyszłość}
-Kiedy w roku 2005 H. Sutter \cite{lunch} opublikował artykuł o intrygująco 
+Kiedy w roku 2005 Herb Sutter \cite{lunch} opublikował artykuł o intrygująco 
 brzmiącej nazwie 'Koniec darmowego lanczu', w szeroko pojętym środowisku 
 deweloperskim rozgorzała dyskusja. Autor stwierdził, że obserwujemy kres 
 wykładniczego wzrostu wydajności mikroprocesorów, rozumianego przez wzrost 
@@ -11,7 +11,7 @@ oferowane na rynku procesory firmy Intel przedstawione na rysunku \ref{proce}.
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=1.0]{images/CPU.png}
-\caption{Źródło: http://www.gotw.ca/}
+\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
 \label{proce}
 \end{figure}
 
@@ -34,7 +34,7 @@ jest prawdziwe? Wprawdzie częstotliwość taktowania nie podlega już takim tre
 co wcześniej, jednak dzisiejsze architektury CPU oferują więcej niż jeden rdzeń
 zdolny do wykonywania programu. Obecnie na rynku jest już oferowany procesor
 Intel z serii i7, który może posiadać do 8 fizycznych rdzeni. Dodatkowo, nowe
-technologie takie jak hyperthreading, pipelining czy zaawansowany brach
+technologie takie jak hyperthreading, pipelining czy zaawansowany branch
 prediction pozwalają na możliwie szybkie, czy wręcz równoległe wykonywanie
 fragmentów sekwencyjnego kodu.
 
@@ -51,7 +51,7 @@ Sutter stwierdza, że odpowiedzą na postawiony wyżej problem jest zmiana
 paradygmatu z programowania sekwencyjnego na współbieżne. Tworzone wielowątkowe
 aplikacje będą w stanie korzystać z wielordzeniowych architektur, co przyspieszy
 ich wykonywanie a programistom pozwoli nadal oczekiwać na ,,darmowy lancz''.
-Faktem potwierdzającym postawiona przez niego tezę jest rysunek \ref{gflops},
+Faktem potwierdzającym postawioną przez niego tezę jest rysunek \ref{gflops},
 przedstawiający teoretyczną maksymalną wydajność wielo-rdzeniowych mikroprocesorów oraz układów
 graficznych mierzoną w giga FLOPS-ach (operacji zmiennoprzecinkowych na
 sekundę).
@@ -66,33 +66,32 @@ sekundę).
 Samo jednak przejście na model programowania równoległego nie będzie łatwe,
 przyjemne, a przede wszystkim tanie. Wg
 Suttera taka zmiana wiązać się będzie nie tylko ze zmianą architektury
-aplikacji, lecz też systemu operacyjnego czy konstrukcjami języków
-programowania. 
+aplikacjiczy konstrukcjami języków programowania. 
 
-Zmiany w stronę wielowątkowości obserwowane są jakiegoś czasu. W nowym
+Zmiany w stronę wielowątkowości obserwowane są od jakiegoś czasu. Dla przykładu
+w 
 standardzie języka C++ 11, biblioteka obsługująca wątki będzie wchodzić w skład
-biblioteki standardowej, Microsoft publikuje wielowątkowe wersje popularnych
-bibliotek dla Platformy .NET jak PLINQ, a NVIDIA biblioteki algorytmiczne
-(CUFFT) wykonywane na GPU. Marsz w stronę wielowątkowości obserwujemy cały czas,
-	ale nie będzie to jednak rewolucja zapowiadana w \cite{rewolucja}, lecz moim
-	zdaniem bardziej ewolucja. Warto dodać, że dużo pracy zostało już w tym
-	kierunku wykonane.
-	Serwery www oraz bazy danych są świetnym przykładem wielowątkowych
-	aplikacji.
+biblioteki standardowej, Microsoft publikuje bibliotekę C++ AMP i wielowątkowe
+wersje popularnych bibliotek dla Platformy .NET jak PLINQ, a NVIDIA biblioteki
+algorytmiczne m.in. CUFFT wykonywane na GPU. Marsz w stronę wielowątkowości
+obserwujemy cały czas, ale moim zdaniem nie będzie to jednak rewolucja
+zapowiadana w \cite{rewolucja}, lecz bardziej ewolucja. Warto dodać, że dużo
+pracy zostało już wykonane.  Serwery www oraz bazy danych są świetnym przykładem
+dobrze skalowanych, wielowątkowych aplikacji.
 
-Koleją istotną kwestią w projektowaniu wielowątkowych aplikacji jest jej
-skalowalność. Jeżeli dany problem programistyczny nie będzie w stanie być
-dynamicznie dzielony na podproblemy, które będą mogły być rozwiązany
+Kolejną istotną kwestią w projektowaniu wielowątkowych aplikacji jest jej
+skalowalność. Jeżeli dany problem programistyczny nie może być
+dynamicznie dzielony na podproblemy, które będą mogły być rozwiązane
 indywidualnie, korzyści związane z przyrostem ilości rdzeni w sprzęcie nie będą
-zauważane. Taki podział często okazuje się być nietrywialny, a czasem
-niemożliwy. Nie można też oczekiwać wielkich wzrostów wydajności, ponieważ nie
+zauważalne. Taki podział często okazuje się być nietrywialny, a czasem
+wręcz niemożliwy. Nie można też oczekiwać wielkich wzrostów wydajności, ponieważ nie
 cały kod aplikacji może być zrównoleglony. Dobrze opisuje to formuła stworzona w
-1967 r. przez G. Amdahl.
+1967 r. przez G. Amdahla:
 
 \begin{equation}
 W(N) = \frac{1}{(1-S) + \frac{S}{N}}
 \end{equation}
-,gdzie $N$ jest ilością jednostek wykonywania, a $S$ jest \% kodu programu,
+,gdzie $N$ jest ilością jednostek wykonywania, a $S$ jest częścią kodu programu,
 	który może być zrównoleglony. I tak dla 8 rdzeni i programu o współczynniku
 	$S=60\%$, otrzymujemy wzrost wydajności tylko około 2.1 raza.
 
@@ -102,14 +101,15 @@ gotowe rozwiązania z dostępnych bibliotek, jednak myślenie o problemie i
 przedstawienie go w postaci dającej się zrównoleglić będzie rzeczą
 najważniejszą. Środowiska naukowe pomagają w tym aspekcie bardzo istotnie.
 Każdego roku publikowane są artykuły przedstawiające często nowatorskie
-podejścia do problemów, wskazując możliwość ich współbieżnego rozwiązania.
+podejścia do standardowych problemów, wskazując możliwość ich współbieżnego rozwiązania.
 Oczekuję, że w następnych latach trend z programowaniem równoległym będzie
 przybierał na sile, czego owocem będą nowe, innowacyjne metody i technologie.
 
 \section{Powstanie CUDA}
 
 Technologia CUDA (Compute Unified Device Architecture) została po raz pierwszy
-zaprezentowana przez NVIDIA w listopadzie 2006 r. Przedstawiła ona nowy model
+zaprezentowana przez NVIDIA w listopadzie 2006 r. Związana jest ona z nowym
+modelem
 programowania aplikacji w którym sekwencyjne fragmenty kodu są wykonywane na
 CPU, natomiast te wymagające obliczeniowo, na procesorach graficznych (GPU).
 Pierwsze karty graficzne z serii GeForce 8800, implementujące technologię CUDA,
@@ -123,7 +123,7 @@ w OpenGL 1.4 (2002) czy Direct3D 8.0 (2001), mogli dokonywać
 obliczeń na kartach graficznych. Wymagało to jednak często wielu trików, takich
 jak przekazywanie danych poprzez tekstury czy odczytywania danych wyjściowych z
 wygenerowanej ramki obrazu. NVIDIA wyszła naprzeciw tym problemom, tworząc
-dedykowane na ten cel interfejsy programistyczne w języku C.
+dedykowane do tego interfejsy programistyczne w języku C.
 
 Na sukces technologi CUDA złożyło się wg \cite{massive} parę czynników.
 Pierwszym jest fakt, że programiści aplikacji równoległych otrzymali środowisko
@@ -147,31 +147,34 @@ CUDA. Ma to bardzo istotny wymiar ekonomiczny, ponieważ wiele specjalistycznych
 
 Ostatnim, najbardziej oczywistym czynnikiem, jest wzrost wydajności. Procesory
 graficzne składające się z multiprocesorów strumieniowych są przystosowane do
-przetwarzania dużej ilości danych jednocześnie. W nowych architekturach takich
-jak GeForce z serii 680 posiadającą aż 1536 rdzeni zdolnych do równoległego
-wykonywania kodu. Efektem tego może być wzrost wydajności aplikacji w niektórych
-zastosowaniach nawet do 150 razy \cite{prez}.
+przetwarzania dużej ilości danych jednocześnie. Dodatkowo narzut związany z
+kreacją i zarządzaniem pojedynczego wątku na GPU jest znacząco mniejszy niż w
+analogiczna operacja wykonana na CPU.  W nowych architekturach takich jak
+GeForce z serii 680 posiadającą aż 1536 rdzeni zdolnych do równoległego
+wykonywania kodu.  Efektem tego może być wzrost wydajności aplikacji w
+niektórych zastosowaniach nawet do 150 razy \cite{prez}.
 
 \section{Interfejs programisty}
 
 \subsection{Kompilacja}
 
-Zaproponowany we frameworku CUDA model programowania, jak to było wcześniej
-przytoczone, zakłada możliwość
-skompilowania kodu w dwóch różnych kontekstach - hosta (CPU) oraz device'a
-(procesora graficznego). Jako kontekst rozumiany jest specyficzny dla danej architektury zestaw
-instrukcji dla procesora. Fragmenty programu, których zrównoleglenie jest
-niemożliwe są tworzone w kontekście hosta, natomiast te wymagające intensywnych,
-wielowątkowych obliczeń w kontekście device'a. Współistnienie dwóch
-kontekstów w jednym programie wykonywalnym możliwe jest dzięki zestawie
-bibliotek i narzędzi dostarczanych wraz z pakietem CUDA.
+Zaproponowany we frameworku CUDA model programowania zakłada możliwość
+skompilowania i wykonywania kodu programu w dwóch różnych kontekstach -
+gospodarza (CPU) oraz GPU (procesora graficznego)\cite{Nvillb}. Jako kontekst rozumiany jest
+specyficzny dla danej architektury zestaw instrukcji dla procesora. Fragmenty
+programu, których zrównoleglenie jest niemożliwe są tworzone w kontekście
+gospodarza,
+	natomiast te wymagające intensywnych, wielowątkowych obliczeń w kontekście
+	GPU.  Współistnienie dwóch kontekstów w jednym programie wykonywalnym
+	możliwe jest dzięki zestawie bibliotek i narzędzi dostarczanych wraz z
+	pakietem CUDA.
 
 Biblioteki dostarczane wraz z pakietem CUDA umożliwiają pisanie kodu CUDA w różnych
-językach programowani. Najczęściej stosowanych jest język C, istnieją jednak biblioteki
+językach programowania. Najczęściej stosowanych jest język C, istnieją jednak biblioteki
 dla języków C++, Java, Python, C czy Fortran. Dodatkowo kod CUDA może być też pisany w specjalnie stworzonym do tego celu
 niskopoziomowym języku PTX (Pararell Thread Execution), przypominającym asembler.
 Cechą wyróżniającą kod PTX od skompilowanego kodu binarnego, jest możliwość jego
-kompilacji w locie z użyciem tzw. Just-In-Time kompilatora (ptxas) dostarczanego przez
+kompilacji w locie z użyciem tzw. kompilatora JIT (ptxas) dostarczanego przez
 NVIDIĘ wraz ze sterownikami do karty graficznej. Pozwala to na uruchamianie kodu
 CUDA nie tylko na różnych wersjach sterowników karty graficznej, lecz również na
 innych procesorach graficznych firmy NVIDIA bez potrzeby rekompilacji.
@@ -186,16 +189,16 @@ innych procesorach graficznych firmy NVIDIA bez potrzeby rekompilacji.
 CUDA to w rzeczywistości cały stos bibliotek, sterowników i narzędzi. Jest on
 ogólnie 
 przedstawiony na rysunku \ref{cuda-model}. Najważniejszymi elementami w całym
-stosie jest driver dostarczany wraz ze sterownikami do karty graficznej NVIDIA 
-oraz biblioteka CUDA Runtime (cudart). Zadaniem drivera, uruchomionego
+stosie jest sterownik dostarczany przez producenta karty graficznej
+oraz biblioteka CUDA Runtime (cudart). Zadaniem sterownika, uruchomionego
 jako moduł jądra systemu operacyjnego, jest dostęp do urządzenia oraz wykonanie
-na nim kodu dedykowanego dla jego architektury i wersji. Driver odpowiada za
+na nim kodu dedykowanego dla jego architektury i wersji. Sterownik odpowiada za
 komunikację z urządzeniem a biblioteka CUDA Runtime nadbudowuje nad nim wyżej
-poziomowe funkcje takiej jak inicjalizacja, wywołaniem kontekstu device'a czy
+poziomowe funkcje takie jak inicjalizacja, wywołanie kontekstu GPU czy
 kopiowanie danych między kartą a pamięcią RAM komputera.
 
 Niezależnie od wybranego języka programowania czy użytych bibliotek, ostatecznie kod programu CUDA musi
-zostać skompilowany do postaci binarnej i uruchomiony w kontekście hosta. W
+zostać skompilowany do postaci binarnej i uruchomiony w kontekście gospodarza. W
 czasie działania programu wykonywanego sekwencyjnie na CPU, następuje zmiana
 kontekstów i uruchomienie skompilowanych fragmentów kodu na procesorze graficznym.
 Przełączanie kontekstów jest transparentne dla programisty,
@@ -203,20 +206,18 @@ ponieważ ogranicza się tylko do wywołania odpowiednich funkcji z bibliotek
 dostarczanych wraz z pakietem CUDA.
 
 CUDA to nie tylko zestaw bibliotek, lecz również zestaw rozszerzeń do języka
-programowania C. Implementacja rozszerzeń była
-podyktowana faktem, że składania C jest językiem wystarczającym do opisu kodu
-wykonywanego w kontekście device'a oraz potrzebą jednoznacznego rozróżnienia
-fragmentów programu każdego z kontekstów w kodzie źródłowym. W rezultacie
-dzięki narzędziom można pisać kod CUDA używając ANSI C oraz specjalnych rozszerzeń
-przypominających atrybuty kompilatora. W ten sposób NVIDIA
-zaoszczędziła programistom CUDA potrzeby nauki nowego języka programowania, czy
-pisania kodu w niskopoziomowym języku PTX. Użycie specjalistycznych atrybutów
-kompilacji dla języka C, możliwe jest tylko dzięki wykorzystaniu dostarczanego wraz z
-frameworkiem CUDA kompilatora 'nvcc'.
+programowania C. Implementacja rozszerzeń podytkowana była potrzebą
+jednoznacznego rozróżnienia fragmentów programu każdego z kontekstów w kodzie
+źródłowym. W rezultacie dzięki narzędziom można pisać kod CUDA używając ANSI C
+oraz specjalnych rozszerzeń przypominających atrybuty kompilatora. W ten sposób
+NVIDIA zaoszczędziła programistom CUDA potrzeby nauki nowego języka
+programowania, czy pisania kodu w niskopoziomowym języku PTX. Użycie
+specjalistycznych atrybutów kompilacji dla języka C, możliwe jest tylko dzięki
+wykorzystaniu dostarczanego wraz z frameworkiem CUDA kompilatora 'nvcc'.
 
-NVIDIA Cuda Compiler (nvcc) nie jest kompilatorem w pełnym tego słowa
+NVIDIA Cuda Compiler (nvcc) nie jest kompilatorem w tradycyjnym tego słowa
 znaczeniu, a bardziej zestawem narzędzi służących do kompilacji. W przypadku gdy
-kod źródłowy będzie kompilowany tylko w kontekście hosta, właściwą kompilacją
+kod źródłowy będzie kompilowany tylko w kontekście gospodarza, właściwą kompilacją
 zajmują się kompilatory dedykowane dla danego systemu operacyjnego. I tak dla
 Windows, nvcc wykorzystuje kompilator Visual Studio, natomiast dla systemu Linux
 użyty jest m.in. GCC. Zadaniem NVCC jest ukrycie przed programistą etapów kompilacji
@@ -224,43 +225,41 @@ specyficznego kodu CUDA dla konkretnej implementacji, którą jest procesor
 graficzny. Schemat kompilacji wraz z poszczególnymi etapami przedstawia rysunek
 \ref{compilation}.
 
-Pliki źródłowe programu napisanego w języku C zawierające rozszerzenia CUDA, przyjęło się zwyczajowo
-sufiksować końcówką ".cu", aby odróżnić je od konwencjonalnych programów C
-oznaczanych sufiksem ".c". Oba rodzaje rozszerzeń są akceptowane przez NVCC, co
-pozwala na wykorzystanie do kompilacji projektów CUDA tylko jednego kompilatora.
-W celu ułatwienia procesu budowania NVCC wspiera większość tradycyjnych
-parametrów kompilatora znanych z GCC czy Visual Studio Compiler. 
-
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=0.8]{images/nvcc-options-for-separate-compilation.png}
 \caption{Schemat rozłącznej kompilacji przy użyciu NVCC. Źródło: CUDA Compiler Driver NVCC}
 \label{compilation}
 \end{figure}
 
+Pliki źródłowe programu napisanego w języku C zawierające rozszerzenia CUDA, przyjęło się zwyczajowo
+oznaczać przyrostkiem ".cu", aby odróżnić je od konwencjonalnych programów C
+oznaczanych przyrostkiem ".c". Oba rodzaje rozszerzeń są akceptowane przez NVCC, co
+pozwala na wykorzystanie do kompilacji projektów CUDA tylko jednego kompilatora.
+W celu ułatwienia procesu budowania NVCC wspiera większość tradycyjnych
+parametrów kompilatora znanych z GCC czy Visual Studio Compiler. 
+
 NVCC używane jest zazwyczaj do kompilacji kodu źródłowego do postaci binarnej.
-Możliwe jest natomiast użycie kompilatora do kompilacji kodu napisanego w
-C do postaci pośrednich takich jak PTX, fatbin czy cubin. Fatbin jest plikiem
-zawierającym kod PTX w wersjach dla różnych architektur kart graficznych.
-W momencie kompilacji w locie (JIT) driver karty graficznej potrafi z pliku
-fatbin wybrać ten kod PTX, który najlepiej odpowiada danemu modelowi karty
-graficznej. Skutkuje to wyborem zoptymalizowanego dla danej architektury kodu
-oraz skróceniem czasem ładowania aplikacji.
-Cubin jest to natomiast plik binarny
-przeznaczony dla konkretnego procesora graficznego, który nie jest
+Możliwe jest także użycie kompilatora do kompilacji kodu napisanego w C do
+postaci pośrednich takich jak PTX, fatbin czy cubin. Fatbin jest plikiem
+zawierającym kod PTX w wersjach dla różnych architektur kart graficznych.  W
+momencie kompilacji w locie (JIT) sterownik karty graficznej potrafi z pliku
+fatbin wybrać ten kod PTX, który najlepiej odpowiada jego wersji i modelowi
+karty graficznej. Skutkuje to wyborem zoptymalizowanego dla danej architektury
+kodu oraz skróceniem czasem ładowania aplikacji. Natomiast Cubin jest to plik
+binarny przeznaczony dla konkretnego procesora graficznego, który nie jest
 kompatybilny z innymi architekturami procesorów graficznych.
 
-
 \subsection{Kernele}
-Z punktu widzenia programisty wykonanie fragmentu kodu w kontekście device'a
+Z punktu widzenia programisty wykonanie fragmentu kodu w kontekście GPU'a
 ogranicza się do wywołania specyficznego rodzaju funkcji, nazywanego w nomenklaturze CUDA kernelami.
 Kernele we języku C oznaczone są specjalnym atrybutem kompilatora
 \texttt{\_\_global\_\_} oraz mają
-specyficzną konwencję wywołania przedstawioną na kodzie źródłowym \ref{kernel}.
+specyficzną konwencję wywołania przedstawioną na listingu \ref{kernel}.
 
 Funkcja kernela wykonywana jest na procesorze graficznym jednocześnie przez $M$
 różnych wątków. W celu określenia dokładnej ilości wątków dla których ma się ona
-wykonać oraz sposobu ich indeksowania dwa dodatkowe parametry
+wykonać oraz sposobu ich indeksowania, dwa dodatkowe parametry
 są przekazane do funkcji kernela między znacznikami $<<<$ oraz $>>>$. Pierwszy parametr
 oznacza ilość tzw. bloków, czyli 1, 2 lub 3 - wymiarowych grup ograniczających
 wątki. Drugi parametr to wymiar pojedynczego bloku, określany jako pojedyncza liczba
@@ -296,7 +295,7 @@ wątki, bloki mogą być indeksowane jedno lub dwuwymiarowo. Ich indeksy są dos
 w funkcji kernela pod specjalną zmienną $blockIdx$, natomiast rozmiar samego
 bloku możliwy jest do pobrania poprzez zmienną $blockDim$.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=0.8]{images/grid-of-thread-blocks.png}
 \caption{Źródło: CUDA Programming Guide}
@@ -304,17 +303,17 @@ bloku możliwy jest do pobrania poprzez zmienną $blockDim$.
 \end{figure}
 
 Specyfikacja CUDA gwarantuje, że pojedynczy blok wykonywany jest na
-dokładnie jednym procesorze graficznym. Efektem tego jest fakt, że wątki wchodzące w
+dokładnie jednym procesorze graficznym. W efekcie, wątki wchodzące w
 skład danego bloku wykonywane są sprzętowo współbieżnie. Same bloki zaś w zależności od
 możliwości obliczeniowych urządzenia wykonywane są również
 współbieżnie na procesorze graficznym lub w przypadku braku zasobów -
 sekwencyjnie, czyli dopiero po
-zakończeniu wykonywanie poprzedzającego bloku. Taki model programowania zapewnia
+zakończeniu wykonywania poprzedzającego bloku. Taki model programowania zapewnia
 skalowalność rozwiązania w przypadku posiadania przez urządzenie więcej niż
 jednego procesora graficznego oraz pozwala programiście skupić się na
-optymalizacji wykonania programu w ramach pojedynczego bloku, zostawiając
+optymalizacji wykonania programu w ramach pojedynczego bloku, zostawiając frameworkowi CUDA.
 zadanie optymalnej alokacji bloków między dostępne procesory 
-frameworkowi CUDA. Programy pisane w CUDA muszę więc uwzględniać fakt,
+ Programy pisane w CUDA muszą więc uwzględniać fakt,
 że bloki mogę być wykonywane w dowolnej kolejności. 
 
 
@@ -328,16 +327,17 @@ __device__ float square(float a)
 
 Definicja kernela nie jest jedynym rozszerzeniem do języka C dostępnym w
 kompilatorze NVCC. Możliwa jest również definicja funkcji wykonywanej w
-kontekście device'a poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_}. Tak
+kontekście GPU poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_}. Tak
 zdefiniowana funkcja może być użyta w funkcji kernela, pozwalając na
 enkapsulację często powtarzanych fragmentów kodu. Należy jednak
-pamiętać, że kontekst hosta i device'a znacząco się od siebie różnią i w
-przypadku tego drugiego wywołania funkcji są z reguły trwają dużo dłużej.
+pamiętać, że kontekst gospodarza i GPU znacząco się od siebie różnią i w
+przypadku tego drugiego wywołania funkcji z reguły trwają dużo
+dłużej\cite{Nvillb}
 Kompilator NVCC na ogół stara się więc inlinować wszystkie funkcje
 oznaczone atrybutem \texttt{\_\_device\_\_}, czyli umieszcza ich kod bezpośrednio
-w miejscu wywołania. Powoduje to, że docelowy kod kernela staje się
-dłuższy, jednak znacząco przyspiesza to jego wykonywanie. W celu wymuszenia na
-kompilatorze braku inlineowania trzeba poprzedzić atrybut
+w miejscu wywołania. Wydłuża to docelowy kod kernela 
+, jednak znacząco przyspiesza jego wykonywanie. W celu wymuszenia na
+kompilatorze braku inlinowania trzeba poprzedzić atrybut
 \texttt{\_\_device\_\_} atrybutem \texttt{\_\_noinline\_\_}, natomiast w celu
 zagwarantowania inlinowania funkcji atrybutem \texttt{\_\_forceinline\_\_}.
 
@@ -351,22 +351,22 @@ W modelu CUDA wyróżnia się 4 podstawowe typy pamięci:
 \item Pamięć Globalna
 \end{itemize}
 
-Rejestry ogólnego przeznaczenia procesora graficznego są najszybszym rodzajem pamięci dostępnej na GPU.
-Ich ilość jest jednak mocno ograniczona, dlatego programista CUDA musi poświęcić
-szczególną uwagę w alokacji możliwie małej ich ilości. Rejestry są najczęściej alokowane
-w przypadku tworzenia i używania zmiennych tymczasowych. Dostęp do zmiennych
-lokalnie zdefiniowanych możliwy jest tylko z jednego wątku, dlatego w celu
-wymiany informacji pomiędzy wątkami zachodzi potrzeba użycia innego rodzaju
-pamięci.
+Rejestry ogólnego przeznaczenia procesora graficznego są najszybszym rodzajem
+pamięci dostępnej na GPU.  Ich ilość jest jednak mocno ograniczona, dlatego
+programista CUDA musi poświęcić szczególną uwagę aby zapewnić możliwe dobre ich
+wykorzystanie. Rejestry są najczęściej alokowane w przypadku tworzenia i
+używania zmiennych tymczasowych. Dostęp do zmiennych lokalnie zdefiniowanych
+możliwy jest tylko z jednego wątku, dlatego w celu wymiany informacji pomiędzy
+wątkami zachodzi potrzeba użycia innego rodzaju pamięci.
 
 Pamięć dzielona to szybka pamięć L1 służąca do wymiany danych między wątkami.
 Z uwagi że cache L1 jest określony tylko dla danego procesora graficznego,
   pamięć ta może być współużytkowana tylko w ramach pojedynczego bloku. W celu
   deklaracji pamięci dzielonej NVCC wprowadza nowy atrybut o nazwie
   \texttt{\_\_shared\_\_}. Odwołania do pamięci dzielonej zajmuje parę razy
-  więcej cyki zegara niż odwołanie do rejestru, jednak i tak liczba ta jest
+  więcej cykli zegara niż odwołanie do rejestru, jednak i tak liczba ta jest
   znacząco mniejsza od cykli potrzebnych do pobrania danych z pamięci globalnej.
-  Ilość pamięci dzielonej dostępnej na procesorze jest niewielka i dla
+  Wielkość pamięci dzielonej dostępnej na procesorze jest niewielka i dla
   architektury Kepler wynosi 48 KB.
 
 Pamięć stała jest to w istocie pamięć L1 stworzona i używana do renderowania tekstur 

@@ -1286,18 +1286,18 @@
     }%
 }{}}
 \AtBeginDocument{\@ifpackageloaded{polski}{% %%nazewnictwo polskie
-\renewcommand\codename{Kod \'zr\'od\l owy}
+\renewcommand\codename{Listing}
 \renewcommand\chartname{Wykres}
 \renewcommand\listdiagramname{Spis diagram\'ow}
-\renewcommand\listcodename{Spis kod\'ow \'zr\'od\l owych}
+\renewcommand\listcodename{Spis listing\'ow}
 \renewcommand\listchartname{Spis wykres\'ow}
 }{}}
 
 \AtBeginDocument{\@ifpackageloaded{listings}{% %%modyfikacja listings
 \lstset{captionpos=b,numberbychapter=false}
 	\AtBeginDocument{\@ifpackageloaded{polski}{%
-	\renewcommand\lstlistlistingname{Spis kod\'ow \'zr\'od\l owych}
-	\renewcommand\lstlistingname{Kod \'zr\'od\l owy}
+	\renewcommand\lstlistlistingname{Spis listing\'ow}
+	\renewcommand\lstlistingname{Listing}
 	}{\renewcommand\lstlistlistingname{List od Codes}
 \renewcommand\lstlistingname{Code}}}
 
