@@ -373,19 +373,21 @@ Ostateczną formułą na przesunięcie związane ze zmianą objętości możemy 
 \section{Dynamika bazująca na pozycji}
 
 Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
-ciał miękkich. Pierwsze propozycje takiego podejścia przedstawione zostało w
-2001 r.\cite{jak}, natomiast uogólniona wersja, będąca bazą kolejnych
-iteracji modelu, została oficjalnie opublikowana w 2006 r.\cite{pbdyn}. Metody te
-szybko stały się popularne w obszarze grafiki komputerowej i są dzisiaj
-implementowane w profesjonalnych silnikach fizycznych, takich jak PhysX czy
-Bullet.
+ciał miękkich. Pierwsze propozycja takiego podejścia przedstawiona została w
+2001 r.\cite{jak}, natomiast uogólniona, usystematyzowana wersja, została oficjalnie
+opublikowana w 2006 r.\cite{pbdyn}. To właśnie autorom \cite{pbdyn} przypisuje
+się autorstwo tej metody, która szybko stały się popularne w obszarze grafiki
+komputerowej i jest dzisiaj implementowana w profesjonalnych silnikach fizycznych,
+takich jak PhysX, Havoc Cloth, Maya nCloth czy Bullet.
 
-Model przedstawiony w tej pracy jest fizycznym modelem Lagrange'a. Termin
-bazujący na pozycji oznacza, że w odróżnieniu od symulacji bazujących na siłach, to pozycje
+Termin bazujący na pozycji oznacza, że w odróżnieniu od modelu Systemu Sprężyn,
+	   w którym to wyznaczenie kolejnych pozycji puntków w czasie $x_i(t)$ jest
+	   zależne od sił działających na ten punkt, wykorzystywane są 
 wszystkich punktów materialnych symulowanego ciała podlegają w symulacji pewnym
 regułom. Zastosowania reguł, czy jak to będzie zwane później ograniczeń, na
 punkty modelu skutkuje poprawą stabilności symulacji oraz ułatwia jej
 implementację. Do najważniejszych zalet modeli bazujących na pozycji należą:
+
 \begin{itemize}
 	\item bezpośrednia kontrola nad całkowaniem równań ruchu, pozwala rozwiązań
 	problemy z niestabilnością model.

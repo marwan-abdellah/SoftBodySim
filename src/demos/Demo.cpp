@@ -1,5 +1,6 @@
 #define GLM_SWIZZLE
 
+#define ENABLE_DEBUG
 #include "common.h"
 
 #include "GLFWApplication.h"
@@ -144,6 +145,7 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveOut(delta);
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
+#if 0
 	if (key == GLFW_KEY_V) {
 		mSolver->Shutdown();
 		delete mSolver;
@@ -160,6 +162,7 @@ void Demo::OnKeyboard(int key, int action)
 		}
 		mSolver->Initialize();
 	}
+#endif
 	if (key == GLFW_KEY_C) {
 		mSolver->Shutdown();
 		mSolver->Initialize();
