@@ -317,7 +317,7 @@ zadanie optymalnej alokacji bloków między dostępne procesory
 że bloki mogę być wykonywane w dowolnej kolejności. 
 
 
-\begin{lstlisting}[caption=Funkcje CUDA, label=func]
+\begin{lstlisting}[caption=Funkcje CUDA, label=cudafunc]
 // Definicja funkcji
 __device__ float square(float a)
 {
@@ -327,19 +327,18 @@ __device__ float square(float a)
 
 Definicja kernela nie jest jedynym rozszerzeniem do języka C dostępnym w
 kompilatorze NVCC. Możliwa jest również definicja funkcji wykonywanej w
-kontekście GPU poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_}. Tak
-zdefiniowana funkcja może być użyta w funkcji kernela, pozwalając na
-enkapsulację często powtarzanych fragmentów kodu. Należy jednak
-pamiętać, że kontekst gospodarza i GPU znacząco się od siebie różnią i w
+kontekście GPU poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_} (listing
+		\ref{cudafunc}). Tak zdefiniowana funkcja może być użyta w funkcji
+kernela, pozwalając na enkapsulację często powtarzanych fragmentów kodu. Należy
+jednak pamiętać, że kontekst gospodarza i GPU znacząco się od siebie różnią i w
 przypadku tego drugiego wywołania funkcji z reguły trwają dużo
-dłużej\cite{Nvillb}
-Kompilator NVCC na ogół stara się więc inlinować wszystkie funkcje
-oznaczone atrybutem \texttt{\_\_device\_\_}, czyli umieszcza ich kod bezpośrednio
-w miejscu wywołania. Wydłuża to docelowy kod kernela 
-, jednak znacząco przyspiesza jego wykonywanie. W celu wymuszenia na
-kompilatorze braku inlinowania trzeba poprzedzić atrybut
-\texttt{\_\_device\_\_} atrybutem \texttt{\_\_noinline\_\_}, natomiast w celu
-zagwarantowania inlinowania funkcji atrybutem \texttt{\_\_forceinline\_\_}.
+dłużej\cite{Nvillb} Kompilator NVCC na ogół stara się więc inlinować wszystkie
+funkcje oznaczone atrybutem \texttt{\_\_device\_\_}, czyli umieszcza ich kod
+bezpośrednio w miejscu wywołania. Wydłuża to docelowy kod kernela , jednak
+znacząco przyspiesza jego wykonywanie. W celu wymuszenia na kompilatorze braku
+inlinowania trzeba poprzedzić atrybut \texttt{\_\_device\_\_} atrybutem
+\texttt{\_\_noinline\_\_}, natomiast w celu zagwarantowania inlinowania funkcji
+atrybutem \texttt{\_\_forceinline\_\_}.
 
 \subsection{Hierarchia pamięci}
 
