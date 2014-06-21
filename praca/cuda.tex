@@ -384,24 +384,17 @@ Wadą jej jest natomiast bardzo długi czas dostępu.
 Schemat wątków i bloków z przypisaniem poszczególnych rodzajów pamięci do których
 mają dostęp podsumowuje rysunek \ref{hier}.
 
-\begin{figure}[ht]
+\begin{figure}[H]
 \centering
 \includegraphics[scale=0.8]{images/memory-hierarchy.png}
-\caption{Hierarchia pamięci w modelu CUDA. Źródło: CUDA Programming Guide}
+\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvillb}}
 \label{hier}
 \end{figure}
 
 \section{GPU}
+\subsection{Architektura procesorów graficznych NVIDIA}
 
-
-\begin{figure}[ht]
-\centering
-\includegraphics{images/gpu-devotes-more-transistors-to-data-processing.png}
-\caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
-\label{cpugpu}
-\end{figure}
-
-\subsection{Architektura procesorów graficznych}
+Współczesne karty graficzne stanowią 
 
 Procesor graficzny mimo swojej coraz to bardziej zaawansowanej budowy nadal
 znacząco różni się od architektury CPU. Przedstawia to rysunek \ref{cpugpu}, na
@@ -413,11 +406,32 @@ Intel czy AMD. Wyróżniają się natomiast większą ilością jednostek arytme
 problemów wymagających dużej intensywności obliczeniowej mierzonej jako stosunek
 operacji arytmetycznych do operacji na pamięci.
 
+\begin{figure}[H]
+\centering
+\includegraphics{images/gpu-devotes-more-transistors-to-data-processing.png}
+\caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
+\label{cpugpu}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/kepler-overview.png}
+\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvillb}}
+\label{hier}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.3]{images/kepler-SMX-overview.png}
+\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvillb}}
+\label{hier}
+\end{figure}
+
 Współbieżne wykonywanie dużej ilości zadań możliwe jest dzięki implementacji
 w procesorach graficznych architektury SIMT (Single Intruction Multiple Thread), która
 przypomina architekturę SIMD używaną w współczesnych procesorach. W
 odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
-operacji na wektorze danych, SIMT umożliwia też równoległe wykonywanie wielu
+operacji na wektorze danych, SIMT umożliwia równoległe wykonywanie wielu
 niezależnych wątków. Zaletą wykonywania wątków, zamiast elementarnych operacji jest większa
 elastyczność w sterowaniu przepływem programu. Każdy wykonywany wątek
 na procesorze graficznym posiada własny licznik programu, dzięki czemu możliwe
@@ -435,13 +449,15 @@ optymalizacji na stworzonym kodzie CUDA\cite{kepler}.
 W czasie wykonywania programu CUDA, każdy blok zostaje wpierw podzielony na odpowiednią
 liczbę warpów, a następnie zlecony do wykonania przez jednostkę procesora zwaną warp
 schedulerem. Wątki wchodzące w skład warpu mogą występować w jednym z dwóch stanów
-- aktywnym, w którym to następna instrukcja wątku zostanie wykonana w następnym
-cyklu zegara, oraz nieaktywnym - którego egzekucja zostaje w następnym cyklu
+- aktywnym oraz nieaktywnym. Stan aktywny oznacza, że następna instrukcja wątku zostanie wykonana w następnym
+cyklu zegara, a nieaktywny - którego egzekucja zostaje w następnym cyklu
 zawieszona. Warp scheduler jest w stanie wykonać serię instrukcji
 procesora dla wszystkich wątków jednocześnie, a w przypadku gdy dla wątku
 nastąpił conditional branching, oznaczany jest on jako nieaktywny i
-zawiesza się wykonanie instrukcji programu dla jego danych. Jeżeli program CUDA
-zawiera wyrażenie \texttt{if X {...} else {...}}, oznacza to, że najpierw zostaną
+zawiesza się wykonanie instrukcji programu dla jego danych. Jeżeli zatem kod
+programu CUDA
+zawiera wyrażenie \texttt{if X {...} else {...}}, i dochodzi do conditional
+branchingu, oznacza to, że najpierw zostaną
 wykonane na 32 wątkach instrukcje programu pierwszej części wyrażenia,
 		 z oznaczeniem jako nieaktywne tych wątków dla których wartość X jest
 		 nieprawdziwa. Następnie druga strona wyrażenia zostanie wykonana na 32
