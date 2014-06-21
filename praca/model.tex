@@ -107,6 +107,7 @@ techniką redukcji złożoności algorytmu zaproponowaną przez autorów, czyni 
 idealną do zastosowania w symulacjach czasu rzeczywistego.
 
 \section{Zachowanie kształtu}
+\label{sec:shape}
 Dopasowanie kształtu (ang. Shape Matching) jest geometryczną techniką
 zaproponowaną po raz pierwszy w 2005 r. przez Muller'a \cite{shape}. Służy ona do
 symulowania sił wewnętrznych ciała poddanemu deformacji. Metoda ta zamiast
@@ -262,28 +263,33 @@ Biegunowego możemy macierz zapisać jako:
 \begin{equation}
 A_{pq} = RS
 \end{equation}
-gdzie:
+gdzie $R$ jest macierzą rotacji, a $S$ macierzą skalowania daną wzorami:
 \begin{eqnarray*}
 S = \sqrt[2]{A^T_{pq} A_{pq}}\\
 R = A_{pq} S^{-1}
 \end{eqnarray*}
 
 %Formalnie pozycję $g_i$ wyraża się wzorem:
-Pozycje docelowe $g_i$ można obliczyć wykorzystując wzór:
+Ostatecznie pozycje docelowe $g_i$ można obliczyć jako:
 \begin{equation}
-g_i = R(x_i^0 - x^0_cm) + x_cm
+g_i = R(x_i^0 - x^0_{cm}) + x_{cm}
 \end{equation}
 
 \subsection{Modyfikacje}
+\label{sec:vol}
 Shape Matching w swojej podstawowej formie dokonuje optymalizacji dopasowania
 globalnie dla wszystkich punktów symulowanego ciała. Powoduje to jego zbytnie
 usztywnienie i dopuszcza tylko wąski zakres deformacji.
 
-Aby rozwiązać powyższe problemy Diziol \cite{diziol} stworzył lokalny
-shape-matching.  Unika globalnego dopasowania poprzez predefiniowanie małych
-zbiorów sąsiadujących punktów w ramach których będzie stosowany shape-matching.
-W przypadku gdy cząstka należy do wielu regionów, jako ostateczna docelowa
-pozycja $g_i$ używana jest średnia z dopasowania z poszczególnych regionów.
+Aby rozwiązać powyższe problemy Diziol w swoim artykule \cite{diziol} użył
+lokalnego shape-matching. Autor unika globalnego dopasowania poprzez
+predefiniowanie małych zbiorów sąsiadujących punktów w ramach których będzie
+stosowany shape-matching.  W przypadku gdy cząstka należy do wielu regionów,
+		  jako ostateczna docelowa pozycja $g_i$ używana jest średnia z
+		  dopasowania z poszczególnych regionów.
+\begin{equation}
+g_i = \frac{1}{K_i} \sum_j^{K_i} R_j (x^0_i - x^0_{cm_j}) + x_{cm_j}
+\end{equation}
 
 \section{Zachowanie objętości}
 Symulacja ciała miękkiego bez obostrzeń na zmiany objętości może
@@ -372,37 +378,65 @@ Ostateczną formułą na przesunięcie związane ze zmianą objętości możemy 
 %\tilde{n}_i,$$
 \section{Dynamika bazująca na pozycji}
 
+Zastosowanie geometrycznych technik takich jak wymieniony w rozdziale
+\ref{sec:shape} Shape-Matching czy metod zachowujących objętość w \ref{sec:vol}
+jest problematyczne z tego względu, że siły działające na ciało nie wynikają
+z nich bezpośrednio. Niemożliwe zatem jest jawne zdefiniowanie dynamiki układu
+opisanego równaniem różniczkowym postaci $x\ddot{\vec{x}} = \vec{F}/m$.
+
+Rozwiązaniem tego problemu może być emulowanie sił poprzez zaczepienie
+'wirtualnych' sprężyn pomiędzy punktami docelowymi $g_i$ wynikającymi z ograniczeń
+geometrycznych a aktualną pozycją $x_i$ cząstki. Otrzymane w ten sposób
+siły działające na ciało mogą być użyte do rozwiązania równań ruchu.
+Takie podejście nie jest jednak używane w literaturze przedmiotu. Zamiast tego
+\cite{pbdyn} proponuje rozwiązanie postawionego problemu poprzez użycie
+tzw. dynamiki bazującej na pozycjach (Position Based Dynamics).
+
 Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
-ciał miękkich. Pierwsze propozycja takiego podejścia przedstawiona została w
-2001 r.\cite{jak}, natomiast uogólniona, usystematyzowana wersja, została oficjalnie
-opublikowana w 2006 r.\cite{pbdyn}. To właśnie autorom \cite{pbdyn} przypisuje
-się autorstwo tej metody, która szybko stały się popularne w obszarze grafiki
+ciał miękkich. Pierwsza propozycja takiego podejścia przedstawiona została w
+2001 r.\cite{jak}, natomiast uogólniony, usystematyzowany koncept, został oficjalnie
+opublikowany w 2006 r.\cite{pbdyn}. To właśnie autorom \cite{pbdyn} przypisuje
+się odkrycie tej metody, która szybko stała się popularna w obszarze grafiki
 komputerowej i jest dzisiaj implementowana w profesjonalnych silnikach fizycznych,
-takich jak PhysX, Havoc Cloth, Maya nCloth czy Bullet.
+takich jak PhysX, Havoc Cloth, Maya nCloth czy Bullet \cite{Liu:2013:FSM}.
 
 Termin bazujący na pozycji oznacza, że w odróżnieniu od modelu Systemu Sprężyn,
-	   w którym to wyznaczenie kolejnych pozycji puntków w czasie $x_i(t)$ jest
-	   zależne od sił działających na ten punkt, wykorzystywane są 
-wszystkich punktów materialnych symulowanego ciała podlegają w symulacji pewnym
-regułom. Zastosowania reguł, czy jak to będzie zwane później ograniczeń, na
-punkty modelu skutkuje poprawą stabilności symulacji oraz ułatwia jej
-implementację. Do najważniejszych zalet modeli bazujących na pozycji należą:
+	   w którym to wyznaczenie kolejnych pozycji punktu w czasie $x_i(t +
+			   \Delta t)$ jest zależne od sił wypadkowych działających na ten
+	   punkt, do wyznaczania przyszłej pozycji w czasie $t + \Delta t$
+	   wykorzystywana jest aktualna pozycja oraz jej tzw. projekcja. Jako
+	   projekcję danego punktu $x_i$ rozumiana jest taka pozycja $g_i$, która
+	   spełnia wszystkie obostrzenia (np. ograniczenia geometryczne)
+	przewidziane w symulowanym modelu.
 
+Bezpośrednie operowanie na pozycjach implikuje ważną własność metody. Odpowiednie
+skonstruowanie funkcji obostrzeń i modyfikowanie wartości projekcji $g_i$, tak
+aby były one spełnione, pozwala uniknąć typowych niestabilności związanych z
+rozwiązaniem układu równań ruchu. Do takich niestabilności należy przede
+wszystkim problem użycia zbyt dużego kroku symulacji $t$. Zbyt
+duża wartość powoduje, że oscylacje sprężyn w modelu Systemu Sprężyn przejawiają
+tendencje to tzw. overshootingu. Jest to zjawisko systematycznego powiększania rozciągnięcia
+sprężyny w czasie oscylacji, powodujące błędny wzrost energii wewnętrznej układu i w
+ostateczności jego widowiskową 'eksplozję'.
+
+Do najważniejszych zalet Dyniamki bazującej na pozycji autorzy \cite{pbdyn}
+zaliczają:
 \begin{itemize}
-	\item bezpośrednia kontrola nad całkowaniem równań ruchu, pozwala rozwiązań
-	problemy z niestabilnością model.
-	\item punkty materialne mogą być bezpośrednio manipulowane, bez użycia sił.
+	\item bezpośrednią kontrolę nad całkowaniem równań ruchu, pozwalającą
+	rozwiązać problemy z niestabilnością modelu,
+	\item punkty materialne mogą być bezpośrednio przesuwane, bez użycia sił,
 	\item model ograniczeń bazujących na pozycji może być wykorzystany do
-	symulowania szerokiego zakresu zdarzeń fizycznych.
+	symulowania szerokiego zakresu zdarzeń fizycznych,
 	\item system rozwiązujący ograniczenia w modelu jest łatwy w implementacji.
 \end{itemize}
 
 \subsection{Definicja}
-Model zakłada, że każdy obiekt deformowalny jest przedstawiony jako zbiór $N$
+Dynamika pozycyjna zakłada, że każdy obiekt deformowalny jest przedstawiony jako zbiór $N$
 punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ ograniczeń
-zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek modelu posiada
+zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek symulowanego ciała posiada
 następujące atrybuty:
 
+\vspace{0.5cm}
 \centering
 \begin{tabular}{|r|l|}
 \hline
@@ -413,9 +447,12 @@ $v_i$ & prędkość \\
 $m_i$ & masa\\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 
 \raggedright
-Natomiast j-te ograniczenie posiada następujące atrybuty:
+Ograniczenie, nazywane też wymiennie w tej pracy obostrzeniem,
+posiada następujące atrybuty:
+\vspace{0.5cm}
 
 \centering
 \begin{tabular}{|r|l|}
@@ -431,148 +468,183 @@ $k_j \in [0.. 1]$ & sztywność\\
 typ & równość lub nierówność\\
 \hline
 \end{tabular}
+\vspace{0.5cm}
 
 \raggedright
-Dane j-te ograniczenie typu równości jest spełnione wtedy gdy $C_j(x_{i_1},...,
-		x_{i_{n_j}}) = 0$, natomiast typu nierówności wtedy gdy $C_j(x_{i_1},...,
-		x_{i_{n_j}}) > 0$. Parametr $k_j$ definiuje siłę ograniczenia w
-		przedziale od $0...1$, gdzie 0 oznacza ograniczenie, które nie powoduje
-		przemieszczenia symulowanych wierzchołków, natomiast 1 oznacza, że
-		wierzchołki muszę tak zostać przesunięte aby spełnić ograniczenie w
-		danym kroku symulacji.
+Liczność ograniczenia $n_j$ informuje ile wierzchołków danego symulowanego ciała 
+podlega temu ograniczeniu. Funkcja $C_j : R^{3n_j} -> R$ będzie używana do
+określenia czy dane ograniczenie jest spełnione oraz do wyznaczania docelowych
+przesunięć wierzchołków $\Delta X$ spełniających warunek $C_j(X + \Delta X) = 0$. 
+Lista indeksów służy przypisaniu konkretnych wierzchołków do danego
+ograniczenia.
+
+Parametr $k_j$ informuje o tym jak szybko dane ograniczenie ma
+powodować zmianę konfiguracji punktów projekcji $g_i$. Po wyznaczeniu
+optymalnej pozycji punktów $X + \Delta X$ pozycje $g_i$ są przesuwane w kierunku
+docelowych punktów, przeskalowanym o parametr $k_j$. Możemy to zapisać jako:
+$$g'_i = g_i + k_j ((x_i + \Delta x_i) - g_i)$$
+W efekcie parametr $k_j$ służy do symulowania fizycznych właściwości
+będących efektem działania ograniczenia. Dla $k_j \to 1$ uzyskamy zatem
+zachowanie przypominające ciało sztywne, natomiast przy $k_j \to 0$ uzyskamy
+efekt całkowitego zaniku sił wewnętrznych podczas deformacji ciała.
+
+Ostatnim atrybutem obostrzenia jest jego typ - przyjmujący wartości równość lub
+nierówność.  Jeżeli ograniczenie jest typu równości to spełnione jest wówczas
+wtedy gdy $C_j(x_{i_1},..., x_{i_{n_j}}) = 0$, natomiast dla typu nierówność to
+wtedy gdy $C_j(x_{i_1},..., x_{i_{n_j}}) > 0$.
+Przykładem obostrzeń typu równość jest zachowanie odległości między dwoma
+wierzchołkami ciała miękkiego:
+\begin{equation}
+C(x_i, x_j) = || x_i - x_j || - l_{ij} = 0
+\end{equation}
+gdzie $l_{ij}$ jest odległością między wierzchołkami i, j w niezdeformowanej
+konfiguracji wierzchołków.
+
+Przykładem ograniczenia typu nierówność może być kolizja z płaszczyzną, która
+w swojej najprostszej postaci może mieć postać:
+\begin{equation}
+C(x_i) = (x - \vec{p}) \circ \vec{n} > 0
+\end{equation}
+gdzie $\vec{p}$ jest punktem leżącym na płaszczyźnie, a $\vec{n}$ jest normalną
+płaszczyzny.
+
+Dynamika pozycyjna pomimo faktu, że stworzona została z myślą o ograniczeniach
+geometrycznych pozwala także wprowadzić do modelu wpływ działania tradycyjnych sił takich jak grawitacja
+czy siła wiatru. Możliwe jest to dzięki przyjęciu, że początkowe wartości
+projekcji $g_i$ są wyznaczone dzięki tradycyjnemu rozwiązaniu równań ruchu z
+modelu Systemu Sprężyn postaci $x \ddot{\vec{x}} = \vec{F} / m$.
+
+Zasadniczą ideą Dynamiki Pozycyjnej jest iteracyjne rozwiązywanie
+równań ograniczeń zdefiniowanych dla modelu.
+Dzieje się to poprzez systematyczne sprawdzanie zdefiniowanych ograniczeń i w
+przypadku gdy nie jest ono spełnione dokonywane jest rzutowanie punktów $g_i$ na
+nowe pozycje (przy uwzględnieniu parametru $k$). Aby zobrazować idę
+Position Based Dynamics przedstawiony zostanie oryginalny algorytm zaproponowany
+przez autorów w \cite{pbdyn}.
 
 \paragraph{Algorytm}
 
-Mając dany model $\{X_N, C_M, \Delta t \} $ każda iteracja symulacji przebiega
-następująco:
+Mając dany zbiór wierzchołków modelu, zbiór ograniczeń i krok symulacji $\{X_N,
+	C_M, \Delta t \}$, algorytm przebiega następująco:
 \begin{enumerate}
 \item \textbf{for} $i = 1:N$
 \item \hspace{1cm} $x_i = x_i^0, v_i = v_i^0, w_i = 1/m_i$
 \item \textbf{end for}
 \item \textbf{loop}
 \item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $v_i \leftarrow v_i + \Delta t w_i f_{ext}(x_i)$
-\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $p_i \leftarrow x_i + \Delta t v_i$
-\item \hspace{1cm} \textbf{for} $j = 1:liczbaIteracjiSolwera$
-\item \hspace{2cm} $rozwiazOgrnaiczenia(C_1,..., C_{M}, p_1, ..., p_N)$
+\item \hspace{1cm} \textbf{for} $i = 1:N$ \textbf{do} $g_i \leftarrow x_i + \Delta t v_i$
+\item \hspace{1cm} \textbf{for} $j = 1:liczbaIteracji$
+\item \hspace{2cm} $rozwiazOgrnaiczenia(C_1,..., C_{M}, g_1, ..., g_N)$
 \item \hspace{1cm} \textbf{end for}
 \item \hspace{1cm} \textbf{for} $i = 1:N$
-\item \hspace{2cm} $v_i = (p_i - x_i) / \Delta t$
-\item \hspace{2cm} $x_i = p_i$
+\item \hspace{2cm} $v_i = (g_i - x_i) / \Delta t$
+\item \hspace{2cm} $x_i = g_i$
 \item \hspace{1cm}\textbf{end for}
 \item \textbf{end loop}
 
 \end{enumerate}
 
-W zaproponowanej przez Mullera symulacji bazującej na pozycji, najważniejszą częścią stanowią są
-fragmenty (6), (8), (11-12). W linii (6) następuje całkowanie równania ruchu za 
-pomocą metody Eulera, ustala się w ten sposób predykcję pozycji $p_i$. Następnie
-wszystkie predykcje są rzutowane w taki sposób aby spełniły wszystkie
-ograniczenia $C_M$. Ostatnim krokiem symulacji jest ponowne wyliczenie
-prędkości oraz przypisane zrzutowanej predykcji do pozycji wierzchołka.
+W zaproponowanej przez Mullera algorytmie, najważniejszą część stanowią
+fragmenty (6), (8), 11-12. W linii (6) następuje całkowanie równania ruchu za 
+pomocą metody Eulera. Ustala się w ten sposób pierwszą projekcję pozycji $g_i$. Następnie
+wszystkie projekcje są rzutowane w taki sposób rozwiązywały one
+ograniczenia $C_M$. Należy tutaj zaznaczyć, że w algorytmie nie zakłada się, że
+ograniczenia $C(g)$ będą rozwiązane dokładnie. Spowodowałoby to 
+usztywnienie systemu i niepożądane wizualnie efekty. Dlatego też każde
+ograniczenie zostanie rozwiązane z pewnym błędem zależnym od parametru $k$ oraz
+ilości iteracji rozwiązania ograniczeń.
+Ostatnim krokiem symulacji jest ponowne obliczenie
+prędkości oraz przypisane zrzutowanej projekcji do pozycji wierzchołka.
 
-Model pozwala do włączenia do symulacji sił zewnętrznych $f_{ext}$, którymi na ogół jest
-grawitacja. W celu symulowania innych sił działających na symulowane ciało
-operuje się bezpośrednio na prędkościach wierzchołków, które mogę zostać
-zmienione pomiędzy liczeniem predykcji, (między 5-6) oraz po
-zaktualizowaniu pozycji oraz prędkości (13-14).
-
-Przedstawiona symulacja jest bezwarunkowo stabilna ponieważ nowe pozycje nie są
+Przedstawiona symulacja jest bezwarunkowo stabilna \cite{pbdyn} ponieważ nowe pozycje nie są
 ekstrapolacją wynikająca z kroku całkowania (6), tyko pewnym rzutowaniem na
-stabilne konfiguracje systemu wyliczane podczas iteracji solwera (8). Jedynym
-źródłem niestabilności jest sam solwer, którym używa metody Newtona do wyliczenia
-stabilnej konfiguracji. Jednakże niestabilność nie zależy od przyjętego kroku
-całkowania systemu $\Delta t$, tylko od samej funkcji danego
-ograniczenia\cite{pbdyn}.
+stabilne konfiguracje systemu wynikające z równań ograniczeń (8). Jedynym
+źródłem niestabilności jest sam proces rozwiązywania ograniczeń \cite{pbdyn}
+Jednakże niestabilność nie zależy od przyjętego kroku całkowania systemu $\Delta
+t$, tylko od samej funkcji danego ograniczenia\cite{pbdyn}.
 
 \subsection{Rozwiązywanie układu ograniczeń}
-Problem rozwiązania ograniczeń $C_1, .., C_M$ dla projekcji układu $p_1, ..., p_N$
-jest podobny do problemu rozwiązania układu równań. Do rozwiązania takiego
-układu możemy się posłużyć metodami Jacobiego oraz Gaussa-Seidela. 
+Problem rozwiązania ograniczeń $C_1, .., C_M$ dla projekcji układu $g_1, ..., g_N$
+jest w istocie problemem rozwiązania układu równań. Do rozwiązania takiego
+układu autorzy sugerują posłużyć się metdoą Jacobiego bądź metodą Gaussa-Seidela. 
 
-Niestety, w modelu funkcje ograniczeń mają też postać nierówności, a
+Wyżej wymienione metody mogą mieć zastosowanie tylko w przypadku
+liniowych układów równań. Niestety w modelu funkcje ograniczeń mają też postać nierówności, a
 najczęściej spotykane funkcje ograniczeń mają charakter nieliniowy. Powoduje to,
 że niemożliwe jest użycie klasycznych wersji w/w metod. Muller proponuje
-zmodyfikowana metodę, w której to każde równanie (lub nierówność) będzie rozwiązane
-oddzielnie metodą Newtona, a następnie otrzymane rozwiązanie zostanie użyte w
-następnej iteracji solwera. Zmodyfikowana metoda Gaussa-Seidela dodatkowo używa
-poprzedniego rozwiązania równania do estymacji następnego co skutkuje szybszą
-zbieżnością metody\cite{pbdyn}.
+zmodyfikowana metodę Gaussa-Seidela, w której każde równanie (lub nierówność) będzie rozwiązane
+oddzielnie metodą Newtona, a następnie zmodyfikowana projekcja będą używana do
+rozwiązania kolejnych równań ograniczeń.
 
 \subsection{Przykłady ograniczeń}
-Ograniczenia mają za cel rzutowanie wyliczonej projekcji $p_i$ do przestrzeni
-rozwiązań możliwych. Spełnienie warunków ograniczenia oznacza w 
-modelu pozycyjnym przemieszczenie danej projekcji wierzchołka o wektor $\Delta p$.
-Jeżeli dane ograniczenie modeluje zależności między punktami należącymi do
-obiektu to przesunięcie $\Delta p$ powinno posiadać
-pewne pożądane z punktu widzenia symulacji własności: zachowanie pędu oraz
-momentu pędu.
+Ograniczenia mają za cel zdefiniowanie przestrzeni rozwiązań możliwych w której
+znaleźć mogą się projekcje $g$.  Jeżeli dane ograniczenie modeluje siły
+wewnętrzne między punktami należącymi do obiektu to przesunięcie $\Delta g$,
+	które będzie efektem jego rozwiązania dla danej konfiguracji $g$ musi
+	posiadać pewne pożądane z punktu widzenia symulacji własności: zachowanie
+	pędu oraz momentu pędu.
 
-Pęd jest zachowane jeśli przesunięcie $\Delta p$ posiada własność:
-$$ \sum_i m_i \Delta p_i = 0$$
+Pęd jest zachowany jeśli przesunięcie $\Delta g$ posiada własność:
+$$ \sum_i m_i \Delta g_i = 0$$
 Natomiast moment pędu jest zachowany gdy:
-$$ \sum_i r_i \times m_i p_i = 0$$, gdzie $r_i$ jest odległością $p_i$ do punktu
-rotacji.
+$$ \sum_i r_i \times m_i \Delta g_i = 0$$
+gdzie $r_i$ jest odległością $g_i$ do osi
+obrotu.
 
 Nie spełnienie w/w równości skutkuje powstawaniem dodatkowych sił, które
-oddziałują na punkty obiektu tak jak siły zewnętrzne. Jeżeli dane ograniczenie
-nie dotyczy zewnętrznych właściwości (np. odległości od punktu kolizji),
+oddziałują na punkty obiektu, tak jak siły zewnętrzne. Jeżeli dane ograniczenie
+dotyczy zewnętrznych właściwości (np. odległości od punktu kolizji),
 własności te nie muszą być zachowane\cite{pbdyn}.
 
-Muller proponuje następujący wzór na obliczanie przemieszczenie $\Delta d$ dla
-ograniczeń, których funkcja jest niezależna od translacji i obrotu punktów.
-Jeżeli $p = [ p_1^T, p_2^T, ..., p_K^T]^T$, gdzie $K$ jest licznością
+Muller proponuje następujący wzór na obliczanie przemieszczenie $\Delta g$ dla
+ograniczeń zachowujący jednocześnie pęd jak i moment pędu.
+Jeżeli $g = [ g_1^T, g_2^T, ..., g_n^T]^T$, gdzie $n$ jest licznością
 ograniczenia $C$:
 \begin{equation} \label{con_eq}
-\Delta p = - \frac{C(p)}{\mid \nabla_p C(p) \mid^2}\nabla_p C(p)
+\Delta g = - \frac{C(g)}{|| \nabla_g C(g) ||^2}\nabla_g C(g),
 \end{equation}
-,gdzie $\nabla_p C(p)$ jest gradientem dla ograniczenia $C$ w $p$
+a $\nabla_g C(g)$ jest gradientem dla ograniczenia $C$ w $g$.
 
 Przemieszczenie dla poszczególnego wierzchołka wyraża się wzorem:
-$$\Delta p_i = -s w_i\nabla_{p_i}C(p_1, ..., p_K)$$ 
-$$ s = \frac{C(p_1, ..., p_K)}{\sum_j w_j\mid \nabla_{p_j}C(p_1, ..., p_K)
-	\mid^2}$$
+$$\Delta g_i = -s w_i\nabla_{g_i}C(g_1, ..., g_n)$$ 
+$$ s = \frac{C(g_1, ..., g_n)}{\sum_j w_j|| \nabla_{g_j}C(g_1, ..., g_n)
+	||^2}$$
 
-,gdzie $w_i = 1 / m_i$
+gdzie $w_i = 1 / m_i$
 
 Przedstawiona powyżej projekcja jest przeprowadzana w kroku (8) głównego
-algorytmu dla każdego ograniczenia $C_i$ o typie równość.
-W przypadku gdy typ ograniczenia jest nierównością przemieszczenie $p$
-o wyliczony wektor wektorów $\Delta p$ następuje tylko wtedy gdy $C(p_1, ...,
-		p_k) < 0$.
-
-Ostatnią istotną własnością każdego ograniczenia jest jej parametr sztywności
-$k$, Informuje on jaka część korekty $\Delta p$ może być dodana do obecnych
-predykcji $p$. Ma to na celu uniemożliwienie powrotu układu do jego konfiguracji
-stabilnej, tzn. takiej gdzie spełnione są wszystkie ograniczenia, w jednej
-iteracji głównego algorytmu. Jeżeli $k$ równałoby się jedności dla wszystkich
-ograniczeń modelu, to symulowany obiekt byłby zbyt usztywniony co nie byłoby
-pożądanym efektem.
+algorytmu dla każdego ograniczenia $C_i$ o typie równości.
+W przypadku gdy typ ograniczenia jest nierównością przemieszczenie $g$
+o wyliczony wektor $\Delta g$ następuje tylko wtedy, gdy $C(g_1, ...,
+		g_n) < 0$.
 
 \paragraph{Dystans między punktami}
-Ograniczenie w dystansie między punktami pozwala symulować efekt rozciągania
-ciała. W swojej podstawowej wersji funkcja ograniczenia dana jest wzorem:
-$$ C(p_1, p_2) = \mid p_1 - p_2 \mid - d$$, gdzie $d$ jest wartością
-spoczynkową, czyli odległością między punktami $p_1$ i $p_2$ w stabilnej
+Ograniczenie w dystansie między punktami pozwala symulować efekt efekt działania
+sił wewnętrznych. W swojej podstawowej wersji funkcja ograniczenia dana jest wzorem:
+$$ C(g_1, g_2) = || g_1 - g_2 || - d,$$ 
+gdzie $d$ jest wartością
+spoczynkową, czyli odległością między punktami $g_1$ i $g_2$ w stabilnej
 konfiguracji.
 
-Funkcja ograniczenia spełnia warunku dla wzoru \ref{con_eq}, czyli jest
-niezależna od translacji i obrotu punktów. Dlatego też wzór na korektę dla
-ograniczenia dystansu jest równy:
+Funkcja ograniczenia spełnia warunek dla wzoru \ref{con_eq}, czyli jest
+niezależna od translacji i obrotu punktów (zachowuje pęd i moment pędu).
+Dlatego też wzór na korekta projkcji dla
+ograniczenia dystansu jest równa:
 
-$$\Delta p_1 = - \frac{w_1}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
-	p_2}{\mid p_1 - p_2 \mid}$$
+$$\Delta g_1 = - \frac{w_1}{w_1 + w_2} (|| g_1 - g_2 || - d)\frac{g_1 -
+	g_2}{|| g_1 - g_2 ||}$$
 
-$$\Delta p_2 = + \frac{w_2}{w_1 + w_2} (\mid p_1 - p_2 \mid - d)\frac{p_1 -
-	p_2}{\mid p_1 - p_2 \mid}$$
+$$\Delta g_2 = + \frac{w_2}{w_1 + w_2} (|| g_1 - g_2 || - d)\frac{g_1 -
+	g_2}{|| g_1 - g_2 ||}$$
 
-Aby otrzymać ostateczną korektę projekcji $p_1$ i $p_2$ w danym kroku solwera,
-	trzeba otrzymane wartości $\Delta _1$ oraz $\Delta p_2$ pomnożyć przez
+Aby otrzymać ostateczną korektę projekcji $g_1$ i $g_2$ w,
+	trzeba otrzymane wartości $\Delta g_1$ oraz $\Delta g_2$ pomnożyć przez
 	sztywność ograniczenia $k$, gdzie $k \in (0, 1)$. 
-	$$ p_i = p_i + k * \Delta p_i$$
-	Powyższe równanie ma jedną niepożądaną własność, ostatecznie przesunięcie
-	$\Delta p_i$ jest zależne od ilości iteracji solwera układu ograniczeń
-	. Efekt po $n_s$ iteracjach na ostateczne przesunięcie $\Delta p$
-	będzie nieliniowy i równy $\Delta p_0 k^n$. Aby pozbyć się zależności od
-	liczby iteracji, parametr $k$ musi być funkcją $n_s$, czyli:
-	$$ k' = 1 - (1 - k)^{1/n_s}$$
+	$$ g_i = g_i + k * \Delta g_i$$
+Powyższe równanie ma jedną niepożądaną własność, ostatecznie przesunięcie
+$\Delta g_i$ jest zależne od ilości iteracji rozwiązania równań ograniczeń.
+Efekt po $I$ iteracjach na ostateczne przesunięcie $\Delta p$ będzie
+nieliniowy i równy $\Delta g_0 k^I$. Aby pozbyć się zależności od liczby
+iteracji, parametr $k$ musi być funkcją $I$, czyli: $$ k' = 1 - (1 -
+		k)^{1/I}$$
 
