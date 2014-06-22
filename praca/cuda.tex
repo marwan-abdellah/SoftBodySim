@@ -387,123 +387,72 @@ mają dostęp podsumowuje rysunek \ref{hier}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.8]{images/memory-hierarchy.png}
+\includegraphics[scale=0.6]{images/memory-hierarchy.png}
 \caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvi11b}}
 \label{hier}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.8]{images/gpu.png}
+\includegraphics[scale=0.6]{images/gpu.png}
 \caption{Źródło: CUDA Manual}
 \end{figure}
 
 \section{GPU}
 \subsection{Procesor graficzny}
-
-W rozdziałem tym przedstawiona zostanie architektura procesora graficznego na
-przykładzie Geforce GTX 680, wykonanym w architekturze Kepler. Nie jest to model
-wykonany w najnowszej architekturze stworzonej dotąd przez NVidę, jednak wybór
-ten jest podyktowany dwoma względami. Pierwszą prozaiczną przyczyną jest fakt,
-	że autor tej pracy posiada do dyspozycji model wykonany w tej samej
-	architekturze, a drugim że dostępne są materiały, opublikowane przez NVidię,
-	omawiające architekturę Kepler na przykładzie Geforce GTX 680.
+W rozdziale tym przedstawiona zostanie architektura procesora graficznego na
+przykładzie modelu Geforce GTX 680. Wykonany jest on w architekturze Kepler
+wprowadzonej przez NVidia w 2012 r. Nie jest to najnowsza architektura stworzona
+dotąd przez NVidę, jednak wybór ten jest podyktowany dwoma
+względami. Pierwszą prozaiczną przyczyną jest fakt, że autor tej pracy posiada
+do dyspozycji model 660M wykonany w tej samej architekturze, a drugim że
+dostępne są materiały, opublikowane przez NVidię, omawiające architekturę Kepler
+na przykładzie Geforce GTX 680.
 
 Rozdział ten nie ma na celu wyczerpującego opisania konstrukcji współczesnych
 procesorów graficznych, gdyż jest to temat zbyt obszerny. Ma za to na celu
-pokazać programistom wykorzystującym CUDA w jaki sposób wykonywane są stworzone
+pokazać programistom CUDA w jaki sposób wykonywane są stworzone
 przez nich programy czy analogie pomiędzy pojęciami używanymi w CUDA a ich
 implementacją w sprzęcie. Przyczyni się to z pewnością do lepszego zrozumienia tematu
 programowania procesorów graficznych NVidia.
 
-Procesory graficzne budowane w architekturze Kepler występują w różnych
-konfiguracjach następujących elementów \cite{gf680}:
-\begin{itemize}
-\item Klastrów Graficznych (Graphics Processing Cluster - GPC)
-\item Procesorów Strumieniowych (Streaming Multiprocessor - SMX)
-\item Kontrolerów Pamięci (Memory Controllers)
-\end{itemize}
-
-Klastry graficzne służą do grupowania procesorów strumieniowych oraz pozwalają
-poprzez ich dodawanie i usuwania na budowanie odmiennych konfiguracji
-procesorów graficznych\cite{gf680}. Procesory z większą ich liczbą, a zatem większą liczbą
-procesorów strumieniowych, cechować się będą lepszą wydajnością. Występujące w
-ofercie NVidia procesory są oznaczone zawsze trzycyfrową liczbą, gdzie pierwsza cyfra
-oznacza serię - co najczęściej oznacza też, że wykonane są w tej samej
-technologii (np. seria 6XX wykonana jest w architekturze Kepler), natomiast dwie
-ostatnie oznaczają wydajność procesora graficznego. I tak należy zakładać, że
-procesory o o tej samej pierwszej cyfrze i wyższej 2-giej cyfrze będą posiadać więcej procesorów
-strumieniowych i najprawdopodobniej też większą ilość klastrów.
-
-Przykładowa konfiguracja klastrów, procesorów strumieniowych i kontrolerów
-pamięci dla omawianego w tym rodziale Geforce'a GTX 680 zaprezentowana jest na
+Architektura procesora graficznego Geforce'a GTX 680 zaprezentowana jest na
 rysunku poniżej:
 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.4]{images/kepler-overview.png}
-\caption{Architektura Kepler na przykładzie Geforce GTX 680. Źródło: \ref{gf680}}
-\label{hier}
+\caption{Architektura Kepler na przykładzie Geforce GTX 680. Źródło: \cite{gf680}}
+\label{gf880}
 \end{figure}
 
-Warto w tym miejscu nawiązać do rodzajów pamięci występujących w CUDA i opisanych w \ref{ssec:mem}. 
-Ze schematu \ref{hier} wynika, że pamięć globalna nie jest częścią procesora
-graficznego, a do komunikacji z nią służą kontrolery pamięci. Oznacza to, że
-pamięć globalna musi być dostarczana przez producenta karty graficznej,
-	który musi ją zintegrować z procesorem graficznym NVidia. Jest to z
-	pewnością elastyczne rozwiązanie, gdyż pozwala produkować sprzęt o różnych
-	parametrach, zróżnicowany cenowo. Jednak dla programisty CUDA oznacza to, że
-	dostępy do pamięci globalnej są bardzo wolne i
-	zawsze powinien on minimalizować serię zapisów i odczytów do pamięci
-	globalnej.
-
-Aby przyspieszyć zapis i odczyt z pamięci globalnej współczesne procesory
-graficzne implementują tzw. cache L2. W Geforce GTX 680 dostępnych jest jej 512KB
-, warto jednak zaznaczyć że pamięć ta jest dzielona pomiędzy 4
-kontrolery, z czego wynika, że każdy kontroler ma do dyspozycji średnio
-128KB tej pamięci. Cache L2 jest transparentny dla programistów CUDA i używany
-jest tylko przez sprzęt w czasie odczytów/zapisu z pamięci globalnej.
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.3]{images/kepler-SMX-overview.png}
-\caption{Schemat procesora strumieniowego w architektura Kepler. Źródło: \ref{gf680}}
-\label{hier2}
-\end{figure}
-
-Najważniejszym elementem procesora graficznego jest procesor strumieniowy.
-Jego schemat przedstawiony jest na rysunku \ref{hier2}. Elementem szczególnego 
-zainteresowania na poniższym schemacie są rdzenie CUDA (CUDA cores) oznaczone
-kolorem zielonym. To one wg Nvidiii głównie decydują o wydajności danego
-procesora graficznego. NVidia nie podaje ścisłej definicji czym jest rdzeń CUDA,
-		  jednak mogą one być postrzegane jako procesory będące w stanie wykonać
-		  instrukcje programu CUDA na dedykowanych dla siebie danych. 
-
-Kolejnymi komponentami oprócz rdzeni CUDA są:
+Jak wynika to ze schematu \ref{gf880} procesory graficzne w architekturze Kepler
+zbudowane są z następujących głównych elementów\cite{gf680}:
 \begin{itemize}
-\item CUDA Core
-\item Loading/Storage Unit (LD/ST)
-\item Special Function Unit (SFU)
+\item Procesorów Strumieniowych (Streaming Multiprocessor - SMX)
+\item Klastrów Graficznych (Graphics Processing Cluster - GPC)
+\item Kontrolerów Pamięci (Memory Controllers)
 \end{itemize}
 
-Procesor graficzny, zwany też multiprocesorem może być logicznie
-podzielony na następujące elementy:
-\begin{itemize}
-\item rdzenie CUDA
-\item 
-\end{itemize}
+Procesory strumieniowe są najważniejszym elementem procesora graficznego. To one
+są najbardziej zaawansowane technologicznie, wykonane w nanometrycznej
+technologii i przedmiotem nieustannych modyfikacji. Z reguły opracowanie nowej
+serii procesorów graficznych zajmuje inżynierom Nvidia parę lat - i tak w 2012
+swoją premierę miała technologii Kepler, a na początku 2014 Maxwell. Nvidia z
+marketingowych względów nie podaje ilości procesorów strumieniowych obecnych w ich GPU. Zamiast tego
+podawana jest ilość rdzeni CUDA dostępnych na całym procesorze graficznym.
 
 Najistotniejszym zagadnieniem przy omawianiu implementacji technologii CUDA jest
-zrozumienie fundamentalnej różnicy w budowie pomiędzy procesora strumieniowego a CPU.
-Przedstawia to rysunek \ref{cpugpu}, na którym pokazany jest podział użytych
-tranzystorów pomiędzy logiczne moduły procesora CPU oraz GPU.  Wynika z
-niego, że procesory strumieniowe posiadają mniejszą ilość pamięci cache oraz mniej
-skomplikowane sterowanie wykonywaniem instrukcji niż procesory firmy Intel czy
-AMD. Wyróżniają się natomiast większą ilością jednostek arytmetyczno-logicznych
-(ALU) dostępnych na układzie scalonym. Sprawia to, że procesory te są
-wyspecjalizowane w rozwiązywaniu problemów wymagających dużej intensywności
-obliczeniowej mierzonej jako stosunek operacji arytmetycznych do operacji na
-pamięci.
+zrozumienie fundamentalnej różnicy w budowie pomiędzy procesorem strumieniowym a
+CPU. Przedstawia to rysunek \ref{cpugpu}, na którym pokazany jest podział
+użytych tranzystorów pomiędzy logiczne moduły procesora.  Wynika z
+niego, że procesory strumieniowe posiadają mniejszą ilość pamięci cache oraz
+mniej skomplikowane sterowanie wykonywaniem instrukcji niż procesory firmy Intel
+czy AMD. Wyróżniają się natomiast większą ilością jednostek
+arytmetyczno-logicznych (ALU) dostępnych na układzie scalonym. Sprawia to, że
+procesory te są wyspecjalizowane w rozwiązywaniu problemów wymagających dużej
+intensywności obliczeniowej mierzonej jako stosunek operacji arytmetycznych do
+operacji na pamięci.
 
 \begin{figure}[H]
 \centering
@@ -511,6 +460,84 @@ pamięci.
 \caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
 \label{cpugpu}
 \end{figure}
+
+Kolejnym elementem są klastry graficzne, które służą do grupowania procesorów
+strumieniowych oraz pozwalają poprzez ich dodawanie i usuwania na budowanie
+odmiennych konfiguracji procesorów graficznych\cite{gf680}. Procesory z większą
+ich liczbą, a zatem większą liczbą procesorów strumieniowych, cechować się będą
+lepszą wydajnością.
+
+Ostatnim istotnym elementem występującym w procesorach graficznych są kontrolery
+pamięci. Zajmują się one pośrednictwem danych pomiędzy pamięcią globalną a
+cachem L2 procesorów strumieniowych. Użycie kontrolerów pamięci oznacza, że
+pamięć globalna musi być dostarczana przez producenta karty graficznej,
+	który musi ją zintegrować z procesorem graficznym. Jest to z
+	pewnością elastyczne rozwiązanie, gdyż pozwala produkować sprzęt o różnych
+	parametrach, zróżnicowany cenowo. Jednak dla programisty CUDA oznacza to, że
+	dostępy do pamięci globalnej są bardzo wolne i
+	zawsze powinien on minimalizować serię zapisów i odczytów do pamięci
+	globalnej.
+
+Aby przyspieszyć zapis i odczyt z pamięci globalnej procesory graficzne
+wyposażone są w cache drugiego poziomu. W Geforce GTX 680 dostępnych
+jest jej 512KB . Pamięć ta jest dzielona pomiędzy 4 kontrolery, z czego wynika,
+	 że każdy kontroler ma do dyspozycji średnio 128KB tej pamięci. Cache L2
+	 jest transparentny dla programistów CUDA i używany jest tylko przez sprzęt
+	 w czasie odczytów/zapisu z pamięci globalnej.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{images/kepler-SMX-overview.png}
+\caption{Schemat procesora strumieniowego w architektura Kepler. Źródło: \cite{gf680}}
+\label{hier2}
+\end{figure}
+
+Najważniejszym elementem procesora graficznego jest procesor strumieniowy.
+Jego schemat przedstawiony jest na rysunku \ref{hier2}. Do głównych komponentów
+procesora strumieniowego, które będą omawiane w tym rozdziale należą:
+
+\begin{itemize}
+\item CUDA Core
+\item Loading/Storage Unit (LD/ST)
+\item Special Function Unit (SFU)
+\item Shared Memory / L1 Cache
+\item Texture Cache
+\item Uniform Cache
+\item Warp Scheduler
+\end{itemize}
+
+Elementem szczególnego  zainteresowania na powyższym schemacie są rdzenie CUDA
+(CUDA cores) oznaczone kolorem zielonym. To one wg Nvidiii głównie decydują o
+wydajności danego procesora graficznego. NVidia nie podaje ścisłej definicji
+czym jest rdzeń CUDA, jednak mogą wg mnie być postrzegane jako procesory będące w
+stanie wykonać instrukcje programu CUDA. Posiada jednostki do operacji
+na liczbach zmiennoprzecinkowych (FPU) oraz całkowitych (INT Unit).
+
+Loading/Storage Unit są komponentem odpowiedzialnych za czytanie i zapis do
+pamięci globalej. Będą one przedmiotem zainteresowania następnych podrozdziałów.
+
+Special Function Unit jest komponentem implementujący sprzętowo pewne znane
+operacje na liczbach zmiennoprzecinkowych. Przykładami tych operacji jest
+obliczanie przybliżonych wartości funkcji sinus czy cosinus.
+
+Shared Memory / L1 cache jest pamięcią używaną albo do współdzielenia danych
+pomiędzy wątkami albo do cachowania danych pochodzących z pamięci L2.
+
+Texture Cache jest specjalnym rodzajem pamięci dedykowanym do obsługi tekstur.
+Zasadniczą różnicą pomiędzy zwykłą pamięcią cache jest zastosowanie
+zoptymalizowanego algorytmu wczytywania danych. Zamiast operować na fragmencie
+pamięci jak na ciągłym obszarze, traktuje on ją jak tablicę dwuwymiarową. W
+momencie nie znalezienia potrzebnych danych w cachu (tzw. cache miss'a) w
+tablicy na pozycji (x,y), wczytywane są też dane sąsiadujące z nim w rozumieniu
+odległości w 2D. Taki algorytm redukuje znacznie ilość cache missów gdy
+odwołania do danych przejawiają przestrzenny charakter, jaki ma miejsce w
+przypadku renderowania tekstur. Z punktu widzenia programisty CUDA Texture Cache może być
+wykorzystany gdy posiadamy ten sam charakter danych lub też gdy zwyczajnie nie
+jesteśmy w stanie przewidzieć w jaki sposób będziemy odwoływać się do danych.
+
+Uniform Cache jest jest w modelu CUDA wykorzystywany do implementacji pamięci
+stałej. Jest ona szczególnie szybka w momencie gdy wszystkie wątki odwołują się
+do tej samej komórki pamięci w cachu.
 
 \subsection{Warp}
 
