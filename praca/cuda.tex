@@ -160,7 +160,7 @@ niektórych zastosowaniach nawet do 150 razy \cite{prez}.
 
 Zaproponowany we frameworku CUDA model programowania zakłada możliwość
 skompilowania i wykonywania kodu programu w dwóch różnych kontekstach -
-gospodarza (CPU) oraz GPU (procesora graficznego)\cite{Nvillb}. Jako kontekst rozumiany jest
+gospodarza (CPU) oraz GPU (procesora graficznego)\cite{Nvi11b}. Jako kontekst rozumiany jest
 specyficzny dla danej architektury zestaw instrukcji dla procesora. Fragmenty
 programu, których zrównoleglenie jest niemożliwe są tworzone w kontekście
 gospodarza,
@@ -332,7 +332,7 @@ kontekście GPU poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_} (listin
 kernela, pozwalając na enkapsulację często powtarzanych fragmentów kodu. Należy
 jednak pamiętać, że kontekst gospodarza i GPU znacząco się od siebie różnią i w
 przypadku tego drugiego wywołania funkcji z reguły trwają dużo
-dłużej\cite{Nvillb} Kompilator NVCC na ogół stara się więc inlinować wszystkie
+dłużej\cite{Nvi11b} Kompilator NVCC na ogół stara się więc inlinować wszystkie
 funkcje oznaczone atrybutem \texttt{\_\_device\_\_}, czyli umieszcza ich kod
 bezpośrednio w miejscu wywołania. Wydłuża to docelowy kod kernela , jednak
 znacząco przyspiesza jego wykonywanie. W celu wymuszenia na kompilatorze braku
@@ -341,6 +341,7 @@ inlinowania trzeba poprzedzić atrybut \texttt{\_\_device\_\_} atrybutem
 atrybutem \texttt{\_\_forceinline\_\_}.
 
 \subsection{Hierarchia pamięci}
+\label{ssec:mem}
 
 W modelu CUDA wyróżnia się 4 podstawowe typy pamięci:
 \begin{itemize}
@@ -387,84 +388,103 @@ mają dostęp podsumowuje rysunek \ref{hier}.
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.8]{images/memory-hierarchy.png}
-\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvillb}}
+\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvi11b}}
 \label{hier}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.8]{images/gpu.png}
+\caption{Źródło: CUDA Manual}
 \end{figure}
 
 \section{GPU}
-\subsection{Architektura procesorów graficznych NVIDIA}
+\subsection{Procesor graficzny}
 
-Współczesne karty graficzne stanowią 
+W rozdziałem tym przedstawiona zostanie architektura procesora graficznego na
+przykładzie Geforce GTX 680, wykonanym w architekturze Kepler. Nie jest to model
+wykonany w najnowszej architekturze stworzonej dotąd przez NVidę, jednak wybór
+ten jest podyktowany dwoma względami. Pierwszą prozaiczną przyczyną jest fakt,
+	że autor tej pracy posiada do dyspozycji model wykonany w tej samej
+	architekturze, a drugim że dostępne są materiały, opublikowane przez NVidię,
+	omawiające architekturę Kepler na przykładzie Geforce GTX 680.
 
-Procesor graficzny mimo swojej coraz to bardziej zaawansowanej budowy nadal
-znacząco różni się od architektury CPU. Przedstawia to rysunek \ref{cpugpu}, na
-którym pokazany jest podział użytych tranzystorów pomiędzy logiczne moduły procesora.
-Wynika z niego, że procesory graficzne posiadają mniejszą ilość pamięci cache oraz
-mniej skomplikowane sterowanie przepływem instrukcji niż procesory firmy
-Intel czy AMD. Wyróżniają się natomiast większą ilością jednostek arytmetyczno-logicznych
-(ALU) dostępnych na układzie scalonym. Sprawia to, że procesory te są wyspecjalizowane w rozwiązywaniu
-problemów wymagających dużej intensywności obliczeniowej mierzonej jako stosunek
-operacji arytmetycznych do operacji na pamięci.
+Rozdział ten nie ma na celu wyczerpującego opisania konstrukcji współczesnych
+procesorów graficznych, gdyż jest to temat zbyt obszerny. Ma za to na celu
+pokazać programistom wykorzystującym CUDA w jaki sposób wykonywane są stworzone
+przez nich programy czy analogie pomiędzy pojęciami używanymi w CUDA a ich
+implementacją w sprzęcie. Przyczyni się to z pewnością do lepszego zrozumienia tematu
+programowania procesorów graficznych NVidia.
+
+Procesory graficzne budowane w architekturze Kepler występują w różnych
+konfiguracjach następujących elementów \cite{gf680}:
+\begin{itemize}
+\item Klastrów Graficznych (Graphics Processing Cluster - GPC)
+\item Procesorów Strumieniowych (Streaming Multiprocessor - SMX)
+\item Kontrolerów Pamięci (Memory Controllers)
+\end{itemize}
+
+Klastry graficzne służą do grupowania procesorów strumieniowych oraz pozwalają
+poprzez ich dodawanie i usuwania na budowanie odmiennych konfiguracji
+procesorów graficznych\cite{gf680}. Procesory z większą ich liczbą, a zatem większą liczbą
+procesorów strumieniowych, cechować się będą lepszą wydajnością. Występujące w
+ofercie NVidia procesory są oznaczone zawsze trzycyfrową liczbą, gdzie pierwsza cyfra
+oznacza serię - co najczęściej oznacza też, że wykonane są w tej samej
+technologii (np. seria 6XX wykonana jest w architekturze Kepler), natomiast dwie
+ostatnie oznaczają wydajność procesora graficznego. I tak należy zakładać, że
+procesory o o tej samej pierwszej cyfrze i wyższej 2-giej cyfrze będą posiadać więcej procesorów
+strumieniowych i najprawdopodobniej też większą ilość klastrów.
+
+Przykładowa konfiguracja klastrów, procesorów strumieniowych i kontrolerów
+pamięci dla omawianego w tym rodziale Geforce'a GTX 680 zaprezentowana jest na
+rysunku poniżej:
 
 \begin{figure}[H]
 \centering
-\includegraphics{images/gpu-devotes-more-transistors-to-data-processing.png}
-\caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
-\label{cpugpu}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.3]{images/kepler-overview.png}
-\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvillb}}
+\includegraphics[scale=0.4]{images/kepler-overview.png}
+\caption{Architektura Kepler na przykładzie Geforce GTX 680. Źródło: \ref{gf680}}
 \label{hier}
 \end{figure}
+
+Warto w tym miejscu nawiązać do rodzajów pamięci występujących w CUDA i opisanych w \ref{ssec:mem}. 
+Ze schematu \ref{hier} wynika, że pamięć globalna nie jest częścią procesora
+graficznego, a do komunikacji z nią służą kontrolery pamięci. Oznacza to, że
+pamięć globalna musi być dostarczana przez producenta karty graficznej,
+	który musi ją zintegrować z procesorem graficznym NVidia. Jest to z
+	pewnością elastyczne rozwiązanie, gdyż pozwala produkować sprzęt o różnych
+	parametrach, zróżnicowany cenowo. Jednak dla programisty CUDA oznacza to, że
+	dostępy do pamięci globalnej są bardzo wolne i
+	zawsze powinien on minimalizować serię zapisów i odczytów do pamięci
+	globalnej.
+
+Aby przyspieszyć zapis i odczyt z pamięci globalnej współczesne procesory
+graficzne implementują tzw. cache L2. W Geforce GTX 680 dostępnych jest jej 512KB
+, warto jednak zaznaczyć że pamięć ta jest dzielona pomiędzy 4
+kontrolery, z czego wynika, że każdy kontroler ma do dyspozycji średnio
+128KB tej pamięci. Cache L2 jest transparentny dla programistów CUDA i używany
+jest tylko przez sprzęt w czasie odczytów/zapisu z pamięci globalnej.
 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.3]{images/kepler-SMX-overview.png}
-\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvillb}}
-\label{hier}
+\caption{Schemat procesora strumieniowego w architektura Kepler. Źródło: \ref{gf680}}
+\label{hier2}
 \end{figure}
 
-Współbieżne wykonywanie dużej ilości zadań możliwe jest dzięki implementacji
-w procesorach graficznych architektury SIMT (Single Intruction Multiple Thread), która
-przypomina architekturę SIMD używaną w współczesnych procesorach. W
-odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
-operacji na wektorze danych, SIMT umożliwia równoległe wykonywanie wielu
-niezależnych wątków. Zaletą wykonywania wątków, zamiast elementarnych operacji jest większa
-elastyczność w sterowaniu przepływem programu. Każdy wykonywany wątek
-na procesorze graficznym posiada własny licznik programu, dzięki czemu możliwe
-jest wykonanie innych zestawów instrukcji procesora (tzw. branching).
+Najważniejszym elementem procesora graficznego jest procesor strumieniowy.
+Jego schemat przedstawiony jest na rysunku \ref{hier2}. Elementem szczególnego 
+zainteresowania na poniższym schemacie są rdzenie CUDA (CUDA cores) oznaczone
+kolorem zielonym. To one wg Nvidiii głównie decydują o wydajności danego
+procesora graficznego. NVidia nie podaje ścisłej definicji czym jest rdzeń CUDA,
+		  jednak mogą one być postrzegane jako procesory będące w stanie wykonać
+		  instrukcje programu CUDA na dedykowanych dla siebie danych. 
 
-W modelu CUDA zakłada się, że wszystkie wątki w ramach jednego bloku wykonywane
-są równolegle. W rzeczywistości procesor graficzny potrafi współbieżnie wykonywać
-instrukcje jedynie dla podzbioru wątków zwanych w nomenklaturze CUDA - warpem. 
-Liczba wątków wchodzących w skład jednego warpa jest stała dla wszystkich stworzonych
-do dziś architektur procesorów graficznych NVIDIA i wynosi 32. Z punktu
-widzenia programisty fakt wykonywania tylko części wątków na raz może być
-całkowicie pominięty, jednak jest niezbędny w przypadku dokonywania
-optymalizacji na stworzonym kodzie CUDA\cite{kepler}.
-
-W czasie wykonywania programu CUDA, każdy blok zostaje wpierw podzielony na odpowiednią
-liczbę warpów, a następnie zlecony do wykonania przez jednostkę procesora zwaną warp
-schedulerem. Wątki wchodzące w skład warpu mogą występować w jednym z dwóch stanów
-- aktywnym oraz nieaktywnym. Stan aktywny oznacza, że następna instrukcja wątku zostanie wykonana w następnym
-cyklu zegara, a nieaktywny - którego egzekucja zostaje w następnym cyklu
-zawieszona. Warp scheduler jest w stanie wykonać serię instrukcji
-procesora dla wszystkich wątków jednocześnie, a w przypadku gdy dla wątku
-nastąpił conditional branching, oznaczany jest on jako nieaktywny i
-zawiesza się wykonanie instrukcji programu dla jego danych. Jeżeli zatem kod
-programu CUDA
-zawiera wyrażenie \texttt{if X {...} else {...}}, i dochodzi do conditional
-branchingu, oznacza to, że najpierw zostaną
-wykonane na 32 wątkach instrukcje programu pierwszej części wyrażenia,
-		 z oznaczeniem jako nieaktywne tych wątków dla których wartość X jest
-		 nieprawdziwa. Następnie druga strona wyrażenia zostanie wykonana na 32
-		 wątkach w analogiczny sposób. Ważną implikacją działania warp
-		 schedulera jest fakt, że dopiero po wykonaniu obu stron rozgałęzienia
-		 programu następne instrukcje mogą być wykonane.
-
+Kolejnymi komponentami oprócz rdzeni CUDA są:
+\begin{itemize}
+\item CUDA Core
+\item Loading/Storage Unit (LD/ST)
+\item Special Function Unit (SFU)
+\end{itemize}
 
 Procesor graficzny, zwany też multiprocesorem może być logicznie
 podzielony na następujące elementy:
@@ -473,6 +493,79 @@ podzielony na następujące elementy:
 \item 
 \end{itemize}
 
+Najistotniejszym zagadnieniem przy omawianiu implementacji technologii CUDA jest
+zrozumienie fundamentalnej różnicy w budowie pomiędzy procesora strumieniowego a CPU.
+Przedstawia to rysunek \ref{cpugpu}, na którym pokazany jest podział użytych
+tranzystorów pomiędzy logiczne moduły procesora CPU oraz GPU.  Wynika z
+niego, że procesory strumieniowe posiadają mniejszą ilość pamięci cache oraz mniej
+skomplikowane sterowanie wykonywaniem instrukcji niż procesory firmy Intel czy
+AMD. Wyróżniają się natomiast większą ilością jednostek arytmetyczno-logicznych
+(ALU) dostępnych na układzie scalonym. Sprawia to, że procesory te są
+wyspecjalizowane w rozwiązywaniu problemów wymagających dużej intensywności
+obliczeniowej mierzonej jako stosunek operacji arytmetycznych do operacji na
+pamięci.
+
+\begin{figure}[H]
+\centering
+\includegraphics{images/gpu-devotes-more-transistors-to-data-processing.png}
+\caption{Podział tranzystorów w architekturze CPU i GPU. Źródło: CUDA C Programming Guide}
+\label{cpugpu}
+\end{figure}
+
+\subsection{Warp}
+
+Współbieżne wykonywanie dużej ilości zadań możliwe jest dzięki implementacji
+w procesorach graficznych architektury SIMT (Single Intruction Multiple Thread), która
+przypomina architekturę SIMD używaną w współczesnych procesorach. W
+odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
+operacji na wektorze danych, SIMT umożliwia równoległe wykonywanie wielu
+niezależnych wątków. Zaletą wykonywania wątków, zamiast elementarnych operacji jest większa
+elastyczność w sterowaniu przepływem programu.
+
+W modelu CUDA zakłada się, że wszystkie wątki w ramach jednego bloku wykonywane
+są równolegle. W rzeczywistości jednak procesor graficzny potrafi współbieżnie
+wykonywać instrukcje jedynie dla grup wątków zwanych w nomenklaturze CUDA -
+warpem.  Liczba wątków wchodzących w skład jednego warpa, dla wszystkich
+stworzonych do dziś architektur procesorów graficznych NVIDIA, jest stała i
+wynosi 32. Z punktu widzenia programisty fakt wykonywania tylko części wątków na
+raz może być całkowicie zignorowany, jednak jest istotny do lepszego zrozumienia
+działania technologii CUDA i dokonywania zaawansowanych optymalizacji na stworzonym
+kodzie \cite{kepler}.
+
+W czasie wykonywania kernela CUDA, każdy blok zostaje wpierw podzielony na
+odpowiednią liczbę warpów, a następnie zlecony do wykonania przez jednostkę
+procesora strumieniowego zwaną warp schedulerem. To warp scheduler decyduje, który warp jest 
+jest w stanie wykonać instrukcję w następnym cyklu zegara. W architekturze
+Kepler wszystkie warpy, przydzielone do danego procesora strumieniowego,
+zostają rozdystrybuowane pomiędzy 4 dostępne warp schedulery. Te następnie w
+każdym cyklu emisji instrukcji są w stanie wykonać po jednej instrukcji na
+dwóch zarządzanych przez nie warpach. Oznacza to ostatecznie, że Geforce GTX 680
+jest w stanie na każdym procesorze strumieniowym sprzętowo wykonywać maksymalnie 8 * 32 =
+256 wątków, co ostatecznie daje krańcową liczbę 2048 wątków dla całego procesora
+graficznego.
+
+Możliwość wykonania tylko jednej instrukcji dla danego warpu ma istotnie
+konsekwencje. Aby wykonać program, którego następna instrukcja
+zależy od danych, NVidia wprowadziła możliwość nadawania wątkom jednego z dwóch stanów -
+aktywnego oraz pasywnego. Stan aktywny oznacza, że następna instrukcja wątku
+zostanie wykonana w następnym cyklu zegara, a pasywny - że egzekucja instrukcji
+zostaje w następnym cyklu zawieszona.
+
+W przypadku gdy kod programu danego warpu zawiera tzw. conditional branching,
+  czyli zawiera wyrażenie postaci \texttt{if X {...} else {...}}, to najpierw
+  zastaną wykonane na 32 wątkach instrukcje programu pierwszej części wyrażenia,
+  z oznaczeniem jako pasywnych tych wątków dla których wartość \texttt{X} jest
+  nieprawdziwa. Następnie druga strona wyrażenia zostanie wykonana na 32 wątkach
+  w analogiczny sposób. Implikacją działania warp schedulera jest fakt, że
+  dopiero po wykonaniu obu stron rozgałęzienia programu następne instrukcje mogą
+  być wykonane. 
+  
+Ważne jest zatem aby unikać branchingu w kodzie kerneli CUDA, a
+najbardziej sytuacji w których jeden wątek wykonywać będzie długą pętlę, przez
+co spowoduje zawieszenie reszty wątków w danym warpie.
+
+\subsection{Dostęp do pamięci}
+
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=0.4]{images/memory-hierarchy2.png}
@@ -480,11 +573,75 @@ podzielony na następujące elementy:
 \label{hierarchiaKepler}
 \end{figure}
 
-\begin{figure}[ht]
+Wymieniony wcześniej Loading/Storage Unit jest komponentem służącym do odczytów
+i zapisów do pamięci globalnej. Każdy dostęp do pamięci globalnej wykonany przez
+procesor strumieniowy odbywa się za jego pośrednictwem. Istotną kwestią związaną
+z działaniem jednostek LD/ST jest fakt, że dokonują one wczytywania pamięci w
+blokach, nazywanych transakcjami. Ilość bajtów wczytanych w jednej transakcji
+zależy od architektury urządzenia i dla architektury Kepler wynosi 32, 64 lub
+128 bajtów \cite{Nvi11b}. Transakcje dodatkowo muszę być też "wyrównane" (memory
+		aligned) tzn. adres początkowy bloku transakcji musi być wielokrotnością
+128 bajtów \cite{Nvi11b}.
+
+Wczytanie z pamięci danych, które nie są są "wyrównane", ma negatywny wpływ na
+wydajność programu CUDA.  Powyższe założenia dobrze zobrazować przykładem.
+Załóżmy, że mamy grupę 32 wątków tworzących warp, które odwołują się do pamięci
+globalnej. Jeżeli każdy z nich wczytuje 4 bajtów to zakładając, że dane
+zaczynają się w pamięci adresem będącym wielokrotnością 128 bajtów, wczytanie
+danych odbywa się dokładnie w jednej transakcji o wielkości 128 bajtów. Jest to
+optymalna sytuacja minimalizująca użycie jednostek LD/ST procesora graficznego.
+
+Przyjmijmy oznaczenia wywodzące się ze składni języka C, że dane globalne mieszczą się w
+tablicy $A[N]$, która jest "wyrównana" do 128 bajtów, a odwołanie do
+pamięci i-tego wątku zapiszmy jako $A[i]$. W przypadku, gdy odwołanie następuje
+z pewnym przesunięciem $t = 1$, które zapiszemy jako $A[i + 1]$, wczytanie danych
+nie może już zostać zrealizowane w jednej transakcji. Dzieje się tak dlatego, że
+pierwsza transakcja zostanie i tak zrealizowana od adresu $A[0]$, jednak element
+$A[32]$ nie będzie się już w niej zawierał. Dlatego będzie niezbędna będzie
+dodatkowa transakcja tylko po to aby wczytać element $A[32]$. Ma to wpływ na
+wydajność całego programu CUDA, ponieważ zamiast jednej jednostki LD/ST używane
+są dwie dla tej samej grupy wątków. 
+
+Dowodem tego jest wykres \ref{hier2}, na którym pokazano
+zależność między wartością przesunięcia a przepustowością obliczoną jako czas
+wywołania kernela CUDA dla 4MB danych. Implementacja kernala zawierała tylko
+wczytanie wartości z pamięci globalnej, jej inkrementację oraz zapis.
+Dane empiryczne potwierdzają tezę, że minimalizacja użytych transakcji ma
+pozytywny wpływ na wydajność programu CUDA. I tak najlepsze rezultaty
+otrzymujemy dla $t = 0$ oraz $t = 32$, gdzie $A[32]$ wskazuje na początek 
+następnego "wyrównanego" bloku pamięci.
+
+\begin{figure}[H]
 \centering
-\includegraphics[scale=0.8]{images/gpu.png}
-\caption{Źródło: CUDA Manual}
+\includegraphics[scale=0.4]{images/gf660_offset.png}
+\caption{Teoretyczna przepustowość Geforce 660M. Źródło: opracowanie własne na
+	podstawie \cite{memperf}}
+\label{hier2}
 \end{figure}
 
-\subsection{Device capabilities}
-sasda
+Warto dodać, że teoretyczny spadek wydajności jest realtywnie
+mały - z 36 GB/s do 32 GB/s dla Geforca 660M. Ciekawa jest również obserwacja
+teoretycznej przepustowości dla innych wartości przesunięcia $t$. Okazuje się,
+			 że nie jest ona stała co sugerowałoby założenie o dwóch dokonywanych
+			 transakcjach dla każdej grupy wątków. W rzeczywistości
+			 kompilator/sterownik dokonuje dodatkowych optymalizacji w
+			 zależności do którego niewyrównanego elementu w pamięci staramy się
+			 odwołać. Niezależnie jednak od użytych optymalizacji, developer aplikacji CUDA
+			 powinien pamiętać, żeby należy wczytywać dane z "wyrównanych"
+			 fragmentów pamięci.
+
+Dużo większy wpływ na spadek wydajności ma wczytywanie danych nie ułożonych gęsto w
+pamięci, a rozdzielonych stałymi odstępami liczonymi w bajtach. Ma to np. miejsce w przypadku gdy
+dane aplikacji CUDA reprezentowane są jako tablica structur (Array of Struct AOS), a deweloper
+odwołuje w kernelu tylko do jednego pola tej struktury. Efekt zwiększania odstępów
+między kolejnymi polami struktur przedstawia wykres \ref{hier}. Rozwiązaniem tego
+problemu może być reprezentacja danych jako struktury tablic (Struct of Array
+		SOA).
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{images/gf660_stride.png}
+\caption{Teoretyczna przepustowość Geforce 660M. Źródło: opracowanie własne na
+	podstawie \cite{memperf}}
+\label{hier}
+\end{figure}
