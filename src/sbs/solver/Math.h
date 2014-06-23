@@ -22,7 +22,7 @@ void inline eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int
 inline glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 {
 	glm::vec3 ret;
-	bool changed = true;
+//	bool changed = true;
 
 	// initial eigenvalues
 	ret[0] = mat[0][0];
@@ -35,7 +35,7 @@ inline glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 	mat[2][2] = 1.0;
 
 	REP(z, max_iter) {
-		changed = false;
+//		changed = false;
 		REP(i, 3) {
 			for(int j = i + 1; j < 3; j++) {
 				double mii = ret[i];
@@ -47,7 +47,7 @@ inline glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 				double mii1 = c * c * mii - 2 * s * c * mij + s * s * mjj;
 				double mjj1 = s * s * mii + 2 * s * c * mij + c * c * mjj;
 				if (abs(mii - mii1) < 0.00001 || (mjj - mjj1) < 0.00001) {
-					changed = true;
+//					changed = true;
 					ret[i] = mii1;
 					ret[j] = mjj1;
 					mat[i][j] = 0.0;
@@ -58,7 +58,7 @@ inline glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 				}
 			}
 		}
-		if (!changed) break;
+//		if (!changed) break;
 	}
 	return ret;
 }
