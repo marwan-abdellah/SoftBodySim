@@ -240,7 +240,7 @@ void CPUSoftBodySolver::SolveVolumeConstraint()
 		if (diff > -0.01f) return;
 		// update positions
 		REP(k, it->count)
-			mProjections[it->baseIdx + k] -= 0.1f * diff * it->posAccumulator[k] / (float_t)it->accumulatorCounter[k];
+			mProjections[it->baseIdx + k] -= it->body->mSpringiness * diff * it->posAccumulator[k] / (float_t)it->accumulatorCounter[k];
 	}
 }
 
