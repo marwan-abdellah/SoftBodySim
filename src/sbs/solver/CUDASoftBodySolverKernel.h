@@ -67,26 +67,10 @@ __global__ void calculateLinkStiffness(
 		glm::uint_t linkIdx,
 		glm::uint_t max_idx);
 
-__global__ void solvePointTriangleCollisionsKernel(
-		SoftBodyDescriptor *descriptors,
-		PointTriangleConstraint *collisions_data,
-		glm::uint_t max_idx);
-
 __global__ void solveGroundCollisionConstraints(
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
 		glm::float_t ground_level,
 		glm::uint_t max_idx);
-
-#if 0
-__global__ void calculateSpatialHash(
-		glm::uint_t objectID,
-		glm::uint_t baseIdx,
-		glm::uvec3 *triangles,
-		glm::vec3 *projections,
-		glm::float_t cellSize,
-		CellID *cellIds,
-		glm::uint_t max_idx);
-#endif
 
 #endif
