@@ -142,8 +142,8 @@ void CPUSoftBodySolver::IntegrateSystem(float dt)
 {
 	REP(i, mPositions.size()) {
 		mVelocities[i] = (mProjections[i] - mPositions[i]) / dt;
-		//mPositions[i] = mProjections[i];
-		mPositions[i] = mPositions[i] + dt * mVelocities[i];
+		mPositions[i] = mProjections[i];
+		//mPositions[i] = mPositions[i] + dt * mVelocities[i];
 	}
 }
 
