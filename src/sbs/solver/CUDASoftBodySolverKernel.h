@@ -2,7 +2,7 @@
 #define SBS_SOLVER_SOLVER_H_
 
 #include <glm/fwd.hpp>
-#include "SoftBody.h"
+#include "sbs/model/SoftBody.h"
 
 #define MAX_LINKS 128
 

@@ -14,13 +14,13 @@ set (COMMON_SRCS
 	)
 
 set (GPU_SRCS
-		CUDASoftBodySolver.cu
-		CUDASoftBodySolverKernel.cu
+		solver/CUDASoftBodySolver.cu
+		solver/CUDASoftBodySolverKernel.cu
 	)
 
 add_subdirectory(geometry)
 
-find_package(CUDAU QUIET)
+find_package(CUDA QUIET)
 find_library(OPENGL_LIBRARY GL)
 
 include_directories(.)
