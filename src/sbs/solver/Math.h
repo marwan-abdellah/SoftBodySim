@@ -3,9 +3,27 @@
 
 #include "common.h"
 #include <glm/glm.hpp>
-#include <glm/ext.hpp>
 
-void inline eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
+#ifndef __CUDACC__
+	#define PREFIX inline
+#else
+	#define PREFIX __device__ __host__
+#endif
+
+/**
+ * This is defined in glm/ext.hpp but for whatever reason ext.hpp can't be
+ * included by CUDA code, so I decided to redefine it.
+ */
+PREFIX glm::mat3 diagonal3x3(glm::vec3 &v)
+{
+	glm::mat3 ret(0.0f);
+	ret[0][0] = v[0];
+	ret[1][1] = v[1];
+	ret[2][2] = v[2];
+	return ret;
+}
+
+PREFIX void eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
 {
 	double a = c * mat[i0][j0] - s * mat[i1][j1];
 	double b = s * mat[i0][j0] + c * mat[i1][j1];
@@ -19,7 +37,7 @@ void inline eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int
  * Passing non diagonizable matrix and infinite max_iter (= -1)
  * May result in infinite loop.
  */
-inline glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
+PREFIX glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 {
 	glm::vec3 ret;
 //	bool changed = true;
@@ -75,7 +93,7 @@ inline glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
  * R = A * S^-1
  * S = sqrt(A' * A)
  */
-inline void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
+PREFIX void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 {
 	glm::mat3 E;
 	glm::mat3 B = glm::transpose(A) * A;
@@ -86,7 +104,7 @@ inline void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 	// add delta value to eigenvalues to overcome det(A) == 0 problem
 	eig += glm::vec3(0.001f, 0.001f, 0.001f);
 
-	S = glm::diagonal3x3(eig);
+	S = diagonal3x3(eig);
 
 	// calculate squere root of diagonal matrix
 	S[0][0] = glm::sqrt(S[0][0]);
@@ -99,6 +117,7 @@ inline void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 	// calculate rotation matrix
 	R = A * glm::inverse(B);
 
+#ifndef __CUDA_ARCH__
 	float_t det = glm::determinant(R);
 	if (det != det) {
 		ERR("det(A): %f", glm::determinant(A));
@@ -108,16 +127,17 @@ inline void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 		ERR("%f %f %f", A[2][0], A[2][1], A[2][2]);
 		SB_ASSERT(false);
 	}
+#endif
 }
 
-inline glm::float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
+PREFIX glm::float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
 {
 	glm::vec3 ab = b - a;
 	glm::vec3 ac = c - a;
 	return 0.5f * glm::length(glm::cross(ab, ac));
 }
 
-inline glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, glm::uint_t *accum, int n)
+PREFIX glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, glm::uint_t *accum, int n)
 {
 	double ret = 0.0f;
 	glm::vec3 norm;
@@ -147,7 +167,7 @@ inline glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::
 	return (glm::float_t)ret / 3.0f;
 }
 
-inline glm::vec3 calculateMassCenter(glm::vec3 *pos, glm::float_t *mass, int n)
+PREFIX glm::vec3 calculateMassCenter(glm::vec3 *pos, glm::float_t *mass, int n)
 {
 	double masssum = 0.0;
 	glm::vec3 xmsum = glm::vec3(0,0,0);

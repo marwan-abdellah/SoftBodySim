@@ -339,13 +339,13 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 	const MeshData::neighboursArray_t &na = obj->mMesh->GetNeighboursArray();
 	unsigned int smin = 999999;
 	unsigned int smax = 0;
+	long len = 0;
 
 	// create shape regions
 	REP(i, obj->mParticles.size()) {
 		ShapeRegion reg;
 		mass = 0.0f;
 		vec3 mc(0,0,0);
-		float_t len = 0.0f;
 		vec3 norm(0,0,0);
 
 		GetRegion(i, na, distance, reg.indexes);
@@ -360,21 +360,17 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 			mass += obj->mMassInv[*it];
 			mc += obj->mParticles[*it] * obj->mMassInv[*it];
 		}
-		FOREACH_R(it, reg.indexes)
-			len += obj->mMassInv[*it] * glm::length(obj->mParticles[*it] - mc);
-
 		reg.mass = mass;
 		reg.mc0 = mc / mass;
 		ret.regions.push_back(reg);
 	}
 
 	ret.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
-	ERR("Rest Volume :%f", ret.volume);
-
-	WRN("Regions total: %ld", ret.regions.size());
-	WRN("Average region size: %f", (float)len / ret.regions.size());
-	WRN("Max region size: %d", smax);
-	WRN("Min region size: %d", smin);
+	DBG("Rest Volume :%f", ret.volume);
+	DBG("Regions total: %ld", ret.regions.size());
+	DBG("Average region size: %f", (float)len / ret.regions.size());
+	DBG("Max region size: %d", smax);
+	DBG("Min region size: %d", smin);
 
 	mShapes.push_back(ret);
 }

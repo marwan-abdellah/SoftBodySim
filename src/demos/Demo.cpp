@@ -45,7 +45,7 @@ private:
 	Material mMat2;
 	Material mMat3;
 	bool cudaSolver;
-	CUDASoftBodySolver::SoftBodyWorldParameters mWorldParams;
+	SoftBodySolver::SoftBodyWorldParameters mWorldParams;
 	Ray GetWoorldCoordinates(int x, int y);
 	float_t mSpringness;
 	bool mCameraMotion;
@@ -145,6 +145,7 @@ void Demo::OnKeyboard(int key, int action)
 		mCamera.moveOut(delta);
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
+#ifdef ENABLE_CUDA
 	if (key == GLFW_KEY_V) {
 		mSolver->Shutdown();
 		delete mSolver;
@@ -161,6 +162,7 @@ void Demo::OnKeyboard(int key, int action)
 		}
 		mSolver->Initialize();
 	}
+#endif
 	if (key == GLFW_KEY_C) {
 		mSolver->Shutdown();
 		mSolver->Initialize();
