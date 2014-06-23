@@ -5,7 +5,6 @@ set (COMMON_SRCS
 		model/Material.cpp
 		solver/SoftBodySolver.cpp
 		solver/CPUSoftBodySolver.cpp
-		geometry/Math.cpp
 		renderer/Shader.cpp
         renderer/Renderer.cpp
         renderer/Camera.cpp
