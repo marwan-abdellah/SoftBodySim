@@ -6,13 +6,6 @@
 
 #define MAX_LINKS 128
 
-struct PointTriangleConstraint {
-	glm::uint_t pointObjectId;
-	glm::uint_t pointIdx;
-	glm::uint_t triangleObjectId;
-	glm::uint_t triangleId;
-};
-
 struct SoftBodyDescriptor {
 	SoftBody                  *body;
 	cudaGraphicsResource      *graphics;
@@ -24,6 +17,7 @@ struct SoftBodyDescriptor {
 	unsigned int              nMapping;
 	unsigned int              trianglesIdx;
 	int                       nTriangles;
+	int                       shapeDescr;
 };
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(

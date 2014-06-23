@@ -13,6 +13,22 @@ using namespace std;
 
 #define DEFAULT_SOLVER_STEPS 10
 #define DEFAULT_CELL_SIZE 1.0
+#define MAX_REGION_SIZE 10
+
+struct ShapeRegion {
+	glm::vec3 mc0; // initial region mass center
+	float_t mass; // region total mass
+	glm::uint_t indexes[MAX_REGION_SIZE]; // indexes of region particles
+};
+
+struct ShapeDescriptor {
+	glm::vec3 mc0; // body global mass
+	CUDAVector<glm::vec3> initPos; // initial particle locations (x0i);
+	float_t radius; // maximum distance between mass center and particle;
+	float_t massTotal; // object total mass
+	float_t volume; // initial shape volume
+	CUDAVector<ShapeRegion> regions; // shape regions
+};
 
 class CUDAContext {
 public:
@@ -44,16 +60,17 @@ private:
 
 	descriptorArray_t                  mDescriptors;
 	CUDAVector<SoftBodyDescriptor>	   mDescriptorsDev;
+	CUDAVector<ShapeDescriptor>        mShapeDescriptors;
 
-	CUDAVector<glm::vec3>                   mPositions;
-	CUDAVector<glm::vec3>                   mProjections;
-	CUDAVector<glm::vec3>                   mVelocities;
-	CUDAVector<glm::float_t>                mInvMasses;
-	CUDAVector<glm::vec3>                   mForces;
+	CUDAVector<glm::vec3>              mPositions;
+	CUDAVector<glm::vec3>              mProjections;
+	CUDAVector<glm::vec3>              mVelocities;
+	CUDAVector<glm::float_t>           mInvMasses;
+	CUDAVector<glm::vec3>              mForces;
 
 	CUDAVector<LinkConstraint>         mLinks;
-	CUDAVector<glm::uint_t>                 mMapping;
-	CUDAVector<glm::uvec3>                  mTriangles;
+	CUDAVector<glm::uint_t>            mMapping;
+	CUDAVector<glm::uvec3>             mTriangles;
 
 	vector<cudaGraphicsResource*>      mResArray; /* helper array to map all resources 
 												  in one call */
@@ -351,37 +368,19 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 			mProjections.data(), mVelocities.data(), NULL,
 			mInvMasses.data(), dt, mPositions.size());
 
-	// collision detection
-#if 0
-	FOREACH(it, &mDescriptors) {
-		blockCount = it->nTriangles / threadsPerBlock + 1;
-		calculateSpatialHash<<<blockCount, threadsPerBlock>>>(
-				idx, it->baseIdx, it->triangles, it->projections,
-				DEFAULT_CELL_SIZE, mCellIDS.devPtr, it->nTriangles);
-		idx++;
-	}
-
-#endif
 	// solver
-	for (int i = 0; i < mSolverSteps; i++) {
-		blockCount = mPositions.size() / threadsPerBlock + 1;
-		FOREACH(it, &mDescriptors) {
-			int linkBlockCount = it->nLinks / MAX_LINKS + 1;
+	blockCount = mPositions.size() / threadsPerBlock + 1;
+	FOREACH(it, &mDescriptors) {
+		int linkBlockCount = it->nLinks / MAX_LINKS + 1;
 
-			solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
-					1, mLinks.data(), mProjections.data(), mInvMasses.data(),
-					it->baseIdx, it->linkIdx, it->nLinks);
-#if 0
-			solvePointTriangleCollisionsKernel<<<collBlockCount,
-				threadsPerBlock>>>(mDescriptorsDev, it->collisions,
-						it->nCollisions);
-#endif
-		}
-		solveGroundWallCollisionConstraints<<<blockCount, threadsPerBlock>>>(
-				mProjections.data(), mInvMasses.data(),
-				world.groundLevel, world.leftWall, world.rightWall,
-				world.frontWall, world.backWall, mPositions.size());
+		solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
+				1, mLinks.data(), mProjections.data(), mInvMasses.data(),
+				it->baseIdx, it->linkIdx, it->nLinks);
 	}
+	solveGroundWallCollisionConstraints<<<blockCount, threadsPerBlock>>>(
+			mProjections.data(), mInvMasses.data(),
+			world.groundLevel, world.leftWall, world.rightWall,
+			world.frontWall, world.backWall, mPositions.size());
 
 	// integrate motion
 	threadsPerBlock = 128;
