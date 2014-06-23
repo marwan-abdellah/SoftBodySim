@@ -391,7 +391,6 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 	ret.regions.reserve(obj->mParticles.size());
 
 	const MeshData::neighboursArray_t &na = obj->mMesh->GetNeighboursArray();
-	long len = 0;
 	unsigned int smin = 999999;
 	unsigned int smax = 0;
 

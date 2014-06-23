@@ -1,15 +1,15 @@
-#include "CUDASoftBodySolver.h"
-#include "CUDAVector.h"
-
 #include "common.h"
+
+#include "sbs/solver/CUDASoftBodySolver.h"
+#include "sbs/solver/CUDAVector.h"
+#include "sbs/solver/CUDASoftBodySolverKernel.h"
+
 #include <cstring>
 
 using namespace std;
 
 #include <cuda_runtime.h>
 #include <cuda_gl_interop.h>
-
-#include "CUDASoftBodySolverKernel.h"
 
 #define DEFAULT_SOLVER_STEPS 10
 #define DEFAULT_CELL_SIZE 1.0

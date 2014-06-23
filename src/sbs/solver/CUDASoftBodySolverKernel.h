@@ -1,5 +1,5 @@
-#ifndef SBS_SOLVER_SOLVER_H_
-#define SBS_SOLVER_SOLVER_H_
+#ifndef SBS_CUDA_KERNEL_H_
+#define SBS_CUDA_KERNEL_H_
 
 #include <glm/fwd.hpp>
 #include "sbs/model/SoftBody.h"

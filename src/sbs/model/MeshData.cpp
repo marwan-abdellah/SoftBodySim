@@ -31,9 +31,21 @@ public:
 };
 
 typedef unordered_map<uvec2, unsigned int, Index2Hasher> vertex2Map_t;
+typedef unordered_map<uvec3, unsigned int, Index3Hasher> vertex3Map_t;
 typedef unordered_set<uvec2, Index2Hasher> linksSet_t;
 typedef unordered_set<uvec3, Index3Hasher> trianglesSet_t;
 
+class OBJParser {
+public:
+	OBJParser() {}
+	~OBJParser() {}
+	bool Parse(const char *file, MeshData *data);
+private:
+	bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md);
+	bool ProcessNormal(OBJLexer &lexer, vec3Array_t &vert);
+	bool ProcessTexture(OBJLexer &lexer, vec2Array_t &vert);
+	bool ProcessVertex(OBJLexer &lexer, vec3Array_t &vert);
+};
 
 static inline unsigned int
 _node_insert(vertex3Map_t &map, vec3Array_t &nods, uvec3 &id, vec3 &p)
@@ -299,7 +311,7 @@ void MeshData::GenerateTriangles(void)
 		nodesTriangles.push_back(*it);
 }
 
-static bool ProcessVertex(OBJLexer &lexer, vec3Array_t &vert)
+bool OBJParser::ProcessVertex(OBJLexer &lexer, vec3Array_t &vert)
 {
 	vec3 v;
 
@@ -321,7 +333,7 @@ static bool ProcessVertex(OBJLexer &lexer, vec3Array_t &vert)
 	return true;
 }
 
-static bool ProcessNormal(OBJLexer &lexer, vec3Array_t &vert)
+bool OBJParser::ProcessNormal(OBJLexer &lexer, vec3Array_t &vert)
 {
 	vec3 v;
 
@@ -339,7 +351,7 @@ static bool ProcessNormal(OBJLexer &lexer, vec3Array_t &vert)
 	return true;
 }
 
-static bool ProcessTexture(OBJLexer &lexer, vec2Array_t &vert)
+bool OBJParser::ProcessTexture(OBJLexer &lexer, vec2Array_t &vert)
 {
 	vec2 v;
 
@@ -397,7 +409,7 @@ int ParseFaceVertexes(OBJLexer &lexer, index3Array_t &out)
 	return 0;
 }
 
-bool MeshData::ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md)
+bool OBJParser::ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md)
 {
 	// valid faces definitions:
 	// f 1 2
@@ -469,6 +481,17 @@ MeshData *MeshData::CreateFromObj(const char *path)
 	MeshData *ret = new MeshData();
 	if (!ret) return NULL;
 
+	OBJParser parser;
+	bool res = parser.Parse(path, ret);
+	if (!res) {
+		delete ret;
+		return NULL;
+	}
+	return ret;
+}
+
+bool OBJParser::Parse(const char *path, MeshData *ret)
+{
 	OBJLexer lexer(path);
 	const char *err;
 
@@ -504,22 +527,19 @@ MeshData *MeshData::CreateFromObj(const char *path)
 			if (!res) {
 				ERR("[line: %d] Line parsing failed. %s", lexer.GetLine(),
 					lexer.GetError());
-				free(ret);
-				return NULL;
+				return false;
 			}
 		}
 		else {
 			ERR("[line: %d] Syntax error. %s", lexer.GetLine(),
 				lexer.GetError());
-			free(ret);
-			return NULL;
+			return false;
 		}
 	}
 
 	if ((err = lexer.GetError()) != NULL) {
 		ERR("%s", err);
-		free(ret);
-		return NULL;
+		return false;
 	}
 
 	ret->GenerateLinks();
@@ -527,7 +547,7 @@ MeshData *MeshData::CreateFromObj(const char *path)
 
 	DBG("file %s processing ended. Lines processed %d", path, lexer.GetLine());
 
-	return ret;
+	return true;
 }
 
 MeshData *MeshData::CreateSphere(glm::vec3 center, glm::float_t radius, size_t nv, size_t nh)

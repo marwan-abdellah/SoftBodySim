@@ -7,10 +7,11 @@
 
 #include <vector>
 #include <set>
-#include <unordered_map>
 
-class Index3Hasher;
-typedef std::unordered_map<glm::uvec3, unsigned int, Index3Hasher> vertex3Map_t;
+/**
+ * Helper class needed for filling MeshData structures
+ */
+class OBJParser;
 
 /**
  * @brief MeshData class 
@@ -23,7 +24,6 @@ typedef std::unordered_map<glm::uvec3, unsigned int, Index3Hasher> vertex3Map_t;
 class MeshData {
 public:
 	typedef std::vector< std::set<int> > neighboursArray_t;
-
 
 	/**
 	 * @brief Creates plane mesh aligned to xy axis.
@@ -135,7 +135,7 @@ private:
 	void GenerateTriangles(void);
 	neighboursArray_t neighbours;
 
-	static bool ProcessFace(OBJLexer &lexer, vertex3Map_t &map, vec2Array_t &textures, vec3Array_t &normals, MeshData *md);
+	friend class OBJParser;
 };
 
 #endif
