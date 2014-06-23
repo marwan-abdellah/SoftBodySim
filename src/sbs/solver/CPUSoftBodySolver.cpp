@@ -11,46 +11,6 @@
 
 using namespace glm;
 
-static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n);
-static float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, uint_t *accum, int n);
-
-static inline float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
-{
-	glm::vec3 ab = b - a;
-	glm::vec3 ac = c - a;
-	return 0.5f * glm::length(cross(ab, ac));
-}
-
-static float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, uint_t *accum, int n)
-{
-	double ret = 0.0f;
-	glm::vec3 norm;
-
-	for(int i = 0; i < n; i++) {
-		glm::vec3 v0 = pos[triangles[i][0]];
-		glm::vec3 v1 = pos[triangles[i][1]];
-		glm::vec3 v2 = pos[triangles[i][2]];
-		norm = glm::cross(v1 - v0, v2 - v0);
-		if (norm != vec3(0,0,0)) {
-			norm = glm::normalize(norm);
-		}
-		float_t area = triangle_area(v0, v1, v2);
-		ret += area * glm::dot(v0 + v1 + v2, norm);
-
-		if (norms) {
-			norm = area * norm;
-			norms[triangles[i][0]] += norm;
-			norms[triangles[i][1]] += norm;
-			norms[triangles[i][2]] += norm;
-			accum[triangles[i][0]]++;
-			accum[triangles[i][1]]++;
-			accum[triangles[i][2]]++;
-		}
-	}
-
-	return (float_t)ret / 3.0f;
-}
-
 CPUSoftBodySolver::CPUSoftBodySolver()
 {
 }
@@ -324,20 +284,6 @@ void CPUSoftBodySolver::Shutdown(void)
 
 	SoftBodySolver::Shutdown();
 	mInitialized = false;
-}
-
-static vec3 calculateMassCenter(vec3 *pos, float_t *mass, int n)
-{
-	double masssum = 0.0;
-	vec3 xmsum = vec3(0,0,0);
-
-	//calculate sum(xi * mi) amd sum(mi)
-	REP(i, n) {
-		xmsum += pos[i] * mass[i];
-		masssum += mass[i];
-	}
-
-	return xmsum / (float_t)masssum;
 }
 
 void CPUSoftBodySolver::GetRegion(int idx, const MeshData::neighboursArray_t &nei, int max, indexArray_t &out)

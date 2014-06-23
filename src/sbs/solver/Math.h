@@ -110,4 +110,57 @@ inline void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 	}
 }
 
+inline glm::float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
+{
+	glm::vec3 ab = b - a;
+	glm::vec3 ac = c - a;
+	return 0.5f * glm::length(glm::cross(ab, ac));
+}
+
+inline glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, glm::uint_t *accum, int n)
+{
+	double ret = 0.0f;
+	glm::vec3 norm;
+
+	for(int i = 0; i < n; i++) {
+		glm::vec3 v0 = pos[triangles[i][0]];
+		glm::vec3 v1 = pos[triangles[i][1]];
+		glm::vec3 v2 = pos[triangles[i][2]];
+		norm = glm::cross(v1 - v0, v2 - v0);
+		if (norm != glm::vec3(0,0,0)) {
+			norm = glm::normalize(norm);
+		}
+		float_t area = triangle_area(v0, v1, v2);
+		ret += area * glm::dot(v0 + v1 + v2, norm);
+
+		if (norms) {
+			norm = area * norm;
+			norms[triangles[i][0]] += norm;
+			norms[triangles[i][1]] += norm;
+			norms[triangles[i][2]] += norm;
+			accum[triangles[i][0]]++;
+			accum[triangles[i][1]]++;
+			accum[triangles[i][2]]++;
+		}
+	}
+
+	return (glm::float_t)ret / 3.0f;
+}
+
+inline glm::vec3 calculateMassCenter(glm::vec3 *pos, glm::float_t *mass, int n)
+{
+	double masssum = 0.0;
+	glm::vec3 xmsum = glm::vec3(0,0,0);
+
+	//calculate sum(xi * mi) amd sum(mi)
+	REP(i, n) {
+		xmsum += pos[i] * mass[i];
+		masssum += mass[i];
+	}
+
+	return xmsum / (glm::float_t)masssum;
+}
+
+
+
 #endif
