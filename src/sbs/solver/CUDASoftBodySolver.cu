@@ -377,9 +377,10 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 						it->nCollisions);
 #endif
 		}
-		solveGroundCollisionConstraints<<<blockCount, threadsPerBlock>>>(
+		solveGroundWallCollisionConstraints<<<blockCount, threadsPerBlock>>>(
 				mProjections.data(), mInvMasses.data(),
-				world.groundLevel, mPositions.size());
+				world.groundLevel, world.leftWall, world.rightWall,
+				world.frontWall, world.backWall, mPositions.size());
 	}
 
 	// integrate motion

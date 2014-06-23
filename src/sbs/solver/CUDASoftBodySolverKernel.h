@@ -67,10 +67,14 @@ __global__ void calculateLinkStiffness(
 		glm::uint_t linkIdx,
 		glm::uint_t max_idx);
 
-__global__ void solveGroundCollisionConstraints(
+__global__ void solveGroundWallCollisionConstraints(
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
 		glm::float_t ground_level,
+		glm::float_t left_wall,
+		glm::float_t right_wall,
+		glm::float_t front_wall,
+		glm::float_t back_wall,
 		glm::uint_t max_idx);
 
 #endif

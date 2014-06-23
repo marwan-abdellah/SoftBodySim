@@ -116,10 +116,14 @@ __global__ void solveLinksConstraints(
 	}
 }
 
-__global__ void solveGroundCollisionConstraints(
+__global__ void solveGroundWallCollisionConstraints(
 		glm::vec3 *projections,
 		glm::float_t *masses_inv,
 		glm::float_t ground_level,
+		glm::float_t left_wall,
+		glm::float_t right_wall,
+		glm::float_t front_wall,
+		glm::float_t back_wall,
 		glm::uint_t max_idx)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -127,8 +131,11 @@ __global__ void solveGroundCollisionConstraints(
 	if (idx < max_idx) {
 		glm::vec3 pos = projections[idx];
 
-		if (pos[1] < ground_level)
-			pos[1] = ground_level;
+		pos[1] = pos[1] < ground_level ? ground_level : pos[1];
+		pos[0] = pos[0] < left_wall ? left_wall : pos[0];
+		pos[0] = pos[0] > right_wall ? right_wall : pos[0];
+		pos[2] = pos[2] > front_wall ? front_wall : pos[2];
+		pos[2] = pos[2] < back_wall ? back_wall : pos[2];
 
 		projections[idx] = pos;
 	}
