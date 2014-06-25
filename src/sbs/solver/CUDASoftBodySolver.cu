@@ -204,8 +204,10 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 	}
 
 	d.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
-	DBG("Rest Volume :%f", d.volume);
+	DBG("==MODEL INFORMATION==");
+	DBG("Particles total: %ld", obj->mParticles.size());
 	DBG("Vertexes total: %ld", obj->mMesh->GetVertexes().size());
+	DBG("Rest Volume :%f", d.volume);
 	DBG("Regions total: %ld", mRegions.size());
 	DBG("Average region size: %f", (float)len / mRegions.size());
 	DBG("Max region size: %d", smax);

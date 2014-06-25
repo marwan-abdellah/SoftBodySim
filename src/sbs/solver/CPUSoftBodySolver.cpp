@@ -366,6 +366,9 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 	}
 
 	ret.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
+	DBG("==MODEL INFORMATION==");
+	DBG("Particles total: %ld", obj->mParticles.size());
+	DBG("Vertexes total: %ld", obj->mMesh->GetVertexes().size());
 	DBG("Rest Volume :%f", ret.volume);
 	DBG("Regions total: %ld", ret.regions.size());
 	DBG("Average region size: %f", (float)len / ret.regions.size());
