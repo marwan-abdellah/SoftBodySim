@@ -2,9 +2,12 @@
 
 #include "sbs/solver/CUDASoftBodySolver.h"
 #include "sbs/solver/CUDAVector.h"
+#include "sbs/solver/Math.h"
 #include "sbs/solver/CUDASoftBodySolverKernel.h"
 
 #include <cstring>
+#include <set>
+#include <queue>
 
 using namespace std;
 
@@ -12,22 +15,15 @@ using namespace std;
 #include <cuda_gl_interop.h>
 
 #define DEFAULT_SOLVER_STEPS 10
-#define DEFAULT_CELL_SIZE 1.0
-#define MAX_REGION_SIZE 10
-
-struct ShapeRegion {
-	glm::vec3 mc0; // initial region mass center
-	float_t mass; // region total mass
-	glm::uint_t indexes[MAX_REGION_SIZE]; // indexes of region particles
-};
 
 struct ShapeDescriptor {
 	glm::vec3 mc0; // body global mass
-	CUDAVector<glm::vec3> initPos; // initial particle locations (x0i);
+	int initPosBaseIdx; // index of first shape particles in global initPos array
 	float_t radius; // maximum distance between mass center and particle;
 	float_t massTotal; // object total mass
 	float_t volume; // initial shape volume
-	CUDAVector<ShapeRegion> regions; // shape regions
+	int regionBaseIndex; // index of first region belonging to mesh
+	int nRegions; //number of regions
 };
 
 class CUDAContext {
@@ -49,7 +45,8 @@ public:
 	bool InitSoftBody(SoftBody *body);
 private:
 	void UpdateConstraintStiffness(SoftBodyDescriptor &descr, int mSolverSteps);
-	SoftBodyDescriptor CreateDescriptor(SoftBody *body);
+	void CreateDescriptor(SoftBody *body);
+	void CreateShapeDescriptor(SoftBody *body);
 	bool RegisterVertexBuffers(SoftBodyDescriptor &descr);
 	cudaGraphicsResource *RegisterGLGraphicsResource(const VertexBuffer *vb);
 
@@ -62,6 +59,12 @@ private:
 	CUDAVector<SoftBodyDescriptor>	   mDescriptorsDev;
 	CUDAVector<ShapeDescriptor>        mShapeDescriptors;
 
+	// shape matching
+	CUDAVector<ShapeRegionInfo>        mRegions;
+	CUDAVector<glm::uint_t>            mRegionsMembersOffsets;
+	CUDAVector<glm::vec3>              mShapeInitialPositions; // initial particle locations (x0i);
+
+	CUDAVector<ParticleInfo>           mParticlesInfo;
 	CUDAVector<glm::vec3>              mPositions;
 	CUDAVector<glm::vec3>              mProjections;
 	CUDAVector<glm::vec3>              mVelocities;
@@ -116,11 +119,96 @@ bool CUDAContext::ShutdownDevice()
 	err = cudaDeviceReset();
 	if (err != cudaSuccess) return false;
 
-
 	return true;
 }
 
-SoftBodyDescriptor CUDAContext::CreateDescriptor(SoftBody *body)
+struct Node {
+	Node(int i, int d) : idx(i), distance(d) {}
+	int idx;
+	int distance;
+};
+
+void GetRegion(int idx, const MeshData::neighboursArray_t &nei, int max, indexArray_t &out)
+{
+	std::queue<Node> toprocess;
+	std::set<int> processed;
+
+	toprocess.push(Node(idx, 0));
+
+	while (!toprocess.empty()) {
+		Node n = toprocess.front();
+		out.push_back(n.idx);
+		toprocess.pop();
+		processed.insert(n.idx);
+
+		if (n.distance >= max) return;
+
+		FOREACH_R(it, nei[n.idx]) {
+			if (processed.find(*it) == processed.end())
+				toprocess.push(Node(*it, n.distance + 1));
+		}
+	}
+}
+
+void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
+{
+	ShapeDescriptor d;
+	vec3Array_t initQ;
+	long len = 0;
+	unsigned int smin = 999999;
+	unsigned int smax = 0;
+
+	d.mc0 = calculateMassCenter(
+			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
+
+	d.initPosBaseIdx = mShapeInitialPositions.size();
+	mShapeInitialPositions.push_back(&(obj->mParticles[0]), obj->mParticles.size());
+
+	d.radius = 0;
+	const MeshData::neighboursArray_t &na = obj->mMesh->GetNeighboursArray();
+
+	// create shape regions
+	REP(i, obj->mParticles.size()) {
+		ShapeRegionInfo reg;
+		indexArray_t indexes;
+		float_t mass = 0.0f;
+		glm::vec3 mc(0,0,0);
+		glm::vec3 norm(0,0,0);
+
+		GetRegion(i, na, 3, indexes);
+
+		len += indexes.size();
+		if (smin > indexes.size())
+			smin = indexes.size();
+		if (smax < indexes.size())
+			smax = indexes.size();
+
+		FOREACH_R(it, indexes) {
+			mass += obj->mMassInv[*it];
+			mc += obj->mParticles[*it] * obj->mMassInv[*it];
+		}
+		reg.mass = mass;
+		reg.mc0 = mc / mass;
+		reg.n_particles = indexes.size();
+		reg.members_offsets_offset = mRegionsMembersOffsets.size();
+		reg.shapes_init_positions_offset = d.initPosBaseIdx;
+		mRegions.push_back(reg);
+		mRegionsMembersOffsets.push_back(&indexes[0], indexes.size());
+	}
+
+	d.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
+	DBG("Rest Volume :%f", d.volume);
+	DBG("Regions total: %ld", mRegions.size());
+	DBG("Average region size: %f", (float)len / mRegions.size());
+	DBG("Max region size: %d", smax);
+	DBG("Min region size: %d", smin);
+
+	DBG("mRegionsMembersOffsets.size: %d", mRegionsMembersOffsets.size());
+
+	mShapeDescriptors.push_back(d);
+}
+
+void CUDAContext::CreateDescriptor(SoftBody *body)
 {
 	SoftBodyDescriptor descr;
 
@@ -135,7 +223,15 @@ SoftBodyDescriptor CUDAContext::CreateDescriptor(SoftBody *body)
 	descr.trianglesIdx = mTriangles.size();
 	descr.nTriangles = body->mTriangles.size();
 
-	return descr;
+	bool res = RegisterVertexBuffers(descr);
+	if (!res) {
+		ERR("Error occured registering SoftBody vertex buffers.");
+		return;
+	}
+
+	mDescriptors.push_back(descr);
+	mDescriptorsDev.push_back(descr);
+	mResArray.push_back(descr.graphics);
 }
 
 cudaGraphicsResource *CUDAContext::RegisterGLGraphicsResource(const VertexBuffer *vb)
@@ -168,36 +264,25 @@ bool CUDAContext::RegisterVertexBuffers(SoftBodyDescriptor &descr)
 void CUDAContext::UpdateConstraintStiffness(SoftBodyDescriptor
 		&descr, int mSolverSteps)
 {
-	int blocks = descr.nLinks / 128;
-	calculateLinkStiffness<<<blocks, 128>>>(mSolverSteps, mLinks.data(),
-			descr.linkIdx, descr.nLinks);
+	//int blocks = descr.nLinks / 128;
+	//calculateLinkStiffness<<<blocks, 128>>>(mSolverSteps, mLinks.data(),
+	//		descr.linkIdx, descr.nLinks);
 }
 
 bool CUDAContext::InitSoftBody(SoftBody *body)
 {
-	SoftBodyDescriptor descr = CreateDescriptor(body);
-	bool res;
+	CreateDescriptor(body);
+	CreateShapeDescriptor(body);
 
-	mPositions.push_back(&(body->mParticles[0]), descr.nParticles);
-	mProjections.push_back(&(body->mParticles[0]), descr.nParticles);
-	mVelocities.resize(mVelocities.size() + descr.nParticles);
-	mInvMasses.push_back(&(body->mMassInv[0]), descr.nParticles);
-	mForces.resize(mForces.size() + descr.nParticles);
-	mLinks.push_back(&(body->mLinks[0]), descr.nLinks);
-	mMapping.push_back(&(body->mMeshVertexParticleMapping[0]), descr.nMapping);
-
-	res = RegisterVertexBuffers(descr);
-	if (!res) {
-		ERR("Error occured registering SoftBody vertex buffers.");
-		ERR("Cuda error: %s", cudaGetErrorString(cudaGetLastError()));
-		return false;
-	}
-
-	UpdateConstraintStiffness(descr, mSolverSteps);
-
-	mDescriptors.push_back(descr);
-	mDescriptorsDev.push_back(descr);
-	mResArray.push_back(descr.graphics);
+	long nParticles = body->mParticles.size();
+	mPositions.push_back(&(body->mParticles[0]), nParticles);
+	mProjections.push_back(&(body->mParticles[0]), nParticles);
+	mVelocities.resize(mVelocities.size() + nParticles);
+	mInvMasses.push_back(&(body->mMassInv[0]), nParticles);
+	mForces.resize(mForces.size() + nParticles);
+	mLinks.push_back(&(body->mLinks[0]), body->mLinks.size());
+	mMapping.push_back(&(body->mMeshVertexParticleMapping[0]),
+			body->mMeshVertexParticleMapping.size());
 
 	return true;
 }
@@ -370,13 +455,6 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 
 	// solver
 	blockCount = mPositions.size() / threadsPerBlock + 1;
-	FOREACH(it, &mDescriptors) {
-		int linkBlockCount = it->nLinks / MAX_LINKS + 1;
-
-		solveLinksConstraints<<<linkBlockCount, threadsPerBlock>>>(
-				1, mLinks.data(), mProjections.data(), mInvMasses.data(),
-				it->baseIdx, it->linkIdx, it->nLinks);
-	}
 	solveGroundWallCollisionConstraints<<<blockCount, threadsPerBlock>>>(
 			mProjections.data(), mInvMasses.data(),
 			world.groundLevel, world.leftWall, world.rightWall,

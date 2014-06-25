@@ -4,17 +4,11 @@
 #include "common.h"
 #include <glm/glm.hpp>
 
-#ifndef __CUDACC__
-	#define PREFIX inline
-#else
-	#define PREFIX __device__ __host__
-#endif
-
 /**
  * This is defined in glm/ext.hpp but for whatever reason ext.hpp can't be
  * included by CUDA code, so I decided to redefine it.
  */
-PREFIX glm::mat3 diagonal3x3(glm::vec3 &v)
+GLM_FUNC_QUALIFIER glm::mat3 diagonal3x3(glm::vec3 &v)
 {
 	glm::mat3 ret(0.0f);
 	ret[0][0] = v[0];
@@ -23,7 +17,7 @@ PREFIX glm::mat3 diagonal3x3(glm::vec3 &v)
 	return ret;
 }
 
-PREFIX void eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
+GLM_FUNC_QUALIFIER void eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
 {
 	double a = c * mat[i0][j0] - s * mat[i1][j1];
 	double b = s * mat[i0][j0] + c * mat[i1][j1];
@@ -37,7 +31,7 @@ PREFIX void eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int
  * Passing non diagonizable matrix and infinite max_iter (= -1)
  * May result in infinite loop.
  */
-PREFIX glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
+GLM_FUNC_QUALIFIER glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 {
 	glm::vec3 ret;
 //	bool changed = true;
@@ -93,7 +87,7 @@ PREFIX glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
  * R = A * S^-1
  * S = sqrt(A' * A)
  */
-PREFIX void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
+GLM_FUNC_QUALIFIER void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 {
 	glm::mat3 E;
 	glm::mat3 B = glm::transpose(A) * A;
@@ -130,14 +124,14 @@ PREFIX void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
 #endif
 }
 
-PREFIX glm::float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
+GLM_FUNC_QUALIFIER glm::float_t triangle_area(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c)
 {
 	glm::vec3 ab = b - a;
 	glm::vec3 ac = c - a;
 	return 0.5f * glm::length(glm::cross(ab, ac));
 }
 
-PREFIX glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, glm::uint_t *accum, int n)
+GLM_FUNC_QUALIFIER glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::vec3 *norms, glm::uint_t *accum, int n)
 {
 	double ret = 0.0f;
 	glm::vec3 norm;
@@ -167,7 +161,7 @@ PREFIX glm::float_t calculateVolume(glm::vec3 *pos, glm::uvec3 *triangles, glm::
 	return (glm::float_t)ret / 3.0f;
 }
 
-PREFIX glm::vec3 calculateMassCenter(glm::vec3 *pos, glm::float_t *mass, int n)
+GLM_FUNC_QUALIFIER glm::vec3 calculateMassCenter(glm::vec3 *pos, glm::float_t *mass, int n)
 {
 	double masssum = 0.0;
 	glm::vec3 xmsum = glm::vec3(0,0,0);
@@ -180,7 +174,5 @@ PREFIX glm::vec3 calculateMassCenter(glm::vec3 *pos, glm::float_t *mass, int n)
 
 	return xmsum / (glm::float_t)masssum;
 }
-
-
 
 #endif

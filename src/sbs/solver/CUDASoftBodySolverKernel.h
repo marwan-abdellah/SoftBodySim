@@ -20,6 +20,22 @@ struct SoftBodyDescriptor {
 	int                       shapeDescr;
 };
 
+
+struct ParticleInfo {
+	glm::uint region_id; // id of regions in global array
+	glm::uint body_info_id; // id of body in global array
+	glm::uint body_offset; // id of first particle in body instance
+};
+
+struct ShapeRegionInfo {
+	glm::vec3 mc0; // initial region mass center
+	float_t mass; // region total mass
+	glm::uint_t members_offsets_offset;
+	glm::uint_t shapes_init_positions_offset;
+	int n_particles; // number of particles in
+	int n_regions; // number of regions in which central particle is
+};
+
 __global__ void cudaProjectPositionsAndVelocitiesKernel(
 	glm::vec3 gravity,
 	glm::vec3 *positions,
@@ -45,6 +61,22 @@ __global__ void cudaUpdateVertexBufferKernel(
 		glm::uint baseIdx,
 		glm::uint mappingBaseIdx,
 		glm::uint max_idx);
+
+__global__ void solveShapeMatchingConstraints1(
+		ParticleInfo *info_array,
+		ShapeRegionInfo *regions,
+		glm::uint_t *members_offsets,
+		glm::vec3 *shapes_init_positions,
+		glm::vec3 *projections,
+		glm::float_t *masses,
+		glm::uint_t max_idx
+		);
+
+__global__ void solveShapeMatchingConstraints2(
+		ParticleInfo *info_array,
+		ShapeRegionInfo *regions,
+		glm::vec3 *projections,
+		glm::uint_t max_idx);
 
 __global__ void solveLinksConstraints(
 		unsigned int steps,
