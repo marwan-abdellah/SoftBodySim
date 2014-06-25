@@ -167,9 +167,15 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 	d.radius = 0;
 	const MeshData::neighboursArray_t &na = obj->mMesh->GetNeighboursArray();
 
+	int regions_base_id = mRegions.size();
+
 	// create shape regions
 	REP(i, obj->mParticles.size()) {
 		ShapeRegionInfo reg;
+		ParticleInfo info;
+		info.region_id = mRegions.size();
+		info.body_info_id = mShapeDescriptors.size();
+		info.body_offset = mPositions.size();
 		indexArray_t indexes;
 		float_t mass = 0.0f;
 		glm::vec3 mc(0,0,0);
@@ -194,16 +200,16 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 		reg.shapes_init_positions_offset = d.initPosBaseIdx;
 		mRegions.push_back(reg);
 		mRegionsMembersOffsets.push_back(&indexes[0], indexes.size());
+		mParticlesInfo.push_back(info);
 	}
 
 	d.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
 	DBG("Rest Volume :%f", d.volume);
+	DBG("Vertexes total: %ld", obj->mMesh->GetVertexes().size());
 	DBG("Regions total: %ld", mRegions.size());
 	DBG("Average region size: %f", (float)len / mRegions.size());
 	DBG("Max region size: %d", smax);
 	DBG("Min region size: %d", smin);
-
-	DBG("mRegionsMembersOffsets.size: %d", mRegionsMembersOffsets.size());
 
 	mShapeDescriptors.push_back(d);
 }
