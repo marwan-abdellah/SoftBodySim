@@ -7,7 +7,7 @@ być jej przedmiotem. Zanim przedstawiona zostanie wybrana metoda wymienione bę
 kryteria którymi kierowałem się przy jej wyborze.  Pragnę też zaznaczyć, że
 wybór ten nastąpił w głównej mierze metodami prób i błędów.  Większość z
 poznanych przeze mnie metod została zaimplementowana i w przypadku niemożności
-uzyskania porządanych efektów wizualnych lub wydajnościowych wyszukiwana była
+uzyskania pożądanych efektów wizualnych lub wydajnościowych wyszukiwana była
 inna.
 
 Pierwszym kryterium jakim kierowałem się przy wyborze metody było zawężenia
@@ -15,7 +15,7 @@ przedmiotu symulacji do ciał posiadających objętość. Wiele z metod symulacj
 ciała miękkiego ukierunkowana jest na symulację ciał nie posiadających objętości
 - takich jak włosy czy materiały. Metody te zaaplikowane do obiektów
 posiadających objętość często nie dawały oczekiwanych rezultatów (miało to
-		np. miejsce w przypadku omawianej później dyniamiki pozycyjnej w formie
+		np. miejsce w przypadku omawianej później dynamiki pozycyjnej w formie
 		zaproponowanej przez jej autorów). Dodatkowo większość z posiadanych przez nie
 własności trzeba było wyeliminować ze względu na charakter symulowanego zjawiska
 - przykładem jest np. efekt marszczenia powierzchni.
@@ -86,7 +86,7 @@ techniki będą dokładniej omawiane w rozdziałach \ref{sec:shape} i \ref{sec:v
 
 % dlaczego powinna byc szybka nie potrzeba wypelniac obiektu puntkami - operuje bezposrednio na powierzchni siatki
 Ważniejszą jednak zaletą wybranego modelu jest fakt, że w przeciwieństwie do
-Systemu Sprężyn symulowane obiekty nie muszę mieć
+Systemu Sprężyn symulowane obiekty nie muszą mieć
 zdefiniowanej struktury wewnętrznej. Pozwala to znacząco przyspieszyć symulację
 unikając generowania i symulacji znacznej ilość cząstek, które odpowiadają tylko za
 utrzymanie fizycznych właściwości obiektu. Metoda ta operuje bezpośrednio na
@@ -96,7 +96,7 @@ trójkątnej siatce, co pozawala wczytać obiekt bezpośrednio z formatu modeli
 % dlaczego powinna byc stabilna - brak sil, dynamika z constraintami
 Kolejną zaletą użytej techniki symulacji jest jej stabilność, która wynika z
 nowatorskiego podejścia do rozwiązywania równań ruchu. Nie posiada ona
-wielu typowych źródeł niestabilności typowych dla modelu Systemu Sprężyn.
+wielu źródeł niestabilności typowych dla modelu Systemu Sprężyn.
 Dokładne omówienie symulowania dynamiki wybranej metody nastąpi w rozdziale
 \ref{sec:dyn}.
 
@@ -111,13 +111,13 @@ idealną do zastosowania w symulacjach czasu rzeczywistego.
 \label{sec:shape}
 Dopasowanie kształtu (ang. Shape Matching) jest geometryczną techniką
 zaproponowaną po raz pierwszy w 2005 r. przez Muller'a \cite{shape}. Służy ona do
-symulowania sił wewnętrznych ciała poddanemu deformacji. Metoda ta zamiast
+symulowania sił wewnętrznych ciała poddanego deformacji. Metoda ta zamiast
 generować siły działające na cząstki, tak jak to ma miejsce w przypadku
 sprężyn w modelu Systemu Sprężyn, definiuje docelowe pozycje cząstek - $g_i$.
 Pozycje te powstają w wyniku próby dopasowania konfiguracji 
 pozycji cząstek ciała w stanie niezdeformowanym do aktualnej.
 
-Wyliczone docelowe pozycje $g_i$ wykorzystywane są w symulacji do "przyciągania"
+Wyliczone docelowe pozycje $\vec{g}_i$ wykorzystywane są w symulacji do "przyciągania"
 aktualnych pozycji cząstek. W przypadku gdy docelowe pozycje cząstek stają się
 natychmiastowo aktualnymi uzyskamy efekt dynamiki ciała sztywnego.
 
@@ -129,7 +129,8 @@ natychmiastowo aktualnymi uzyskamy efekt dynamiki ciała sztywnego.
 \end{figure}
 
 Ideę shape matching przedstawia rysunek \ref{shape-matching}. Punkty w stanie
-niezdeformowanym $x^0_i$ są dopasowywane do zdeformowanych pozycji $x_i$ za
+niezdeformowanym $\vec{x}^0_i$ są dopasowywane do zdeformowanych pozycji
+$\vec{x}_i$ za
 pomocą macierzy rotacji i wektorów translacji. 
 Formalnie koncepcję Shape Matchingu autorzy w \cite{shape} zdefiniowali jako problem minimalizacji
 funkcji:
@@ -137,24 +138,25 @@ funkcji:
 E^2 = \sum_{i} m_i ||R (x^0_i - t^0) - (x_i - t) ||^2,
 \label{min}
 \end{equation}
+
 gdzie $t^0$ i $t_i$ są wektorami translacji, a $R$ jest macierzą
 rotacji.
 
-Przedstawiony w problem sprowadza się do minimalizacji błędu średniokwadratowego.
-Wyrażenie z \ref{min} można przedstawić jako funkcję trzech zmiennych:
+Przedstawiony problem sprowadza się do minimalizacji błędu średniokwadratowego.
+Wyrażenie z (\ref{min}) można przedstawić jako funkcję trzech zmiennych:
 \begin{equation*}
 \phi(R, t, t^0) = \sum_{i} m_i ||R (x^0_i - t^0) - (x_i - t) ||^2,
 \end{equation*}
 
 Okazuje się, że znalezienie wartości wektorów $t$ i $t^0$ w
-wyrażeniu \ref{min} jest możliwe. Muller \cite{shape} podaje, że optymalnymi
+wyrażeniu (\ref{min}) jest możliwe. Muller \cite{shape} podaje, że optymalnymi
 wektorami translacji $t^0$ i $t$ są odpowiednio środek masy obiektu
 niezdeformowanego (konfiguracja spoczynkowa) i środek masy
 ciała w aktualnej konfiguracji. Pokazanie tego rozwiązania polega na
 wyliczeniu gradientów funkcji $\phi$ po zmiennych $t$ i $t^0$ i przyrównaniu ich
 do zera.
 
-Zanim zostanie przedstawiony dowód że środki mas są optymalnymi wektorami
+Zanim zostanie przedstawiony dowód że, położenia środków mas są optymalnymi wektorami
 translacji, przypomniane zostaną wzory na pochodne cząstkowe wraz z ich
 wektorowymi odpowiednikami. Zakładając że dane mamy funkcje $f: R^n \to R^m$,
 $g: R^n \to R^m$ i $h = f^T g$, gdzie $h: R^n \to R^1$. Gradient
@@ -174,7 +176,7 @@ W przypadku gdy funkcje $f = g$, gradient ma postać:
 Wprowadzając nowe oznaczenia:
 $$ v = R (x^0_i - t^0) - (x_i - t)$$
 $$ \phi = \sum_i m_i v^T v$$ 
-i uwzględniając własność \ref{part}, gradient funkcji $\phi$ po
+i uwzględniając własność (\ref{part}), gradient funkcji $\phi$ po
 zmiennych $t^0$ i $t$ zapiszemy:
 \begin{eqnarray*}
 \nabla_{t^0} \phi = 2 \sum_i m_i (R (x^0_i - t^0) + t - x_i)^T (-R)\\
@@ -195,15 +197,15 @@ W celu wyliczenia wartości $t$ i $t^0$ przyrównujemy gradient do zera:
 \nabla \phi_{t} = 0 \Leftrightarrow \sum_i m_i R (x^0_i - t^0) + t - x_i = 0
 \end{eqnarray}
 
-Można łatwo zauważyć że równania \ref{d1} oraz \ref{d2} są od siebie liniowo
-zależne. Przekształcając równanie \ref{d2} otrzymujemy:
+Można łatwo zauważyć że równania (\ref{d1}) oraz (\ref{d2}) są od siebie liniowo
+zależne. Przekształcając równanie (\ref{d2}) otrzymujemy:
 
 \begin{eqnarray*}
 \sum_i m_i (R (x^0_i - t^0) + t - x_i) = 0\\
 \sum_i m_i R x^0_i - \sum_i m_i R t^0 + \sum_i m_i t - \sum_i m_i x_i = 0\\
 R \sum_i m_i t^0 - \sum_i m_i t = R \sum_i m_i x^0_i - \sum_i m_i x_i\\
 \end{eqnarray*}
-Ostatecznie równanie spełniające warunek optymalizacji \ref{min} dla wektorów $t$
+Ostatecznie równanie spełniające warunek optymalizacji (\ref{min}) dla wektorów $t$
 i $t^0$ możemy zapisać jako:
 \begin{equation}
 \label{tt0}
@@ -211,14 +213,14 @@ R t^0 - t = R \frac{\sum_i m_i x^0_i}{\sum_i m_i} - \frac{\sum_i m_i
 	x_i}{\sum_i m_i}
 \end{equation}
 
-Z równania \ref{tt0} wynikają następujące wnioski. Nie istnieje unikalna para
+Z równania (\ref{tt0}) wynikają następujące wnioski. Nie istnieje unikalna para
 wektorów
-$t$ i $t^0$ spełniająca warunek minimalizacji wyrażenia \ref{min}. Rozwiązaniem
-trywialnym \ref{tt0} jest $t = \frac{\sum_i m_i x_i}{\sum_i m_i}$
+$t$ i $t^0$ spełniająca warunek minimalizacji wyrażenia (\ref{min}). Rozwiązaniem
+trywialnym (\ref{tt0}) jest $t = \frac{\sum_i m_i x_i}{\sum_i m_i}$
 i $t^0 = \frac{\sum_i m_i x^0_i}{\sum_i m_i}$,
 	co dowodzi tezy postawionej w \cite{shape}. Przyjęcie środków mas jako
 	wektorów translacji sprawia, że wartości $t$ i $t^0$ minimalizujące
-	\ref{min} są niezależne od wartości macierzy rotacji $R$.
+	(\ref{min}) są niezależne od wartości macierzy rotacji $R$.
 
 Ostatnim elementem niezbędnym do wyliczenia docelowych pozycji $g_i$ jest
 macierz obrotu $R$. W tym celu musimy wprowadzić następujące oznaczenia:
@@ -230,13 +232,13 @@ M = \sum_i m_i,\\
 \vec{p}_i = x_i - x_{cm}.
 \end{eqnarray*}
 Używając powyższych oznaczeń i uwzględniając fakt, że wybrane wektory translacji
-są niezależne od R wyrażenie \ref{min} może być zapisane następująco:
+są niezależne od R wyrażenie (\ref{min}) może być zapisane następująco:
 \begin{equation*}
 \phi(R) = \sum_i m_i || R\vec{q}_i - \vec{p}_i||^2
 \end{equation*}
 
 Wyznaczenie macierzy R odbywa się analogicznie jak w przypadku wektorów
-translacji, z jedyną kompilacją, że gradient wyznaczony jest teraz po macierzy.
+translacji, z jedyną różnicą, że gradient wyznaczony jest teraz po macierzy.
 Muller \cite{shape} przy wyliczaniu macierzy $R$, uchyla założenie, że macierz ta
 jest tylko macierzą rotacji, a przyjmuje, że jest to macierz transformacji
 liniowej. W celu odróżnienia tych dwóch różnych problemów zdefiniujmy problem
@@ -252,7 +254,7 @@ A = (\sum_i m_i \vec{p}_i \vec{q}^T_i)(\sum_i m_i \vec{q}_i \vec{q}^T_i)^{-1}
 \end{equation}
 
 Ostatnim krokiem niezbędnym do estymacji punktów docelowych $g_i$ jest
-dekompozycja macierz $A$ i uzyskanie jest składowej rotacji. Jest to możliwe dzięki
+dekompozycja macierzy $A$ i uzyskanie jej składowej rotacji. Jest to możliwe dzięki
 użyciu metod takich jak Rozkład Biegunowy (Polar Decomposition) czy Rozkład
 według wartości osobliwych (Singular Value Decomposition). Warto też nadmienić,
 	że macierz $A_{qq}$ jest macierzą symetryczną i zawiera w sobie tylko
@@ -322,7 +324,7 @@ objętość różną od $V_0$, wtedy należy znaleźć takie przesunięcie punkt
 \tilde{X}$, tak by spełniona była równość 
 $$C(\tilde{X} + \Delta \tilde{X}) = 0$$
 
-Funkcja ograniczenia \ref{cons} może zostać aproksymowana przez:
+Funkcja ograniczenia (\ref{cons}) może zostać aproksymowana przez:
 \begin{equation}
 \label{e1}
 C(X + \Delta X) \approx C(X) + \nabla_X C(X) \Delta X
@@ -335,8 +337,8 @@ C(X)$ otrzymujemy dodatkową równość:
 \Delta X = \lambda \nabla_X C(X)
 \end{equation}
 
-Rozwiązując układ równań \ref{e1} i \ref{e2} otrzymujemy ostateczną formułę
-opisujące przemieszczenie $\Delta X$ rozwiązujące ograniczenie na objętość:
+Rozwiązując układ równań (\ref{e1}) i (\ref{e2}) otrzymujemy ostateczną formułę
+opisujące przemieszczenie $\Delta X$ rozwiązujące więzy na objętość:
 \begin{equation*}
 \Delta X = - \frac{C(X)}{||\nabla_p C(X)||^2} \nabla_X C(X)
 \end{equation*}
@@ -346,7 +348,7 @@ Indywidualne przemieszczenie $x_i$ mogą zostać wyliczone z formuły:
 \Delta x_i = - \frac{C(X)}{\sum_j ||\nabla_{x_j} C(X)||^2} \nabla_{x_i} C(X)
 \end{equation}
 
-Aby ustalić wartość gradientu przekształcimy wyrażenie \ref{obj} w taki sposób,
+Aby ustalić wartość gradientu przekształcimy wyrażenie (\ref{obj}) w taki sposób,
 	aby zamiast sumowania po trójkątach sumowała po punktach siatki:
 \begin{equation}
 \label{dd}
@@ -356,7 +358,7 @@ Aby ustalić wartość gradientu przekształcimy wyrażenie \ref{obj} w taki spo
 gdzie $\tilde{n}_i = \sum_j A_j n_j$.
 
 Diziol \cite{diziol} nie używa dokładnej formuły na gradient wyznaczony z
-\ref{dd}. Zamiast tego proponuje następujące uproszczenie:
+(\ref{dd}). Zamiast tego proponuje następujące uproszczenie:
 \begin{equation}
 \nabla C(X) \approx \frac{1}{3} [\tilde{n}^T_1, \tilde{n}^T_2, ...,
 	\tilde{n}^T_n]^T
@@ -384,7 +386,7 @@ Zastosowanie geometrycznych technik takich jak wymieniony w rozdziale
 \ref{sec:shape} Shape-Matching czy metod zachowujących objętość w \ref{sec:vol}
 jest problematyczne z tego względu, że siły działające na ciało nie wynikają
 z nich bezpośrednio. Niemożliwe zatem jest jawne zdefiniowanie dynamiki układu
-opisanego równaniem różniczkowym postaci $x\ddot{\vec{x}} = \vec{F}/m$.
+opisanego równaniem różniczkowym postaci $\ddot{\vec{x}} = \vec{F}/m$.
 
 Rozwiązaniem tego problemu może być emulowanie sił poprzez zaczepienie
 'wirtualnych' sprężyn pomiędzy punktami docelowymi $g_i$ wynikającymi z ograniczeń
@@ -394,7 +396,7 @@ Takie podejście nie jest jednak używane w literaturze przedmiotu. Zamiast tego
 \cite{pbdyn} proponuje rozwiązanie postawionego problemu poprzez użycie
 tzw. dynamiki bazującej na pozycjach (Position Based Dynamics).
 
-Metody bazujące na pozycji są relatywnie młodą metodą wykorzystywaną w symulacji
+Metody bazujące na pozycji są relatywnie nowym podejściem wykorzystywanym w symulacji
 ciał miękkich. Pierwsza propozycja takiego podejścia przedstawiona została w
 2001 r.\cite{jak}, natomiast uogólniony, usystematyzowany koncept, został oficjalnie
 opublikowany w 2006 r.\cite{pbdyn}. To właśnie autorom \cite{pbdyn} przypisuje
@@ -402,26 +404,26 @@ się odkrycie tej metody, która szybko stała się popularna w obszarze grafiki
 komputerowej i jest dzisiaj implementowana w profesjonalnych silnikach fizycznych,
 takich jak PhysX, Havoc Cloth, Maya nCloth czy Bullet \cite{Liu:2013:FSM}.
 
-Termin bazujący na pozycji oznacza, że w odróżnieniu od modelu Systemu Sprężyn,
-	   w którym to wyznaczenie kolejnych pozycji punktu w czasie $x_i(t +
+Termin ,,bazujący na pozycji'' oznacza, że w odróżnieniu od modelu Systemu Sprężyn,
+	   w którym wyznaczenie kolejnych pozycji punktu w czasie $x_i(t +
 			   \Delta t)$ jest zależne od sił wypadkowych działających na ten
 	   punkt, do wyznaczania przyszłej pozycji w czasie $t + \Delta t$
 	   wykorzystywana jest aktualna pozycja oraz jej tzw. projekcja. Jako
 	   projekcję danego punktu $x_i$ rozumiana jest taka pozycja $g_i$, która
-	   spełnia wszystkie obostrzenia (np. ograniczenia geometryczne)
+	   spełnia wszystkie więzy (ang. constraints)
 	przewidziane w symulowanym modelu.
 
 Bezpośrednie operowanie na pozycjach implikuje ważną własność metody. Odpowiednie
-skonstruowanie funkcji obostrzeń i modyfikowanie wartości projekcji $g_i$, tak
+skonstruowanie więzów i modyfikowanie wartości projekcji $g_i$, tak
 aby były one spełnione, pozwala uniknąć typowych niestabilności związanych z
 rozwiązaniem układu równań ruchu. Do takich niestabilności należy przede
 wszystkim problem użycia zbyt dużego kroku symulacji $t$. Zbyt
 duża wartość powoduje, że oscylacje sprężyn w modelu Systemu Sprężyn przejawiają
 tendencje to tzw. overshootingu. Jest to zjawisko systematycznego powiększania rozciągnięcia
 sprężyny w czasie oscylacji, powodujące błędny wzrost energii wewnętrznej układu i w
-ostateczności jego widowiskową 'eksplozję'.
+ostateczności jego widowiskową ,,eksplozję''.
 
-Do najważniejszych zalet Dyniamki bazującej na pozycji autorzy \cite{pbdyn}
+Do najważniejszych zalet dynamiki bazującej na pozycji autorzy \cite{pbdyn}
 zaliczają:
 \begin{itemize}
 	\item bezpośrednią kontrolę nad całkowaniem równań ruchu, pozwalającą
@@ -434,7 +436,7 @@ zaliczają:
 
 \subsection{Definicja}
 Dynamika pozycyjna zakłada, że każdy obiekt deformowalny jest przedstawiony jako zbiór $N$
-punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ ograniczeń
+punktów materialnych (zwanych dalej wierzchołkami) oraz $M$ więzów
 zdefiniowanych na tych wierzchołkach. Każdy i-ty wierzchołek symulowanego ciała posiada
 następujące atrybuty:
 
@@ -452,14 +454,13 @@ $m_i$ & masa\\
 \vspace{0.5cm}
 
 \raggedright
-Ograniczenie, nazywane też wymiennie w tej pracy obostrzeniem,
-posiada następujące atrybuty:
+Więzy, nazywane też w tej pracy ograniczeniami, posiadają następujące atrybuty:
 \vspace{0.5cm}
 
 \centering
 \begin{tabular}{|r|l|}
 \hline
-$n_j$ & liczność ograniczenia \\
+$n_j$ & liczebność \\
 \hline
 $C_j$ & funkcja $R^{3n_j} -> R$\\
 \hline
@@ -473,25 +474,25 @@ typ & równość lub nierówność\\
 \vspace{0.5cm}
 
 \raggedright
-Liczność ograniczenia $n_j$ informuje ile wierzchołków danego symulowanego ciała 
-podlega temu ograniczeniu. Funkcja $C_j : R^{3n_j} -> R$ będzie używana do
-określenia czy dane ograniczenie jest spełnione oraz do wyznaczania docelowych
+Liczebność więzów $n_j$ informuje ile wierzchołków symulowanego ciała 
+jemu podlega. Funkcja $C_j : R^{3n_j} -> R$ będzie używana do
+określenia czy wiązy są spełnione oraz do wyznaczania docelowych
 przesunięć wierzchołków $\Delta X$ spełniających warunek $C_j(X + \Delta X) = 0$. 
-Lista indeksów służy przypisaniu konkretnych wierzchołków do danego
-ograniczenia.
+Lista indeksów służy przypisaniu konkretnych wierzchołków do danych
+więzów.
 
-Parametr $k_j$ informuje o tym jak szybko dane ograniczenie ma
+Parametr $k_j$ informuje o tym jak szybko dane więzy mają
 powodować zmianę konfiguracji punktów projekcji $g_i$. Po wyznaczeniu
 optymalnej pozycji punktów $X + \Delta X$ pozycje $g_i$ są przesuwane w kierunku
-docelowych punktów, przeskalowanym o parametr $k_j$. Możemy to zapisać jako:
+docelowych punktów, wg wzoru:
 $$g'_i = g_i + k_j ((x_i + \Delta x_i) - g_i)$$
 W efekcie parametr $k_j$ służy do symulowania fizycznych właściwości
 będących efektem działania ograniczenia. Dla $k_j \to 1$ uzyskamy zatem
 zachowanie przypominające ciało sztywne, natomiast przy $k_j \to 0$ uzyskamy
 efekt całkowitego zaniku sił wewnętrznych podczas deformacji ciała.
 
-Ostatnim atrybutem obostrzenia jest jego typ - przyjmujący wartości równość lub
-nierówność.  Jeżeli ograniczenie jest typu równości to spełnione jest wówczas
+Ostatnim atrybutem ograniczenia jest jego typ - przyjmujący wartości równości lub
+nierówności. Jeżeli ograniczenie jest typu równości to spełnione jest wówczas
 wtedy gdy $C_j(x_{i_1},..., x_{i_{n_j}}) = 0$, natomiast dla typu nierówność to
 wtedy gdy $C_j(x_{i_1},..., x_{i_{n_j}}) > 0$.
 Przykładem obostrzeń typu równość jest zachowanie odległości między dwoma
@@ -499,7 +500,7 @@ wierzchołkami ciała miękkiego:
 \begin{equation}
 C(x_i, x_j) = || x_i - x_j || - l_{ij} = 0
 \end{equation}
-gdzie $l_{ij}$ jest odległością między wierzchołkami i, j w niezdeformowanej
+gdzie $l_{ij}$ jest odległością między wierzchołkami $i, j$ w niezdeformowanej
 konfiguracji wierzchołków.
 
 Przykładem ograniczenia typu nierówność może być kolizja z płaszczyzną, która
@@ -514,7 +515,7 @@ Dynamika pozycyjna pomimo faktu, że stworzona została z myślą o ograniczenia
 geometrycznych pozwala także wprowadzić do modelu wpływ działania tradycyjnych sił takich jak grawitacja
 czy siła wiatru. Możliwe jest to dzięki przyjęciu, że początkowe wartości
 projekcji $g_i$ są wyznaczone dzięki tradycyjnemu rozwiązaniu równań ruchu z
-modelu Systemu Sprężyn postaci $x \ddot{\vec{x}} = \vec{F} / m$.
+modelu Systemu Sprężyn postaci $\ddot{\vec{x}} = \vec{F} / m$.
 
 Zasadniczą ideą Dynamiki Pozycyjnej jest iteracyjne rozwiązywanie
 równań ograniczeń zdefiniowanych dla modelu.
@@ -546,17 +547,17 @@ Mając dany zbiór wierzchołków modelu, zbiór ograniczeń i krok symulacji $\
 
 \end{enumerate}
 
-W zaproponowanej przez Mullera algorytmie, najważniejszą część stanowią
-fragmenty (6), (8), 11-12. W linii (6) następuje całkowanie równania ruchu za 
+W zaproponowanym przez Mullera algorytmie, najważniejszą część stanowią
+fragmenty (6), (8), (11)-(12). W linii (6) następuje całkowanie równania ruchu za 
 pomocą metody Eulera. Ustala się w ten sposób pierwszą projekcję pozycji $g_i$. Następnie
-wszystkie projekcje są rzutowane w taki sposób rozwiązywały one
-ograniczenia $C_M$. Należy tutaj zaznaczyć, że w algorytmie nie zakłada się, że
-ograniczenia $C(g)$ będą rozwiązane dokładnie. Spowodowałoby to 
+wszystkie projekcje są rzutowane w taki sposób, aby rozwiązywały 
+więzy $C_M$. Należy tutaj zaznaczyć, że w algorytmie nie zakłada się, że
+więzy $C(g)$ będą rozwiązane dokładnie. Spowodowałoby to 
 usztywnienie systemu i niepożądane wizualnie efekty. Dlatego też każde
-ograniczenie zostanie rozwiązane z pewnym błędem zależnym od parametru $k$ oraz
-ilości iteracji rozwiązania ograniczeń.
+ograniczenie zostanie rozwiązane z pewnym błędem zależnym od parametru $k$ po
+pewnej liczbie iteracji rozwiązania więzów.
 Ostatnim krokiem symulacji jest ponowne obliczenie
-prędkości oraz przypisane zrzutowanej projekcji do pozycji wierzchołka.
+prędkości oraz przypisane rzutowanej projekcji do pozycji wierzchołka.
 
 Przedstawiona symulacja jest bezwarunkowo stabilna \cite{pbdyn} ponieważ nowe pozycje nie są
 ekstrapolacją wynikająca z kroku całkowania (6), tyko pewnym rzutowaniem na
@@ -565,18 +566,18 @@ stabilne konfiguracje systemu wynikające z równań ograniczeń (8). Jedynym
 Jednakże niestabilność nie zależy od przyjętego kroku całkowania systemu $\Delta
 t$, tylko od samej funkcji danego ograniczenia\cite{pbdyn}.
 
-\subsection{Rozwiązywanie układu ograniczeń}
-Problem rozwiązania ograniczeń $C_1, .., C_M$ dla projekcji układu $g_1, ..., g_N$
+\subsection{Rozwiązywanie układu więzów}
+Problem rozwiązania więzów $C_1, .., C_M$ dla projekcji układu $g_1, ..., g_N$
 jest w istocie problemem rozwiązania układu równań. Do rozwiązania takiego
-układu autorzy sugerują posłużyć się metdoą Jacobiego bądź metodą Gaussa-Seidela. 
+układu autorzy sugerują posłużyć się metodą Jacobiego bądź metodą Gaussa-Seidela. 
 
 Wyżej wymienione metody mogą mieć zastosowanie tylko w przypadku
 liniowych układów równań. Niestety w modelu funkcje ograniczeń mają też postać nierówności, a
-najczęściej spotykane funkcje ograniczeń mają charakter nieliniowy. Powoduje to,
+najczęściej spotykane funkcje więzów mają charakter nieliniowy. Powoduje to,
 że niemożliwe jest użycie klasycznych wersji w/w metod. Muller proponuje
-zmodyfikowana metodę Gaussa-Seidela, w której każde równanie (lub nierówność) będzie rozwiązane
-oddzielnie metodą Newtona, a następnie zmodyfikowana projekcja będą używana do
-rozwiązania kolejnych równań ograniczeń.
+zmodyfikowaną metodę Gaussa-Seidela, w której każde równanie (lub nierówność) będzie rozwiązane
+oddzielnie metodą Newtona, a następnie zmodyfikowana projekcja będzie używana do
+rozwiązania kolejnych równań więzów.
 
 \subsection{Przykłady ograniczeń}
 Ograniczenia mają za cel zdefiniowanie przestrzeni rozwiązań możliwych w której
@@ -598,9 +599,9 @@ oddziałują na punkty obiektu, tak jak siły zewnętrzne. Jeżeli dane ogranicz
 dotyczy zewnętrznych właściwości (np. odległości od punktu kolizji),
 własności te nie muszą być zachowane\cite{pbdyn}.
 
-Muller proponuje następujący wzór na obliczanie przemieszczenie $\Delta g$ dla
-ograniczeń zachowujący jednocześnie pęd jak i moment pędu.
-Jeżeli $g = [ g_1^T, g_2^T, ..., g_n^T]^T$, gdzie $n$ jest licznością
+Muller proponuje następujący wzór na obliczanie przemieszczenia $\Delta g$ dla
+więzów zachowujący jednocześnie pęd jak i moment pędu.
+Jeżeli $g = [ g_1^T, g_2^T, ..., g_n^T]^T$, gdzie $n$ jest liczebnością
 ograniczenia $C$:
 \begin{equation} \label{con_eq}
 \Delta g = - \frac{C(g)}{|| \nabla_g C(g) ||^2}\nabla_g C(g),
@@ -612,7 +613,7 @@ $$\Delta g_i = -s w_i\nabla_{g_i}C(g_1, ..., g_n)$$
 $$ s = \frac{C(g_1, ..., g_n)}{\sum_j w_j|| \nabla_{g_j}C(g_1, ..., g_n)
 	||^2}$$
 
-gdzie $w_i = 1 / m_i$
+gdzie $w_i = 1 / m_i$.
 
 Przedstawiona powyżej projekcja jest przeprowadzana w kroku (8) głównego
 algorytmu dla każdego ograniczenia $C_i$ o typie równości.
@@ -630,7 +631,7 @@ konfiguracji.
 
 Funkcja ograniczenia spełnia warunek dla wzoru \ref{con_eq}, czyli jest
 niezależna od translacji i obrotu punktów (zachowuje pęd i moment pędu).
-Dlatego też wzór na korekta projkcji dla
+Dlatego też wzór na korektę projekcji dla
 ograniczenia dystansu jest równa:
 
 $$\Delta g_1 = - \frac{w_1}{w_1 + w_2} (|| g_1 - g_2 || - d)\frac{g_1 -
@@ -639,11 +640,11 @@ $$\Delta g_1 = - \frac{w_1}{w_1 + w_2} (|| g_1 - g_2 || - d)\frac{g_1 -
 $$\Delta g_2 = + \frac{w_2}{w_1 + w_2} (|| g_1 - g_2 || - d)\frac{g_1 -
 	g_2}{|| g_1 - g_2 ||}$$
 
-Aby otrzymać ostateczną korektę projekcji $g_1$ i $g_2$ w,
+Aby otrzymać ostateczną korektę projekcji $g_1$ i $g_2$,
 	trzeba otrzymane wartości $\Delta g_1$ oraz $\Delta g_2$ pomnożyć przez
 	sztywność ograniczenia $k$, gdzie $k \in (0, 1)$. 
 	$$ g_i = g_i + k * \Delta g_i$$
-Powyższe równanie ma jedną niepożądaną własność, ostatecznie przesunięcie
+Powyższe równanie ma jedną niepożądaną własność. Ostatecznie przesunięcie
 $\Delta g_i$ jest zależne od ilości iteracji rozwiązania równań ograniczeń.
 Efekt po $I$ iteracjach na ostateczne przesunięcie $\Delta p$ będzie
 nieliniowy i równy $\Delta g_0 k^I$. Aby pozbyć się zależności od liczby

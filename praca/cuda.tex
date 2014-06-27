@@ -34,7 +34,7 @@ jest prawdziwe? Wprawdzie częstotliwość taktowania nie podlega już takim tre
 co wcześniej, jednak dzisiejsze architektury CPU oferują więcej niż jeden rdzeń
 zdolny do wykonywania programu. Obecnie na rynku jest już oferowany procesor
 Intel z serii i7, który może posiadać do 8 fizycznych rdzeni. Dodatkowo, nowe
-technologie takie jak hyperthreading, pipelining czy zaawansowany branch
+technologie takie jak hyperthreading, pipelining czy zaawansowane branch
 prediction pozwalają na możliwie szybkie, czy wręcz równoległe wykonywanie
 fragmentów sekwencyjnego kodu.
 
@@ -66,11 +66,11 @@ sekundę).
 Samo jednak przejście na model programowania równoległego nie będzie łatwe,
 przyjemne, a przede wszystkim tanie. Wg
 Suttera taka zmiana wiązać się będzie nie tylko ze zmianą architektury
-aplikacjiczy konstrukcjami języków programowania. 
+aplikacji czy konstrukcjami języków programowania. 
 
 Zmiany w stronę wielowątkowości obserwowane są od jakiegoś czasu. Dla przykładu
 w 
-standardzie języka C++ 11, biblioteka obsługująca wątki będzie wchodzić w skład
+standardzie języka C++ 11, biblioteka obsługująca wątki wchodzi w skład
 biblioteki standardowej, Microsoft publikuje bibliotekę C++ AMP i wielowątkowe
 wersje popularnych bibliotek dla Platformy .NET jak PLINQ, a NVIDIA biblioteki
 algorytmiczne m.in. CUFFT wykonywane na GPU. Marsz w stronę wielowątkowości
@@ -84,17 +84,21 @@ skalowalność. Jeżeli dany problem programistyczny nie może być
 dynamicznie dzielony na podproblemy, które będą mogły być rozwiązane
 indywidualnie, korzyści związane z przyrostem ilości rdzeni w sprzęcie nie będą
 zauważalne. Taki podział często okazuje się być nietrywialny, a czasem
-wręcz niemożliwy. Nie można też oczekiwać wielkich wzrostów wydajności, ponieważ nie
+wręcz niemożliwy. Nie można też oczekiwać wzrostów wydajności równych ilości
+zrzenia, ponieważ nie
 cały kod aplikacji może być zrównoleglony. Dobrze opisuje to formuła stworzona w
 1967 r. przez G. Amdahla:
 
 \begin{equation}
-W(N) = \frac{1}{(1-S) + \frac{S}{N}}
+W(N) = \frac{1}{(1-S) + \frac{S}{N}},
 \end{equation}
-,gdzie $N$ jest ilością jednostek wykonywania, a $S$ jest częścią kodu programu,
+gdzie $N$ jest ilością jednostek wykonywania, a $S$ jest częścią kodu programu,
 	który może być zrównoleglony. I tak dla 8 rdzeni i programu o współczynniku
 	$S=60\%$, otrzymujemy wzrost wydajności tylko około 2.1 raza.
 
+Zakładając hipotetycznie, że mamy do dyspozycji nieograniczoną liczbę jednostek
+wykonania, czyli $n \to \infty$ to maksymalny wzrost wydajności
+wg Amdahla wynosić będzie tylko 2.5 raza.
 Współbieżność jest bez wątpienia problemem z którym każdemu programiście
 przyjdzie się kiedyś zmierzyć. Możliwe, że do niektórych problemów wystarczą mu
 gotowe rozwiązania z dostępnych bibliotek, jednak myślenie o problemie i
@@ -102,7 +106,7 @@ przedstawienie go w postaci dającej się zrównoleglić będzie rzeczą
 najważniejszą. Środowiska naukowe pomagają w tym aspekcie bardzo istotnie.
 Każdego roku publikowane są artykuły przedstawiające często nowatorskie
 podejścia do standardowych problemów, wskazując możliwość ich współbieżnego rozwiązania.
-Oczekuję, że w następnych latach trend z programowaniem równoległym będzie
+Przewiduję, że w następnych latach trend z programowaniem równoległym będzie
 przybierał na sile, czego owocem będą nowe, innowacyjne metody i technologie.
 
 \section{Powstanie CUDA}
@@ -145,14 +149,19 @@ CUDA. Ma to bardzo istotny wymiar ekonomiczny, ponieważ wiele specjalistycznych
 	tego typu rozwiązań i stworzyło ekonomiczne uzasadnienie do dalszej pracy
 	nad współbieżnie wykonywanymi aplikacjami.
 
+Istotne było też zwiększenie dokładności dokonywanych obliczeń na kartach
+graficznych poprzez umożliwienie użycia liczb podwójnej precyzji. Obecnie
+wszystkie karty NVIDIA , począwszy od architektury Fermi, pozwalają na
+korzystanie z liczb zmiennoprzecinkowych o zwiększonej precyzji.
+
 Ostatnim, najbardziej oczywistym czynnikiem, jest wzrost wydajności. Procesory
 graficzne składające się z multiprocesorów strumieniowych są przystosowane do
 przetwarzania dużej ilości danych jednocześnie. Dodatkowo narzut związany z
-kreacją i zarządzaniem pojedynczego wątku na GPU jest znacząco mniejszy niż w
+kreacją i zarządzaniem pojedynczego wątku na GPU jest znacząco mniejszy niż
 analogiczna operacja wykonana na CPU.  W nowych architekturach takich jak
-GeForce z serii 680 posiadającą aż 1536 rdzeni zdolnych do równoległego
-wykonywania kodu.  Efektem tego może być wzrost wydajności aplikacji w
-niektórych zastosowaniach nawet do 150 razy \cite{prez}.
+GeForce z serii 780 posiadających aż 2304 rdzenie zdolne do równoległego
+wykonywania kodu. Efektem jest wzrost wydajności aplikacji średnio
+o 2.5 raza \cite{cpuvsgpu}.
 
 \section{Interfejs programisty}
 
@@ -171,7 +180,7 @@ gospodarza,
 
 Biblioteki dostarczane wraz z pakietem CUDA umożliwiają pisanie kodu CUDA w różnych
 językach programowania. Najczęściej stosowanych jest język C, istnieją jednak biblioteki
-dla języków C++, Java, Python, C czy Fortran. Dodatkowo kod CUDA może być też pisany w specjalnie stworzonym do tego celu
+dla języków C++, Java, Python czy Fortran. Dodatkowo kod CUDA może być też pisany w specjalnie stworzonym do tego celu
 niskopoziomowym języku PTX (Pararell Thread Execution), przypominającym asembler.
 Cechą wyróżniającą kod PTX od skompilowanego kodu binarnego, jest możliwość jego
 kompilacji w locie z użyciem tzw. kompilatora JIT (ptxas) dostarczanego przez
@@ -208,7 +217,7 @@ dostarczanych wraz z pakietem CUDA.
 CUDA to nie tylko zestaw bibliotek, lecz również zestaw rozszerzeń do języka
 programowania C. Implementacja rozszerzeń podytkowana była potrzebą
 jednoznacznego rozróżnienia fragmentów programu każdego z kontekstów w kodzie
-źródłowym. W rezultacie dzięki narzędziom można pisać kod CUDA używając ANSI C
+źródłowym. W rezultacie można pisać kod CUDA używając ANSI C
 oraz specjalnych rozszerzeń przypominających atrybuty kompilatora. W ten sposób
 NVIDIA zaoszczędziła programistom CUDA potrzeby nauki nowego języka
 programowania, czy pisania kodu w niskopoziomowym języku PTX. Użycie
@@ -218,11 +227,11 @@ wykorzystaniu dostarczanego wraz z frameworkiem CUDA kompilatora 'nvcc'.
 NVIDIA Cuda Compiler (nvcc) nie jest kompilatorem w tradycyjnym tego słowa
 znaczeniu, a bardziej zestawem narzędzi służących do kompilacji. W przypadku gdy
 kod źródłowy będzie kompilowany tylko w kontekście gospodarza, właściwą kompilacją
-zajmują się kompilatory dedykowane dla danego systemu operacyjnego. I tak dla
-Windows, nvcc wykorzystuje kompilator Visual Studio, natomiast dla systemu Linux
+zajmują się kompilatory dedykowane dla danego systemu operacyjnego. Dla
+Windows nvcc wykorzystuje kompilator Visual Studio, natomiast dla systemu Linux
 użyty jest m.in. GCC. Zadaniem NVCC jest ukrycie przed programistą etapów kompilacji
-specyficznego kodu CUDA dla konkretnej implementacji, którą jest procesor
-graficzny. Schemat kompilacji wraz z poszczególnymi etapami przedstawia rysunek
+specyficznego kodu CUDA przeznaczonego do wykonania na procesorze
+graficznym. Schemat kompilacji wraz z poszczególnymi etapami przedstawia rysunek
 \ref{compilation}.
 
 \begin{figure}[H]
@@ -251,9 +260,9 @@ binarny przeznaczony dla konkretnego procesora graficznego, który nie jest
 kompatybilny z innymi architekturami procesorów graficznych.
 
 \subsection{Kernele}
-Z punktu widzenia programisty wykonanie fragmentu kodu w kontekście GPU'a
+Z punktu widzenia programisty wykonanie fragmentu kodu w kontekście GPU
 ogranicza się do wywołania specyficznego rodzaju funkcji, nazywanego w nomenklaturze CUDA kernelami.
-Kernele we języku C oznaczone są specjalnym atrybutem kompilatora
+Kernele w języku C oznaczone są specjalnym atrybutem kompilatora
 \texttt{\_\_global\_\_} oraz mają
 specyficzną konwencję wywołania przedstawioną na listingu \ref{kernel}.
 
@@ -261,7 +270,7 @@ Funkcja kernela wykonywana jest na procesorze graficznym jednocześnie przez $M$
 różnych wątków. W celu określenia dokładnej ilości wątków dla których ma się ona
 wykonać oraz sposobu ich indeksowania, dwa dodatkowe parametry
 są przekazane do funkcji kernela między znacznikami $<<<$ oraz $>>>$. Pierwszy parametr
-oznacza ilość tzw. bloków, czyli 1, 2 lub 3 - wymiarowych grup ograniczających
+oznacza liczbę tzw. bloków, czyli 1, 2 lub 3 - wymiarowych grup ograniczających
 wątki. Drugi parametr to wymiar pojedynczego bloku, określany jako pojedyncza liczba
 całkowita lub specjalnym typ $dim3$, służący do określenia rozmiarów 2 lub
 3-wymiarowego bloku. Po zdefiniowaniu ilości i wielkości bloków indeksy wątków dostępne
@@ -289,8 +298,8 @@ int main()
 }
 \end{lstlisting}
 
-Grupę bloków zleconą do wykonania dla CUDA nazywa się siatką
-(grid). Ogólny schemat siatki przedstawia rysunek \ref{grid}. Podobnie jak
+Grupę bloków zleconą do wykonania z użyciem CUDA nazywa się siatką
+(ang. grid). Ogólny schemat siatki przedstawia rysunek \ref{grid}. Podobnie jak
 wątki, bloki mogą być indeksowane jedno lub dwuwymiarowo. Ich indeksy są dostępne
 w funkcji kernela pod specjalną zmienną $blockIdx$, natomiast rozmiar samego
 bloku możliwy jest do pobrania poprzez zmienną $blockDim$.
@@ -311,8 +320,8 @@ sekwencyjnie, czyli dopiero po
 zakończeniu wykonywania poprzedzającego bloku. Taki model programowania zapewnia
 skalowalność rozwiązania w przypadku posiadania przez urządzenie więcej niż
 jednego procesora graficznego oraz pozwala programiście skupić się na
-optymalizacji wykonania programu w ramach pojedynczego bloku, zostawiając frameworkowi CUDA.
-zadanie optymalnej alokacji bloków między dostępne procesory 
+optymalizacji wykonania programu w ramach pojedynczego bloku, zostawiając frameworkowi CUDA
+zadanie optymalnej alokacji bloków między dostępne procesory.
  Programy pisane w CUDA muszą więc uwzględniać fakt,
 że bloki mogę być wykonywane w dowolnej kolejności. 
 
@@ -325,16 +334,16 @@ __device__ float square(float a)
 }
 \end{lstlisting}
 
-Definicja kernela nie jest jedynym rozszerzeniem do języka C dostępnym w
+Definicja kernela nie jest jedynym rozszerzeniem języka C dostępnym w
 kompilatorze NVCC. Możliwa jest również definicja funkcji wykonywanej w
 kontekście GPU poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_} (listing
 		\ref{cudafunc}). Tak zdefiniowana funkcja może być użyta w funkcji
 kernela, pozwalając na enkapsulację często powtarzanych fragmentów kodu. Należy
 jednak pamiętać, że kontekst gospodarza i GPU znacząco się od siebie różnią i w
 przypadku tego drugiego wywołania funkcji z reguły trwają dużo
-dłużej\cite{Nvi11b} Kompilator NVCC na ogół stara się więc inlinować wszystkie
+dłużej\cite{Nvi11b} Kompilator NVCC na ogół stara się więc ,,inlinować'' wszystkie
 funkcje oznaczone atrybutem \texttt{\_\_device\_\_}, czyli umieszcza ich kod
-bezpośrednio w miejscu wywołania. Wydłuża to docelowy kod kernela , jednak
+bezpośrednio w miejscu wywołania. Wydłuża to docelowy kod kernela, jednak
 znacząco przyspiesza jego wykonywanie. W celu wymuszenia na kompilatorze braku
 inlinowania trzeba poprzedzić atrybut \texttt{\_\_device\_\_} atrybutem
 \texttt{\_\_noinline\_\_}, natomiast w celu zagwarantowania inlinowania funkcji
@@ -360,7 +369,7 @@ możliwy jest tylko z jednego wątku, dlatego w celu wymiany informacji pomiędz
 wątkami zachodzi potrzeba użycia innego rodzaju pamięci.
 
 Pamięć dzielona to szybka pamięć L1 służąca do wymiany danych między wątkami.
-Z uwagi że cache L1 jest określony tylko dla danego procesora graficznego,
+Ponieważ cache L1 jest dostępny tylko dla danego procesora graficznego,
   pamięć ta może być współużytkowana tylko w ramach pojedynczego bloku. W celu
   deklaracji pamięci dzielonej NVCC wprowadza nowy atrybut o nazwie
   \texttt{\_\_shared\_\_}. Odwołania do pamięci dzielonej zajmuje parę razy
@@ -369,27 +378,27 @@ Z uwagi że cache L1 jest określony tylko dla danego procesora graficznego,
   Wielkość pamięci dzielonej dostępnej na procesorze jest niewielka i dla
   architektury Kepler wynosi 48 KB.
 
-Pamięć stała jest to w istocie pamięć L1 stworzona i używana do renderowania tekstur 
-w grafice komputerowej. Ideą zastosowania tej pamięci jest zmniejszenie czasu
-dostępu do danych mieszczących się z pamięci globalnej, których nie modyfikuje się w trakcie działania programu.
+Pamięć stała to w istocie pamięć L1 stworzona i używana do renderowania tekstur 
+w grafice komputerowej. Powodem zastosowania tej pamięci jest zmniejszenie czasu
+dostępu do danych mieszczących się w pamięci globalnej, których nie modyfikuje się w trakcie działania programu.
 W tym celu użyty jest dodatkowy cache L1, który przechowuje kopię danych 
 z pamięci globalnej i dostępny jest tylko w trybie do odczytu.
-Aby zadeklarować zmienne tego typu, która może zostać odczytana z dowolnego
-wątku, czy też bloku używa się atrybutu \texttt{\_\_constant\_\_}.
+Aby zadeklarować zmienną tego typu, która może zostać odczytana z dowolnego
+wątku lub bloku używa się atrybutu \texttt{\_\_constant\_\_}.
 
 Ostatnim rodzajem pamięci wykorzystywanej w modelu CUDA jest pamięć globalna.
-Jest to pamięć typu DRAM o znacznej pojemności, wynoszącej na chwilę pisania tej
+Jest to pamięć typu DRAM o znacznej pojemności, wynoszącej w chwili pisania tej
 pracy, nawet do 4 GB w najbardziej zaawansowanych kartach dostępnych na rynku. 
 Wadą jej jest natomiast bardzo długi czas dostępu.
 
-Schemat wątków i bloków z przypisaniem poszczególnych rodzajów pamięci do których
+Schemat wątków i bloków z przypisaniem poszczególnych rodzajów pamięci, do których
 mają dostęp podsumowuje rysunek \ref{hier}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.6]{images/memory-hierarchy.png}
-\caption{Hierarchia pamięci w modelu CUDA. Źródło: \ref{Nvi11b}}
 \label{hier}
+\includegraphics[scale=0.6]{images/memory-hierarchy.png}
+\caption{Hierarchia pamięci w modelu CUDA. Źródło: \cite{Nvi11b}}
 \end{figure}
 
 \begin{figure}[H]
@@ -402,19 +411,19 @@ mają dostęp podsumowuje rysunek \ref{hier}.
 \subsection{Procesor graficzny}
 W rozdziale tym przedstawiona zostanie architektura procesora graficznego na
 przykładzie modelu Geforce GTX 680. Wykonany jest on w architekturze Kepler
-wprowadzonej przez NVidia w 2012 r. Nie jest to najnowsza architektura stworzona
-dotąd przez NVidę, jednak wybór ten jest podyktowany dwoma
+wprowadzonej przez NVIDIA w 2012 r. Nie jest to najnowsza architektura stworzona
+dotąd przez NVIDIA, jednak wybór ten jest podyktowany dwoma
 względami. Pierwszą prozaiczną przyczyną jest fakt, że autor tej pracy posiada
 do dyspozycji model 660M wykonany w tej samej architekturze, a drugim że
-dostępne są materiały, opublikowane przez NVidię, omawiające architekturę Kepler
+dostępne są materiały, opublikowane przez NVIDIA, omawiające architekturę Kepler
 na przykładzie Geforce GTX 680.
 
 Rozdział ten nie ma na celu wyczerpującego opisania konstrukcji współczesnych
-procesorów graficznych, gdyż jest to temat zbyt obszerny. Ma za to na celu
+procesorów graficznych, gdyż jest to temat zbyt obszerny. Ma za to 
 pokazać programistom CUDA w jaki sposób wykonywane są stworzone
-przez nich programy czy analogie pomiędzy pojęciami używanymi w CUDA a ich
+przez nich programy oraz analogie pomiędzy pojęciami używanymi w CUDA i ich
 implementacją w sprzęcie. Przyczyni się to z pewnością do lepszego zrozumienia tematu
-programowania procesorów graficznych NVidia.
+programowania procesorów graficznych NVIDIA.
 
 Architektura procesora graficznego Geforce'a GTX 680 zaprezentowana jest na
 rysunku poniżej:
@@ -435,10 +444,10 @@ zbudowane są z następujących głównych elementów\cite{gf680}:
 \end{itemize}
 
 Procesory strumieniowe są najważniejszym elementem procesora graficznego. To one
-są najbardziej zaawansowane technologicznie, wykonane w nanometrycznej
-technologii i przedmiotem nieustannych modyfikacji. Z reguły opracowanie nowej
-serii procesorów graficznych zajmuje inżynierom Nvidia parę lat - i tak w 2012
-swoją premierę miała technologii Kepler, a na początku 2014 Maxwell. Nvidia z
+są najbardziej zaawansowane technologicznie, wykonane z nanometryczną
+precyzją i przedmiotem nieustannych modyfikacji. Z reguły opracowanie nowej
+serii procesorów graficznych zajmuje inżynierom NVIDIA parę lat - i tak w 2012
+swoją premierę miała technologii Kepler, a na początku 2014 Maxwell. NVIDIA z
 marketingowych względów nie podaje ilości procesorów strumieniowych obecnych w ich GPU. Zamiast tego
 podawana jest ilość rdzeni CUDA dostępnych na całym procesorze graficznym.
 
@@ -507,8 +516,8 @@ procesora strumieniowego, które będą omawiane w tym rozdziale należą:
 \end{itemize}
 
 Elementem szczególnego  zainteresowania na powyższym schemacie są rdzenie CUDA
-(CUDA cores) oznaczone kolorem zielonym. To one wg Nvidiii głównie decydują o
-wydajności danego procesora graficznego. NVidia nie podaje ścisłej definicji
+(CUDA cores) oznaczone kolorem zielonym. To one wg NVIDIA głównie decydują o
+wydajności danego procesora graficznego. NVIDIA nie podaje ścisłej definicji
 czym jest rdzeń CUDA, jednak mogą wg mnie być postrzegane jako procesory będące w
 stanie wykonać instrukcje programu CUDA. Posiada jednostki do operacji
 na liczbach zmiennoprzecinkowych (FPU) oraz całkowitych (INT Unit).
@@ -524,7 +533,7 @@ Shared Memory / L1 cache jest pamięcią używaną albo do współdzielenia dany
 pomiędzy wątkami albo do cachowania danych pochodzących z pamięci L2.
 
 Texture Cache jest specjalnym rodzajem pamięci dedykowanym do obsługi tekstur.
-Zasadniczą różnicą pomiędzy zwykłą pamięcią cache jest zastosowanie
+Zasadniczą różnicą pomiędzy nią a zwykłą pamięcią cache jest zastosowanie
 zoptymalizowanego algorytmu wczytywania danych. Zamiast operować na fragmencie
 pamięci jak na ciągłym obszarze, traktuje on ją jak tablicę dwuwymiarową. W
 momencie nie znalezienia potrzebnych danych w cachu (tzw. cache miss'a) w
@@ -535,13 +544,13 @@ przypadku renderowania tekstur. Z punktu widzenia programisty CUDA Texture Cache
 wykorzystany gdy posiadamy ten sam charakter danych lub też gdy zwyczajnie nie
 jesteśmy w stanie przewidzieć w jaki sposób będziemy odwoływać się do danych.
 
-Uniform Cache jest jest w modelu CUDA wykorzystywany do implementacji pamięci
+Uniform Cache jest w modelu CUDA wykorzystywany do implementacji pamięci
 stałej. Jest ona szczególnie szybka w momencie gdy wszystkie wątki odwołują się
 do tej samej komórki pamięci w cachu.
 
 \subsection{Warp}
 
-Współbieżne wykonywanie dużej ilości zadań możliwe jest dzięki implementacji
+Współbieżne wykonywanie dużej liczby zadań możliwe jest dzięki implementacji
 w procesorach graficznych architektury SIMT (Single Intruction Multiple Thread), która
 przypomina architekturę SIMD używaną w współczesnych procesorach. W
 odróżnieniu od SIMD, który udostępnia tylko możliwość równoległego wykonania danej
@@ -551,7 +560,7 @@ elastyczność w sterowaniu przepływem programu.
 
 W modelu CUDA zakłada się, że wszystkie wątki w ramach jednego bloku wykonywane
 są równolegle. W rzeczywistości jednak procesor graficzny potrafi współbieżnie
-wykonywać instrukcje jedynie dla grup wątków zwanych w nomenklaturze CUDA -
+wykonywać instrukcje jedynie dla grup wątków zwanych w nomenklaturze CUDA
 warpem.  Liczba wątków wchodzących w skład jednego warpa, dla wszystkich
 stworzonych do dziś architektur procesorów graficznych NVIDIA, jest stała i
 wynosi 32. Z punktu widzenia programisty fakt wykonywania tylko części wątków na
@@ -561,7 +570,7 @@ kodzie \cite{kepler}.
 
 W czasie wykonywania kernela CUDA, każdy blok zostaje wpierw podzielony na
 odpowiednią liczbę warpów, a następnie zlecony do wykonania przez jednostkę
-procesora strumieniowego zwaną warp schedulerem. To warp scheduler decyduje, który warp jest 
+procesora strumieniowego zwaną warp schedulerem. To warp scheduler decyduje, który warp
 jest w stanie wykonać instrukcję w następnym cyklu zegara. W architekturze
 Kepler wszystkie warpy, przydzielone do danego procesora strumieniowego,
 zostają rozdystrybuowane pomiędzy 4 dostępne warp schedulery. Te następnie w
@@ -573,13 +582,13 @@ graficznego.
 
 Możliwość wykonania tylko jednej instrukcji dla danego warpu ma istotnie
 konsekwencje. Aby wykonać program, którego następna instrukcja
-zależy od danych, NVidia wprowadziła możliwość nadawania wątkom jednego z dwóch stanów -
+zależy od danych, NVIDIA wprowadziła możliwość nadawania wątkom jednego z dwóch stanów -
 aktywnego oraz pasywnego. Stan aktywny oznacza, że następna instrukcja wątku
 zostanie wykonana w następnym cyklu zegara, a pasywny - że egzekucja instrukcji
 zostaje w następnym cyklu zawieszona.
 
 W przypadku gdy kod programu danego warpu zawiera tzw. conditional branching,
-  czyli zawiera wyrażenie postaci \texttt{if X {...} else {...}}, to najpierw
+  czyli zawiera warunek postaci \texttt{if X {...} else {...}}, to najpierw
   zastaną wykonane na 32 wątkach instrukcje programu pierwszej części wyrażenia,
   z oznaczeniem jako pasywnych tych wątków dla których wartość \texttt{X} jest
   nieprawdziwa. Następnie druga strona wyrażenia zostanie wykonana na 32 wątkach
@@ -613,14 +622,14 @@ zależy od architektury urządzenia i dla architektury Kepler wynosi 32, 64 lub
 Wczytanie z pamięci danych, które nie są są "wyrównane", ma negatywny wpływ na
 wydajność programu CUDA.  Powyższe założenia dobrze zobrazować przykładem.
 Załóżmy, że mamy grupę 32 wątków tworzących warp, które odwołują się do pamięci
-globalnej. Jeżeli każdy z nich wczytuje 4 bajtów to zakładając, że dane
+globalnej. Jeżeli każdy z nich wczytuje 4 bajty to zakładając, że dane
 zaczynają się w pamięci adresem będącym wielokrotnością 128 bajtów, wczytanie
 danych odbywa się dokładnie w jednej transakcji o wielkości 128 bajtów. Jest to
 optymalna sytuacja minimalizująca użycie jednostek LD/ST procesora graficznego.
 
-Przyjmijmy oznaczenia wywodzące się ze składni języka C, że dane globalne mieszczą się w
+Przyjmijmy oznaczenia wywodzące się ze składni języka C. Dane globalne mieszczą się w
 tablicy $A[N]$, która jest "wyrównana" do 128 bajtów, a odwołanie do
-pamięci i-tego wątku zapiszmy jako $A[i]$. W przypadku, gdy odwołanie następuje
+i-tej komórki tablicy zapiszmy jako $A[i]$. W przypadku, gdy odwołanie następuje
 z pewnym przesunięciem $t = 1$, które zapiszemy jako $A[i + 1]$, wczytanie danych
 nie może już zostać zrealizowane w jednej transakcji. Dzieje się tak dlatego, że
 pierwsza transakcja zostanie i tak zrealizowana od adresu $A[0]$, jednak element
@@ -641,7 +650,8 @@ następnego "wyrównanego" bloku pamięci.
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.4]{images/gf660_offset.png}
-\caption{Teoretyczna przepustowość Geforce 660M. Źródło: opracowanie własne na
+\caption{Teoretyczna przepustowość Geforce 660M liczona jako czas inkrementacji
+	4MB danych zmiennoprzecinkowych. Źródło: opracowanie własne na
 	podstawie \cite{memperf}}
 \label{hier2}
 \end{figure}
@@ -652,23 +662,24 @@ teoretycznej przepustowości dla innych wartości przesunięcia $t$. Okazuje si�
 			 że nie jest ona stała co sugerowałoby założenie o dwóch dokonywanych
 			 transakcjach dla każdej grupy wątków. W rzeczywistości
 			 kompilator/sterownik dokonuje dodatkowych optymalizacji w
-			 zależności do którego niewyrównanego elementu w pamięci staramy się
+			 zależności od tego do którego niewyrównanego elementu w pamięci staramy się
 			 odwołać. Niezależnie jednak od użytych optymalizacji, developer aplikacji CUDA
 			 powinien pamiętać, żeby należy wczytywać dane z "wyrównanych"
 			 fragmentów pamięci.
 
 Dużo większy wpływ na spadek wydajności ma wczytywanie danych nie ułożonych gęsto w
 pamięci, a rozdzielonych stałymi odstępami liczonymi w bajtach. Ma to np. miejsce w przypadku gdy
-dane aplikacji CUDA reprezentowane są jako tablica structur (Array of Struct AOS), a deweloper
+dane aplikacji CUDA reprezentowane są jako tablica struktur (Array of Struct, AOS), a deweloper
 odwołuje w kernelu tylko do jednego pola tej struktury. Efekt zwiększania odstępów
 między kolejnymi polami struktur przedstawia wykres \ref{hier}. Rozwiązaniem tego
-problemu może być reprezentacja danych jako struktury tablic (Struct of Array
+problemu może być reprezentacja danych jako struktury tablic (Struct of Array,
 		SOA).
 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.4]{images/gf660_stride.png}
-\caption{Teoretyczna przepustowość Geforce 660M. Źródło: opracowanie własne na
+\caption{Teoretyczna przepustowość Geforce 660M liczona jako czas inkrementacji
+	4MB danych zmiennoprzecinkowych. Źródło: opracowanie własne na
 	podstawie \cite{memperf}}
 \label{hier}
 \end{figure}

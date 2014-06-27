@@ -2,13 +2,14 @@
 
 \section{Wprowadzenie}
 
-W literaturze przedmiotu odnaleźć można szereg metod opisujących symulacje komputerowe ciał
-miękkich. Metody te, mimo faktu, że potrafią symulować ten sam zakres zjawisk
-fizycznych potrafią znacząco się różnić w zależności od ich zastosowań.
-Symulacje fizyczne ciał miękkich mogą być zatem ukierunkowane na otrzymanie wyników
-zbieżnych do obserwowanych doświadczalnie, natomiast te używane w grafice
-komputerowej będą stawiały za cel stworzenie przyjemnego dla oka efektu
-wizualnego oraz stabilność i responsywność symulacji.
+W literaturze przedmiotu \cite{TR97-19} \cite{pbdo} \cite{survey} odnaleźć można
+szereg metod opisujących symulacje komputerowe ciał miękkich. Metody te, mimo
+faktu, że potrafią symulować ten sam zakres zjawisk fizycznych potrafią znacząco
+się różnić w zależności od ich zastosowań.  Symulacje fizyczne ciał miękkich
+mogą być zatem ukierunkowane na otrzymanie wyników zbieżnych do obserwowanych
+doświadczalnie, natomiast te używane w grafice komputerowej będą stawiały za cel
+stworzenie przyjemnego dla oka efektu wizualnego oraz stabilność i responsywność
+symulacji.
 
 Rozdział ten ma za zadanie wprowadzić czytelnika w bogaty świat metod symulacji
 ciał miękkich. Zostaną podjęte próby usystematyzowania dotychczasowych
@@ -44,14 +45,14 @@ stanu wiedzy i sprzętu komputerowego.
 Mnogość zastosowań symulacji ciał miękkich sprawiła też, że tematyką tą
 zainteresowali są badacze z różnych dziedzin. W efekcie tego obszar modelowania ciał
 deformowalnych nabrał prawdziwie interdyscyplinarnego charakteru i łączy dzisiaj w sobie
-taki obszary naukowe jak dynamika newtonowska, mechanika ośrodków ciągłych,
+takie obszary naukowe jak dynamika newtonowska, mechanika ośrodków ciągłych,
 metody numeryczne, geometria różniczkowa czy metody aproksymacji\cite{pbdo}.
 
 Bardzo zmienne środowisko, relatywnie młody wiek dziedziny czy jej 
 interdyscyplinarny charakter sprawia
 że obszar wiedzy na temat komputerowej symulacji ciał deformowalnych relatywnie
 trudno opisać.
-Jak dotąd znane są mi tylko 2 próby usystematyzowania osiągnięć
+Jak dotąd znane są mi tylko dwie próby usystematyzowania osiągnięć
 tej dziedzinie podjęte w przeciągu ostatnich 30 lat, odnoszące się wyłącznie do
 ciał miękkich.
 
@@ -59,13 +60,13 @@ ciał miękkich.
 
 Pierwszą próbę sklasyfikowania znanych metod symulacji ciał miękkich
 podjęli w swoim opracowaniu z 1997 r. Sarah oraz Gibson\cite{TR97-19}. Podzielili
-oni wszystkie znane modele na 2 ogólne kategorie: fizyczne oraz niefizyczne. Metody fizyczne, czyli
+oni wszystkie znane modele na dwie ogólne kategorie: fizyczne oraz niefizyczne. Metody fizyczne, czyli
 takie które uwzględniają w swojej budowie pewne prawa fizyczne będą przedmiotem
 wnikliwszej analizy w tej pracy. Do modeli niefizycznych zaliczyć można natomiast
 krzywe parametryczne oparte na krzywych Breziera czy deformacje brył sztywnych (Free-Form Deformations).\cite{pbdo}
 
 Metody niefizyczne znajdują zastosowanie w obszarach, w których właściwości
-fizyczne czy też symulacja zmian w czasie obiektu nie jest celowa. Przykładem
+fizyczne czy też symulacja zmian obiektu w czasie nie jest celowa. Przykładem
 takiego obszaru jest projektowanie komputerowe w programach typu CAD, gdzie
 projektowany obiekt musi być przekształcony ze stanu A do B zachowując określone
 własności. Nie dziwi zatem fakt, że wszystkie metody niefizyczne są także 
@@ -134,7 +135,7 @@ obiektu w celu przeprowadzenia jego numerycznej symulacji:
 	\end{itemize}
 \item Metody Eulera
 	\begin{itemize}
-		\item Symulacjie płynów i gazów
+		\item Symulacje płynów i gazów
 	\end{itemize}
 \end{itemize}
 
@@ -156,7 +157,7 @@ są w tym obszarze powszechnie używane. System cząstek składa się z obiektó
 reprezentowanych przez punkty czy sfery. Każda cząstka
 rozpoczyna swój cykl życia od generacji, w której ustalane są 
 jej unikalne parametry takie jak pozycja, prędkość, temperatura czy długość życia.
-Następną fazą symulacji jest faza dynamiki czątek, w której wygenerowane parametry
+Następną fazą symulacji jest faza dynamiki cząstek, w której wygenerowane parametry
 są aktualizowane względem czasu symulacji. Ostatecznie każda cząstka po
 przekroczeniu swojej długości życie zostaje zniszczona i usunięta z modelu.
 Wielką zaletą systemu cząstek jest jej nieskomplikowana budowa, co pozwala na
@@ -165,7 +166,7 @@ symulację bardzo dużych systemów.
 Drugą techniką modelowania ciał miękkich są metody Eulera. Zasadniczą różnicą
 pomiędzy nimi a przytoczonymi wcześniej metodami Lagrange'a jest fakt, że nie skupiają 
 się one na symulacji punktów ciała miękkiego, lecz definiują zbiór arbitralnie
-określonych punktów w których wyliczane są parametry symulowanego materiału.
+określonych punktów, w których wyliczane są parametry symulowanego materiału.
 
 Typowym schematem modelowania płynów technikami Eulera jest podział przestrzeni w
 której rozpatrywana jest symulacja na regularną siatkę voxeli i użycie równań Naviera-Stokes'a do
@@ -175,12 +176,12 @@ Metody Eulera najczęściej wykorzystywane są do symulacji płynów oraz gazów
 
 \section{Podstawy fizyczne}
 \subsection{Prawo Hooka}
-Jest jednym z pierwszych odkrytych praw fizycznych formalnie opisujących deformację ciał pod wpływam
+Jest prawem fizycznym formalnie opisującym deformację ciał pod wpływem
 działających na nie sił. Zostało ono odkryte w 1660 r. przez Roberta Hooka i 
 stanowi bazę dzisiejszej teorii elastyczności\cite{elast}.
 
 Prawo Hooka jest prawem mechaniki określającym, że w pewnym zakresie odkształcenie ciała jest
-proporcjonalne do sił działających na ciało,
+proporcjonalne do sił działających na to ciało,
 Zakładając najprostszy wariant statycznego rozciągania pręta w jednym wymiarze, prawo to definiuje
 się:
 $$\delta = \frac{F}{S} = E\frac{\Delta l}{l},$$
@@ -201,7 +202,7 @@ ciał deformowalnych:
  
 W symulacji komputerowej prawo Hooka wykorzystywane jest najczęściej do określenia sił
 działających na model w wyniku jego deformacji. Takie podejście wykorzystywane
-jest np. w omawianym w kolejnym podrozdziale tej pracy modelu systemu
+jest np. w omawianym w kolejnym podrozdziale modelu systemu
 sprężyn.
 
 \subsection{Moduł Younga}
@@ -214,7 +215,7 @@ Tak jak w fizyce, moduł Younga w symulacji komputerowej ma określać fizyczne
 właściwości materiałów. Analizując literaturę przedmiotu nie znajdujemy jednak 
 bezpośrednich odwołań do tej wielkości fizycznej. Zamiast tego, większość modeli wprowadza
 własne bezwymiarowe wielkości mające na celu symulowanie podobnego spektrum
-zachowań. I tak model systemu sprężyn wprowadza swój współczynnik
+zachowań. I tak model systemu sprężyn wprowadza współczynnik
 sprężystości, który jest współczynnikiem proporcjonalności między względnym
 odkształceniem liniowym a działającą siłą. Modele z kategorii dynamiki
 pozycyjnej, modelują właściwości materiałów poprzez wprowadzenia parametru
@@ -230,7 +231,7 @@ miękkiego jest operowanie na siłach działających na ciało. Schemat takiej
 symulacji można uogólnić, zakładając, że ciało miękkie przedstawiamy jako zbiór
 punktów, na które mogą działać siły. W każdym kroku akumulowane są siły
 zewnętrzne i wewnętrzne działające na każdy punkt modelu. Jako siły wewnętrzne
-najczęściej wymieniane są siły sprężystości czy ciśnienia, jako siły zewnętrzne
+najczęściej wymieniane są siły sprężystości, jako siły zewnętrzne
 siła grawitacji czy siły powstałe w następstwie kolizji z innymi obiektami.
 Następnie w każdym kroku symulacji z sił wyliczane jest przyspieszenie punktów
 zgodnie z drugim prawem dynamiki Newtona. W kolejnych krokach, wykorzystując
@@ -267,9 +268,16 @@ W powyższym równaniu na punkt masy w danej chwili $t$ działają siły:
 \begin{equation}
 \vec{g}_{ij} = k_s (|\vec{x}_{ij}| - l_{ij})\frac{\vec{x}_{ij}}{|\vec{x}_{ij}|},
 \end{equation}
-gdzie $\vec{x}_{ij} = \vec{x}_i - \vec{x}_j$, jest wektorem różnicy położeń między sąsiadującymi punktami masy. Siła sprężystości w modelu jest zgodna z prawem Hook'a, czyli jest proporcjonalna do odchylenia sprężyny od jej spoczynkowej długości $l_{ij}$. Współczynnik $k_s$ jest współczynnikiem sprężystości i z założenia jest zależny od materiału z którego składa się symulowane ciało.
+gdzie $\vec{x}_{ij} = \vec{x}_i - \vec{x}_j$, jest wektorem różnicy położeń
+między sąsiadującymi punktami masy. Siła sprężystości w modelu jest zgodna z
+prawem Hook'a, czyli jest proporcjonalna do odchylenia sprężyny od jej
+spoczynkowej długości $l_{ij}$. Współczynnik $k_s$ jest współczynnikiem
+sprężystości i charakteryzuje materiał z którego składa się symulowane ciało.
 
-\item Siła tłumienia $f^{d}_i$ wynikająca z faktu, iż symulowanie ciało nie jest doskonale elastyczne i nie zachowuje energii układu. (Tzn. energia mechaniczna jest transformowana w energię wewnętrzną ciała, jednak z punktu widzenia symulacji energia nie jest zachowana.)
+\item Siła tłumienia $f^{d}_i$ wynikająca z faktu, iż symulowanie ciało nie jest
+doskonale elastyczne i nie zachowuje energii układu. (tzn. energia mechaniczna
+		jest transformowana w energię wewnętrzną ciała, co oznacza że z punktu
+		widzenia symulacji energia mechaniczna nie jest zachowana.)
 
 \begin{equation}
 \vec{f}^{d}_i = k_d(\vec{v}_j - \vec{v}_i),
@@ -282,7 +290,7 @@ masy połączonych sprężynami, a $k_d$ jest współczynnikiem tłumienia chara
 
 Ewolucja modelu opisana jest równaniem różniczkowym drugiego rzędu:
 \begin{equation}
-\ddot{\vec{x}} = \frac{\vec{F}}{m},
+\ddot{\vec{x}} = \frac{\vec{F}}{m}, gdzie \vec{F} = \sum_i \vec{F}_i
 \end{equation}
 i może być rozwiązany jednym z wielu algorytmów numerycznych.
 Jedną z najczęściej wykorzystywanych metod jest algorytm Verleta, który cechuje się prostą
@@ -291,7 +299,7 @@ przeprowadzone w \cite{var} pokazały, że algorytm Verleta okazał się
 najwydajniejszy w porównaniu z innymi metodami numerycznymi, dlatego też będzie
 stosowany w niniejszej pracy.
 
-Wzór na pozycję punku masy $i$ w czasie $t + dt$ jest w modelu wyrażona wzorem:
+Wzór na pozycję punku masy $i$ w czasie $t + dt$ jest w tym algorytmie wyrażona wzorem:
 
 % Wzór na dynamikę punktu w modelu (Verlet)
 \begin{equation}
@@ -301,7 +309,7 @@ Wzór na pozycję punku masy $i$ w czasie $t + dt$ jest w modelu wyrażona wzore
 
 W podstawowej metodzie Verleta błąd aproksymacji nowych pozycji punktów masy
 jest rzędu $O(dt^4)$. Oznacza to, że przy wyliczaniu nowych pozycji nie jest
-uwzględniany wpływ pochodnych 4 rządu i wyższych z rozwinięcia funcji
+uwzględniany wpływ pochodnych 4 rzędu i wyższych z rozwinięcia funcji
 $\vec{x}_i(t)$ w szereg Taylora. Wariant podstawowy metody Verleta posiada
  jednak wadę - nie wylicza bezpośrednio prędkości, które mogę być potrzebne do
  wyliczania np. sił działających na ciało. Rozwiązaniem problemu jest inna
@@ -321,10 +329,10 @@ $\vec{x}_i(t)$ w szereg Taylora. Wariant podstawowy metody Verleta posiada
 \subsection{Modyfikacje modelu}
 
 \subsubsection{Siła tłumienia}
-Definicja siły tłumienia jako różnicy prędkości między dwoma punktami masy w
+Definicja siły tłumienia jako wielkości proporcjonalnej do różnicy prędkości między dwoma punktami masy w
 jest rzadko stosowana, ze względu na wiele niepożądanych
-własności. Umożliwia ona np. aby siła tłumienia posiadała wektor różny co do
-kierunku od wektora różnic położeń dwóch punktów masy połączonych spręzyną.
+własności. Umożliwia ona np. aby wektor siły tłumienia nie było równoległy do 
+wektora różnic położeń dwóch punktów masy połączonych spręzyną.
 Efektem tego, jest np. tłumienie obrotu ciała wokół nieruchomego punktu masy, tak jak
 przedstawiono na rys. \ref{tlumienie}.
 
@@ -343,7 +351,7 @@ i marszczenie. Dlatego też warunek na siłę tłumienia zdefiniujemy jako:
 		\vec{x}_{ij}}{\vec{x}_{ij} \cdot \vec{x}_{ij}}) \vec{x}_{ij},
 \end{equation}
 
-gdzie $v_{ij} = v_i - v_j$, jest prędkością względną, a $\vec{v}_{ij} \cdot \vec{x}_{ij}$ jest 
+gdzie $\vec{v}_{ij} = \vec{v}_i - \vec{v}_j$, jest prędkością względną, a $\vec{v}_{ij} \cdot \vec{x}_{ij}$ jest 
 składową prędkością względnej w kierunku $\vec{x}_{ij}$. Definicja nakłada zatem
 ograniczenie, iż siła tłumienia może działać tylko w kierunku wyznaczonym przez
 sprężynę.
@@ -377,10 +385,10 @@ masy, a krawędzie sprężynami. Siła zachowawcza działająca na dany punktu m
 $i$ czworościanu, określa się wzorem:
 
 \begin{equation}
-F_i^d = d_v ( v - v_0) n_i,
+\vec{F}_i^d = d_v ( v - v_0) \vec{n}_i,
 \end{equation}
 gdzie $v$ jest aktualną objętością symulowanego czworościanu, $v_0$ jest jego
-spoczynkową objętością a $d_v$ jest arbitralnie zdefiniowaną stałą. $n_i$ jest
+spoczynkową objętością a $d_v$ jest arbitralnie zdefiniowaną stałą. $|vec{n}_i$ jest
 to normalna przeciwległej ściany czworościanu. Podana metoda pozwala uniknąć
 odwrócenia wierzchołków symulowanego obiektu, ponieważ w takim przypadku
 obliczona objętość będzie ujemna i powstałaby duża siła $F_i^d$, która wymusi powrót
@@ -394,7 +402,7 @@ charakterystykę. Na przykład, symulując elastyczny sześcian i dodając dodat
 połączenia między punktami masy w jednej płaszczyźnie otrzymamy obiekt różnie
 podatny na odkształcanie w zależności od kierunku działania siły. Taką
 mechaniczną właściwość ciała nazywany anizotropią. Anizotropia stanowi bardzo
-ciekawy przykład własności mechanicznej materiału, której implementacji w modelu
+ciekawy przykład własności mechanicznej materiału, której implementacja w modelu
 punktów mas i sprężyn jest często problematyczna. 
 
 Idealny model powinien umożliwiać symulowanie materiałów izotropowych (o
@@ -409,7 +417,7 @@ struktury wewnętrzne modelu przedstawiono na rys. \ref{anizotropia}.
 \begin{figure}[ht]
 \centering
 \includegraphics[scale=0.5]{images/anisotropy.png}
-\caption{Różnice własności anizotropijne dwóch prostpadłościaów
+\caption{Różnice własności anizotropijne dwóch prostopadłościanów
 	przytwierdzonych górną podstawą i poddanych sile grawitacji. Lewo:
 		Czworościenna siatka połączeń. Prawo: Sześciościenna siatka połączeń. Źródło: \cite{ca}}
 \label{anizotropia}
@@ -418,7 +426,7 @@ struktury wewnętrzne modelu przedstawiono na rys. \ref{anizotropia}.
 Okazuje się, że kalibracja parametrów modelu nie jest trywialna. W \cite{usa}
 autorzy proponują metodę kalibracji poszczególnych stałych sprężystości sprężyn.
 Ich metoda pozwala na symulację zarówno układów izotropowych jak i anizotropowych,
-jednak, jak sami autorzy wskazują jest złożona obliczeniowo,a w publikacji
+jednak, jak sami autorzy wskazują jest złożona obliczeniowo, a w publikacji
 został zaprezentowany tylko przykład dla siatek dwuwymiarowych. Inne podejście
 w swojej publikacji przedstawili francuscy badacze wykorzystując do estymacji
 parametrów sprężystości algorytmy genetyczne.\cite{ei}
