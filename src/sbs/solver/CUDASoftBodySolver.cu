@@ -60,8 +60,10 @@ private:
 	CUDAVector<ShapeDescriptor>        mShapeDescriptors;
 
 	// shape matching
-	CUDAVector<ShapeRegionInfo>        mRegions;
+	CUDAVector<ShapeRegionStaticInfo>  mRegions;
+	CUDAVector<ShapeRegionDynamicInfo> mRegionsDynamicInfo;
 	CUDAVector<glm::uint_t>            mRegionsMembersOffsets;
+	CUDAVector<glm::uint_t>            mMembersRegionsOffsets;
 	CUDAVector<glm::vec3>              mShapeInitialPositions; // initial particle locations (x0i);
 
 	CUDAVector<ParticleInfo>           mParticlesInfo;
@@ -161,7 +163,7 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 	d.mc0 = calculateMassCenter(
 			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
 
-	d.initPosBaseIdx = mShapeInitialPositions.size();
+	d.initPosBaseIdx = mShapeInitialPositions.size(); // shuld depend on mesh
 	mShapeInitialPositions.push_back(&(obj->mParticles[0]), obj->mParticles.size());
 
 	d.radius = 0;
@@ -169,9 +171,25 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 
 	int regions_base_id = mRegions.size();
 
+	std::vector< std::vector<glm::uint_t> > particlesInRegions;
+	particlesInRegions.resize(obj->mParticles.size());
+
+	REP(i, obj->mParticles.size()) {
+		indexArray_t indexes;
+		GetRegion(i, na, 3, indexes);
+		REP(p, indexes.size()) {
+			if (indexes[p] == i) {
+				particlesInRegions[indexes[p]].insert(particlesInRegions[indexes[p]].begin(),
+						i);
+			}
+			else
+				particlesInRegions[indexes[p]].push_back(i);
+		}
+	}
+
 	// create shape regions
 	REP(i, obj->mParticles.size()) {
-		ShapeRegionInfo reg;
+		ShapeRegionStaticInfo reg;
 		ParticleInfo info;
 		info.region_id = mRegions.size();
 		info.body_info_id = mShapeDescriptors.size();
@@ -198,8 +216,14 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 		reg.n_particles = indexes.size();
 		reg.members_offsets_offset = mRegionsMembersOffsets.size();
 		reg.shapes_init_positions_offset = d.initPosBaseIdx;
+		reg.regions_offsets_offset = mMembersRegionsOffsets.size();
+		reg.n_regions = particlesInRegions[i].size();
+
 		mRegions.push_back(reg);
 		mRegionsMembersOffsets.push_back(&indexes[0], indexes.size());
+		mMembersRegionsOffsets.push_back(&particlesInRegions[i][0],
+				particlesInRegions[i].size());
+		//ERR("i: %d %d", i, particlesInRegions[i].size());
 		mParticlesInfo.push_back(info);
 	}
 
@@ -212,6 +236,8 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 	DBG("Average region size: %f", (float)len / mRegions.size());
 	DBG("Max region size: %d", smax);
 	DBG("Min region size: %d", smin);
+
+	DBG("ParticeInfo size: %d", mParticlesInfo.size());
 
 	mShapeDescriptors.push_back(d);
 }
@@ -291,6 +317,7 @@ bool CUDAContext::InitSoftBody(SoftBody *body)
 	mLinks.push_back(&(body->mLinks[0]), body->mLinks.size());
 	mMapping.push_back(&(body->mMeshVertexParticleMapping[0]),
 			body->mMeshVertexParticleMapping.size());
+	mRegionsDynamicInfo.resize(mPositions.size());
 
 	return true;
 }
@@ -463,10 +490,46 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 
 	// solver
 	blockCount = mPositions.size() / threadsPerBlock + 1;
+	solveShapeMatchingConstraints1<<<blockCount, threadsPerBlock>>>(
+			mParticlesInfo.data(),
+			mRegions.data(),
+			mRegionsMembersOffsets.data(),
+			mShapeInitialPositions.data(),
+			mProjections.data(),
+			mInvMasses.data(),
+			mRegionsDynamicInfo.data(),
+			mPositions.size()
+			);
+	solveShapeMatchingConstraints2<<<blockCount, threadsPerBlock>>>(
+			mParticlesInfo.data(),
+			mRegions.data(),
+			mRegionsDynamicInfo.data(),
+			mRegionsMembersOffsets.data(),
+			mShapeInitialPositions.data(),
+			mMembersRegionsOffsets.data(),
+			mProjections.data(),
+			mPositions.size()
+			);
 	solveGroundWallCollisionConstraints<<<blockCount, threadsPerBlock>>>(
 			mProjections.data(), mInvMasses.data(),
 			world.groundLevel, world.leftWall, world.rightWall,
 			world.frontWall, world.backWall, mPositions.size());
+
+#if 1
+	vector<ShapeRegionDynamicInfo> info;
+	info.resize(mRegionsDynamicInfo.size());
+	ERR("mRegionsDynamicInfo size: %d", mRegionsDynamicInfo.size());
+	cudaMemcpy(&info[0], mRegionsDynamicInfo.data(),
+			sizeof(ShapeRegionDynamicInfo) * mRegionsDynamicInfo.size(),
+			cudaMemcpyDeviceToHost);
+
+	FOREACH_R(i, info) {
+		ERR("[%f %f %f]", i->mc[0], i->mc[1], i->mc[2]);
+		glm::mat3 R = i->R;
+		ERR("[%f %f %f %f %f %f %f %f %f]", R[0][0], R[1][0], R[2][0],
+				R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]);
+	}
+#endif
 
 	// integrate motion
 	threadsPerBlock = 128;
@@ -474,6 +537,8 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 	integrateMotionKernel<<<blockCount, threadsPerBlock>>>(
 			dt, mPositions.data(), mProjections.data(),
 			mVelocities.data(), mPositions.size());
+
+	cudaDeviceSynchronize();
 }
 
 void CUDASoftBodySolver::ProjectSystem(glm::float_t dt)

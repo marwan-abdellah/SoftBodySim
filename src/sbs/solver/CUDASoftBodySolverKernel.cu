@@ -44,59 +44,47 @@ __global__ void cudaProjectPositionsAndVelocitiesKernel(
 
 __global__ void solveShapeMatchingConstraints1(
 		ParticleInfo *info_array,
-		ShapeRegionInfo *regions,
+		ShapeRegionStaticInfo *regions,
 		glm::uint_t *members_offsets,
 		glm::vec3 *shapes_init_positions,
 		glm::vec3 *projections,
 		glm::float_t *masses,
+		ShapeRegionDynamicInfo *results,
 		glm::uint_t max_idx
 		)
 {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < max_idx) {
-		glm::mat3 A(0);
-		glm::vec3 mc(0,0,0);
-		glm::mat3 R, S;
+		glm::mat3 A(0), S;
 		ParticleInfo info = info_array[idx];
-		ShapeRegionInfo reg = regions[info.region_id];
+		ShapeRegionStaticInfo reg = regions[info.region_id];
+		ShapeRegionDynamicInfo res;
+		res.R = glm::mat3(0);
+		res.mc = glm::vec3(0,0,0);
+
+		glm::uint_t *members = members_offsets +
+			reg.members_offsets_offset;
+		glm::vec3 *inits = shapes_init_positions +
+			reg.shapes_init_positions_offset;
 
 		for (int i = 0; i < reg.n_particles; ++i) {
-			glm::uint_t *members = members_offsets +
-				reg.members_offsets_offset;
 			glm::uint mem_offset = members[i];
-
-			glm::vec3 *inits = shapes_init_positions +
-				reg.shapes_init_positions_offset;
 			glm::vec3 init = inits[mem_offset];
 
 			glm::uint_t offset = info.body_offset + mem_offset;
 			glm::vec3 proj = projections[offset];
 			glm::float_t mass = masses[offset];
-			A += glm::outerProduct(proj, init);
-			mc += proj * mass;
+			A += mass * glm::outerProduct(proj, init);
+			res.mc += proj * mass;
 		}
 
-		mc = mc / reg.mass;
-		A -= reg.mass * glm::outerProduct(mc, reg.mc0);
+		res.mc = res.mc / reg.mass;
+		A -= reg.mass * glm::outerProduct(res.mc, reg.mc0);
 
-		polar_decomposition(A, R, S);
+		polar_decomposition(A, res.R, S);
 
-		for (int i = 0; i < reg.n_particles; ++i) {
-			glm::uint_t *members = members_offsets +
-				reg.members_offsets_offset;
-			glm::uint mem_offset = members[i];
-
-			glm::vec3 *inits = shapes_init_positions +
-				reg.shapes_init_positions_offset;
-			glm::vec3 init = inits[mem_offset];
-
-			glm::vec3 final = R * (init - reg.mc0) + mc;
-
-			atomicAdd(&projections[info.body_offset + mem_offset][0], final[0]);
-			atomicAdd(&projections[info.body_offset + mem_offset][1], final[1]);
-			atomicAdd(&projections[info.body_offset + mem_offset][2], final[2]);
-		}
+		results[idx] = res;
 	}
 }
 
@@ -120,7 +108,11 @@ __global__ void solveShapeMatchingConstraints2(
 
 __global__ void solveShapeMatchingConstraints2(
 		ParticleInfo *info_array,
-		ShapeRegionInfo *regions,
+		ShapeRegionStaticInfo *regions,
+		ShapeRegionDynamicInfo *results,
+		glm::uint_t *region_members,
+		glm::vec3 *shapes_initial_positions,
+		glm::uint_t *particles_regions,
 		glm::vec3 *projections,
 		glm::uint_t max_idx)
 {
@@ -128,12 +120,36 @@ __global__ void solveShapeMatchingConstraints2(
 
 	if (idx < max_idx) {
 		ParticleInfo info = info_array[idx];
-		ShapeRegionInfo reg = regions[info.region_id];
+		ShapeRegionStaticInfo reg = regions[info.region_id];
+		ShapeRegionDynamicInfo dinfo = results[idx];
+
 		glm::vec3 proj = projections[idx];
 
-		proj = proj / (glm::float_t)(reg.n_regions + 1);
+		glm::uint_t *mem_start = region_members +
+			reg.members_offsets_offset;
+		glm::vec3 *init_pos_start =
+			shapes_initial_positions + reg.shapes_init_positions_offset;
+		glm::uint_t *part_reg_start = particles_regions +
+			reg.regions_offsets_offset;
+		
+		glm::uint mem_offset = mem_start[0]; // pivot always first
+		glm::vec3 init = init_pos_start[mem_offset];
 
+		glm::vec3 final(0,0,0);
+		glm::mat3 Rfinal(0);
+
+		for (int i = 0; i < reg.n_regions; ++i) {
+			glm::uint id = part_reg_start[i];
+			ShapeRegionDynamicInfo res = results[info.body_offset + id];
+			final += res.R * (init - reg.mc0) + res.mc;
+			Rfinal += res.R;
+		}
+		final = final / (glm::float_t)reg.n_regions;
+
+		proj += 0.1f * (final - proj);
 		projections[idx] = proj;
+		results[idx].R = Rfinal;
+		results[idx].mc = init;
 	}
 }
 

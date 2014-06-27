@@ -34,7 +34,6 @@ GLM_FUNC_QUALIFIER void eigenvalues_rotate(glm::mat3 &mat, double &c, double &s,
 GLM_FUNC_QUALIFIER glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
 {
 	glm::vec3 ret;
-//	bool changed = true;
 
 	// initial eigenvalues
 	ret[0] = mat[0][0];
@@ -47,7 +46,6 @@ GLM_FUNC_QUALIFIER glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, gl
 	mat[2][2] = 1.0;
 
 	REP(z, max_iter) {
-//		changed = false;
 		REP(i, 3) {
 			for(int j = i + 1; j < 3; j++) {
 				double mii = ret[i];
@@ -70,7 +68,6 @@ GLM_FUNC_QUALIFIER glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, gl
 				}
 			}
 		}
-//		if (!changed) break;
 	}
 	return ret;
 }
@@ -93,10 +90,10 @@ GLM_FUNC_QUALIFIER void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, gl
 	glm::mat3 B = glm::transpose(A) * A;
 
 	// B is symmetrix matrix so it is diagonizable
-	glm::vec3 eig = eigenvalues_jacobi(B, 10, E);
+	glm::vec3 eig = eigenvalues_jacobi(B, 5, E);
 
 	// add delta value to eigenvalues to overcome det(A) == 0 problem
-	eig += glm::vec3(0.001f, 0.001f, 0.001f);
+	eig += glm::vec3(0.01f, 0.01f, 0.01f);
 
 	S = diagonal3x3(eig);
 

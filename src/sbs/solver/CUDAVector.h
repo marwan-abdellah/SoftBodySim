@@ -48,8 +48,10 @@ CUDAVector<T>::~CUDAVector(void)
 template <typename T>
 void CUDAVector<T>::push_back(T &data)
 {
-	if (mSize >= mAlloc)
+	if (mSize >= mAlloc) {
+		if (!mAlloc) mAlloc = 1;
 		if (!ReallocInternal(mAlloc * 2)) return;
+	}
 	cudaMemcpy(mPtr + mSize, &data, sizeof(T), cudaMemcpyHostToDevice);
 	mSize++;
 }
@@ -57,8 +59,10 @@ void CUDAVector<T>::push_back(T &data)
 template <typename T>
 void CUDAVector<T>::push_back(T *data, size_t count)
 {
-	if (mSize + count >= mAlloc)
+	if (mSize + count >= mAlloc) {
+		if (!mAlloc) mAlloc = 1;
 		if (!ReallocInternal(mSize + count)) return;
+	}
 	cudaMemcpy(mPtr + mSize, data, count * sizeof(T), cudaMemcpyHostToDevice);
 	mSize += count;
 }
@@ -74,7 +78,7 @@ bool CUDAVector<T>::ReallocInternal(size_t n)
 		int size = mSize > n ? n : mSize; // clip if current buffer is lesser
 		err = cudaMemcpy(tmp, mPtr, sizeof(T) * size , cudaMemcpyDeviceToDevice); 
 		if (err != cudaSuccess) {
-			ERR("Failed to copy data on device!");
+			cudaFree(tmp);
 			return false;
 		}
 	}
@@ -102,6 +106,7 @@ void CUDAVector<T>::resize(size_t n)
 		ReallocInternal(n);
 	if (n > size)
 		cudaMemset(mPtr + size, 0x0, sizeof(T) * (n - size));
+	mSize = n;
 }
 
 #endif

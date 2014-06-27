@@ -27,13 +27,19 @@ struct ParticleInfo {
 	glm::uint body_offset; // id of first particle in body instance
 };
 
-struct ShapeRegionInfo {
+struct ShapeRegionStaticInfo {
 	glm::vec3 mc0; // initial region mass center
 	float_t mass; // region total mass
 	glm::uint_t members_offsets_offset;
 	glm::uint_t shapes_init_positions_offset;
 	int n_particles; // number of particles in
+	glm::uint_t regions_offsets_offset;
 	int n_regions; // number of regions in which central particle is
+};
+
+struct ShapeRegionDynamicInfo {
+	glm::mat3 R;
+	glm::vec3 mc;
 };
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(
@@ -64,17 +70,22 @@ __global__ void cudaUpdateVertexBufferKernel(
 
 __global__ void solveShapeMatchingConstraints1(
 		ParticleInfo *info_array,
-		ShapeRegionInfo *regions,
+		ShapeRegionStaticInfo *regions,
 		glm::uint_t *members_offsets,
 		glm::vec3 *shapes_init_positions,
 		glm::vec3 *projections,
 		glm::float_t *masses,
+		ShapeRegionDynamicInfo *results,
 		glm::uint_t max_idx
 		);
 
 __global__ void solveShapeMatchingConstraints2(
 		ParticleInfo *info_array,
-		ShapeRegionInfo *regions,
+		ShapeRegionStaticInfo *regions,
+		ShapeRegionDynamicInfo *results,
+		glm::uint_t *members_offsets,
+		glm::vec3 *shapes_init_positions,
+		glm::uint_t *particles_regions,
 		glm::vec3 *projections,
 		glm::uint_t max_idx);
 
