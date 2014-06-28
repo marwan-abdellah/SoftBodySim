@@ -31,6 +31,7 @@ public:
 	void OnMouseMove(int x, int y);
 	void OnRender(void);
 	void OnUpdate(double dt);
+	void OnScroll(double x, double y);
 private:
 	SoftBodyRenderer    renderer;
 	vector<Body*> mBodies;
@@ -130,19 +131,8 @@ void Demo::OnKeyboard(int key, int action)
 {
 	float delta = 0.1f;
 
-	if (key == GLFW_KEY_LEFT_SHIFT) {
-		if (action == GLFW_RELEASE)
-			mCameraMotion = false;
-		else if (action == GLFW_PRESS)
-			mCameraMotion = true;
-	}
-
 	if (action == GLFW_RELEASE) return;
 
-	if (key == GLFW_KEY_Z)
-		mCamera.moveIn(delta);
-	if (key == GLFW_KEY_X)
-		mCamera.moveOut(delta);
 	if (key == GLFW_KEY_P)
 		mPaused = !mPaused;
 #ifdef ENABLE_CUDA
@@ -231,26 +221,37 @@ Ray Demo::GetWoorldCoordinates(int x, int y)
 
 void Demo::OnMouseClick(int type, int state, int x, int y)
 {
-	if (type != GLFW_MOUSE_BUTTON_1)
-		return;
+	if (type == GLFW_MOUSE_BUTTON_RIGHT) {
+		if (state == GLFW_PRESS) {
+			mMouseLastX = x;
+			mMouseLastY = y;
+			mMousePressed = true;
+			mCameraMotion = true;
+		}
+		else if (state == GLFW_RELEASE) {
+			mMousePressed = false;
+			mCameraMotion = false;
+		}
+	}
 
-	if (state == GLFW_PRESS) {
-		mMouseLastX = x;
-		mMouseLastY = y;
-		mMousePressed = true;
+	if (type == GLFW_MOUSE_BUTTON_LEFT) {
+		if (!mCameraMotion && state == GLFW_PRESS) { 
+			Ray ray = GetWoorldCoordinates(x, y);
+			mSolver->GrabStart(ray, 0.5f, 120.0f);
+			mMousePressed = true;
+			mGrabb = true;
+		}
+		if (!mCameraMotion && state == GLFW_RELEASE) { 
+			mSolver->GrabStop();
+			mMousePressed = false;
+			mGrabb = false;
+		}
 	}
-	else if (state == GLFW_RELEASE)
-		mMousePressed = false;
+}
 
-	if (!mCameraMotion && state == GLFW_PRESS) { 
-		Ray ray = GetWoorldCoordinates(x, y);
-		mSolver->GrabStart(ray, 0.5f, 120.0f);
-		mGrabb = true;
-	}
-	if (!mCameraMotion && state == GLFW_RELEASE) { 
-		mSolver->GrabStop();
-		mGrabb = false;
-	}
+void Demo::OnScroll(double x, double y)
+{
+	mCamera.moveIn(y * 0.02);
 }
 
 void Demo::OnMouseMove(int x, int y)

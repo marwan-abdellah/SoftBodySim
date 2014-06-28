@@ -16,6 +16,7 @@ public:
 	virtual void OnMouseMove(int x, int y) {}
     virtual void OnMouseClick(int btn, int state, int x, int y) {}
 	virtual void OnKeyboard(int key, int action) {}
+	virtual void OnScroll(double key, double action) {}
 
 	void MainLoop(double timeDelta);
 	void QuitMain(void);

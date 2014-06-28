@@ -29,6 +29,11 @@ void mouseCb(GLFWwindow *m_window, int button, int action,
 	app->OnMouseClick(button, action, x, y);
 }
 
+void scrollCb(GLFWwindow *m_window, double x, double y)
+{
+	app->OnScroll(x, y);
+}
+
 GLFWApplication::GLFWApplication(const char *title, unsigned int width, unsigned int height) :
 	m_currentTime(0),
 	m_width(width),
@@ -50,6 +55,7 @@ GLFWApplication::GLFWApplication(const char *title, unsigned int width, unsigned
 	glfwSetKeyCallback(m_window, keyCb);
 	glfwSetCursorPosCallback(m_window, mouseMoveCb);
 	glfwSetMouseButtonCallback(m_window, mouseCb);
+	glfwSetScrollCallback(m_window, scrollCb);
 }
 
 GLFWApplication::~GLFWApplication()
