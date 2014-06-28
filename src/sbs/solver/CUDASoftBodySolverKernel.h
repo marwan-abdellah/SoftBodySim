@@ -40,6 +40,7 @@ struct ShapeRegionStaticInfo {
 struct ShapeRegionDynamicInfo {
 	glm::mat3 R;
 	glm::vec3 mc;
+	glm::vec3 mc0;
 };
 
 __global__ void cudaProjectPositionsAndVelocitiesKernel(

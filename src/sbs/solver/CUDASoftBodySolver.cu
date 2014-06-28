@@ -139,16 +139,16 @@ void GetRegion(int idx, const MeshData::neighboursArray_t &nei, int max, indexAr
 
 	while (!toprocess.empty()) {
 		Node n = toprocess.front();
-		out.push_back(n.idx);
-		toprocess.pop();
-		processed.insert(n.idx);
-
-		if (n.distance >= max) return;
-
-		FOREACH_R(it, nei[n.idx]) {
-			if (processed.find(*it) == processed.end())
-				toprocess.push(Node(*it, n.distance + 1));
+		if (processed.find(n.idx) == processed.end()) {
+			out.push_back(n.idx);
+			processed.insert(n.idx);
 		}
+		toprocess.pop();
+
+		if (n.distance >= max) continue;
+
+		FOREACH_R(it, nei[n.idx])
+			toprocess.push(Node(*it, n.distance + 1));
 	}
 }
 
@@ -176,17 +176,20 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 
 	REP(i, obj->mParticles.size()) {
 		indexArray_t indexes;
-		GetRegion(i, na, 3, indexes);
+		GetRegion(i, na, 2, indexes);
 		REP(p, indexes.size()) {
-			if (indexes[p] == i) {
-				particlesInRegions[indexes[p]].insert(particlesInRegions[indexes[p]].begin(),
-						i);
-			}
-			else
-				particlesInRegions[indexes[p]].push_back(i);
+			particlesInRegions[indexes[p]].push_back(i);
 		}
 	}
-
+#if 0
+	eEP(i, particlesInRegions.size()) {
+		printf("%d:", particlesInRegions[i].size());
+		REP(j, particlesInRegions[i].size()) {
+			printf("%d,", particlesInRegions[i][j]);
+		}
+		printf("\n");
+	}
+#endif
 	// create shape regions
 	REP(i, obj->mParticles.size()) {
 		ShapeRegionStaticInfo reg;
@@ -197,9 +200,8 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 		indexArray_t indexes;
 		float_t mass = 0.0f;
 		glm::vec3 mc(0,0,0);
-		glm::vec3 norm(0,0,0);
 
-		GetRegion(i, na, 3, indexes);
+		GetRegion(i, na, 2, indexes);
 
 		len += indexes.size();
 		if (smin > indexes.size())
@@ -221,10 +223,9 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 
 		mRegions.push_back(reg);
 		mRegionsMembersOffsets.push_back(&indexes[0], indexes.size());
-		mMembersRegionsOffsets.push_back(&particlesInRegions[i][0],
-				particlesInRegions[i].size());
-		//ERR("i: %d %d", i, particlesInRegions[i].size());
 		mParticlesInfo.push_back(info);
+		mMembersRegionsOffsets.push_back(&(particlesInRegions[i][0]),
+				particlesInRegions[i].size());
 	}
 
 	d.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
@@ -515,19 +516,36 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 			world.groundLevel, world.leftWall, world.rightWall,
 			world.frontWall, world.backWall, mPositions.size());
 
-#if 1
-	vector<ShapeRegionDynamicInfo> info;
-	info.resize(mRegionsDynamicInfo.size());
-	ERR("mRegionsDynamicInfo size: %d", mRegionsDynamicInfo.size());
-	cudaMemcpy(&info[0], mRegionsDynamicInfo.data(),
-			sizeof(ShapeRegionDynamicInfo) * mRegionsDynamicInfo.size(),
+#if 0
+	vector<glm::mat3> info;
+	info.resize(mTest.size());
+	cudaMemcpy(&info[0], mTest.data(),
+			sizeof(glm::mat3) * mTest.size(),
+			cudaMemcpyDeviceToHost);
+	vector<glm::vec3> info2;
+	info2.resize(mTest2.size());
+	cudaMemcpy(&info2[0], mTest2.data(),
+			sizeof(glm::vec3) * mTest2.size(),
+			cudaMemcpyDeviceToHost);
+
+	REP(k, info.size()) {
+		glm::mat3 R = info[k];
+		glm::vec3 mc = info2[k];
+		ERR("[%f %f %f]", mc[0], mc[1], mc[2]);
+		ERR("[%f %f %f %f %f %f %f %f %f]", R[0][0], R[1][0], R[2][0],
+				R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]);
+	}
+#endif
+
+#if 0
+	vector<glm::uint> info;
+	info.resize(mMembersRegionsOffsets.size());
+	cudaMemcpy(&info[0], mMembersRegionsOffsets.data(),
+			sizeof(glm::uint) * mMembersRegionsOffsets.size(),
 			cudaMemcpyDeviceToHost);
 
 	FOREACH_R(i, info) {
-		ERR("[%f %f %f]", i->mc[0], i->mc[1], i->mc[2]);
-		glm::mat3 R = i->R;
-		ERR("[%f %f %f %f %f %f %f %f %f]", R[0][0], R[1][0], R[2][0],
-				R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]);
+		ERR("%d,", *i);
 	}
 #endif
 
@@ -537,8 +555,8 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 	integrateMotionKernel<<<blockCount, threadsPerBlock>>>(
 			dt, mPositions.data(), mProjections.data(),
 			mVelocities.data(), mPositions.size());
-
 	cudaDeviceSynchronize();
+
 }
 
 void CUDASoftBodySolver::ProjectSystem(glm::float_t dt)

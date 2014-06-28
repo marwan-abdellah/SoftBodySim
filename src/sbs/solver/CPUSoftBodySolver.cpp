@@ -134,14 +134,17 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		// clear accumulator(s)
 		glm::mat3 *Rs = new glm::mat3[it->count];
 		glm::vec3 *Is = new glm::vec3[it->count];
+		std::vector< std::vector<glm::uint_t> > descr;
+		descr.resize(it->count);
 		REP(i, it->count) {
-			Rs[i] = mat3(0);
+			Rs[i] = glm::mat3(0);
 			it->posAccumulator[i] = vec3(0,0,0);
 			it->accumulatorCounter[i] = 0;
 			Is[i] = glm::vec3(0,0,0);
 		}
 
 		// process regions
+		int i = 0;
 		FOREACH_R(reg, mShapes[it->shapeMatching.descriptor].regions) {
 			mat3 A(0);
 			mc = vec3(0,0,0);
@@ -163,6 +166,7 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 			polar_decomposition(A, R, S);
 
 #if 0
+			ERR("[%f %f %f]", mc[0], mc[1], mc[2]);
 			ERR("[%f %f %f %f %f %f %f %f %f]", R[0][0], R[1][0], R[2][0],
 					R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]);
 #endif
@@ -174,7 +178,9 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 				it->posAccumulator[*idx] += g;
 				it->accumulatorCounter[*idx]++;
 				Rs[*idx] += R;
+				Is[*idx] += mc;
 			}
+			i++;
 		}
 
 		// update particles position by taking average from region transform
@@ -182,12 +188,15 @@ void CPUSoftBodySolver::SolveShapeMatchConstraint(void)
 		REP(i, it->count) {
 			vec3 g = it->posAccumulator[i] / (float_t)it->accumulatorCounter[i];
 			mProjections[it->baseIdx + i] += (g - mProjections[it->baseIdx + i]) * sping;
+#if 0
 			mat3 R = Rs[i];
-#if 1
-			mc = mShapes[it->shapeMatching.descriptor].initPos[i];
-			ERR("[%f %f %f]", mc[0], mc[1], mc[2]);
-			ERR("[%f %f %f %f %f %f %f %f %f]", R[0][0], R[1][0], R[2][0],
+			//mc = mShapes[it->shapeMatching.descriptor].initPos[i];
+			mc = Is[i];
+			g = it->posAccumulator[i];
+			ERR("[%f %f %f]", g[0], g[1], g[2]);
+	   	    ERR("[%f %f %f %f %f %f %f %f %f]", R[0][0], R[1][0], R[2][0],
 					R[0][1], R[1][1], R[2][1], R[0][2], R[1][2], R[2][2]);
+			//printf("%d:", descr[i].size());
 #endif
 		}
 		delete Rs;
@@ -317,16 +326,16 @@ void CPUSoftBodySolver::GetRegion(int idx, const MeshData::neighboursArray_t &ne
 
 	while (!toprocess.empty()) {
 		Node n = toprocess.front();
-		out.push_back(n.idx);
-		toprocess.pop();
-		processed.insert(n.idx);
-
-		if (n.distance >= max) return;
-
-		FOREACH_R(it, nei[n.idx]) {
-			if (processed.find(*it) == processed.end())
-				toprocess.push(Node(*it, n.distance + 1));
+		if (processed.find(n.idx) == processed.end()) {
+			out.push_back(n.idx);
+			processed.insert(n.idx);
 		}
+		toprocess.pop();
+
+		if (n.distance >= max) continue;
+
+		FOREACH_R(it, nei[n.idx])
+			toprocess.push(Node(*it, n.distance + 1));
 	}
 }
 
@@ -377,6 +386,7 @@ void CPUSoftBodySolver::AddShapeDescriptor(SoftBody *obj, int distance)
 			mass += obj->mMassInv[*it];
 			mc += obj->mParticles[*it] * obj->mMassInv[*it];
 		}
+
 		reg.mass = mass;
 		reg.mc0 = mc / mass;
 		ret.regions.push_back(reg);
@@ -424,7 +434,7 @@ void CPUSoftBodySolver::AddSoftBody(SoftBody *b)
 	descr.posAccumulator.resize(descr.count);
 	descr.accumulatorCounter.resize(descr.count);
 
-	AddShapeDescriptor(b, 3);
+	AddShapeDescriptor(b, 2);
 
 	b->mBS.mCenter = mShapes[descr.shapeMatching.descriptor].mc0;
 	b->mBS.mRadius = mShapes[descr.shapeMatching.descriptor].radius;

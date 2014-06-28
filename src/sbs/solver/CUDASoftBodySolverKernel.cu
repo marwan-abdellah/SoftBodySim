@@ -84,6 +84,7 @@ __global__ void solveShapeMatchingConstraints1(
 
 		polar_decomposition(A, res.R, S);
 
+		res.mc0 = reg.mc0;
 		results[idx] = res;
 	}
 }
@@ -125,31 +126,22 @@ __global__ void solveShapeMatchingConstraints2(
 
 		glm::vec3 proj = projections[idx];
 
-		glm::uint_t *mem_start = region_members +
-			reg.members_offsets_offset;
-		glm::vec3 *init_pos_start =
-			shapes_initial_positions + reg.shapes_init_positions_offset;
 		glm::uint_t *part_reg_start = particles_regions +
 			reg.regions_offsets_offset;
 		
-		glm::uint mem_offset = mem_start[0]; // pivot always first
-		glm::vec3 init = init_pos_start[mem_offset];
-
+		glm::vec3 init = shapes_initial_positions[idx];
 		glm::vec3 final(0,0,0);
 		glm::mat3 Rfinal(0);
 
 		for (int i = 0; i < reg.n_regions; ++i) {
 			glm::uint id = part_reg_start[i];
-			ShapeRegionDynamicInfo res = results[info.body_offset + id];
-			final += res.R * (init - reg.mc0) + res.mc;
-			Rfinal += res.R;
+			ShapeRegionDynamicInfo res = results[id];
+			final += res.R * (init - res.mc0) + res.mc;
 		}
 		final = final / (glm::float_t)reg.n_regions;
 
-		proj += 0.1f * (final - proj);
+		proj += 0.9f * (final - proj);
 		projections[idx] = proj;
-		results[idx].R = Rfinal;
-		results[idx].mc = init;
 	}
 }
 
