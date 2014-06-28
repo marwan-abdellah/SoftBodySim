@@ -21,7 +21,7 @@ public:
 	void MainLoop(double timeDelta);
 	void QuitMain(void);
 protected:
-	double m_currentTime;
+	double m_lastFrameTime;
 	int m_width, m_height;
 	std::string m_title;
 private:

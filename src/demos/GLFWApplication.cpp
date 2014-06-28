@@ -4,9 +4,11 @@
 
 static GLFWApplication *app;
 
+#define MAX_FRAME_TIME 0.5
+
 static void errorCb(int error, const char *descr)
 {
-	std::cout << descr << std::endl;
+	std::cerr << descr << std::endl;
 }
 
 void keyCb(GLFWwindow *m_window, int key, int scancode, int action, int mds)
@@ -35,7 +37,7 @@ void scrollCb(GLFWwindow *m_window, double x, double y)
 }
 
 GLFWApplication::GLFWApplication(const char *title, unsigned int width, unsigned int height) :
-	m_currentTime(0),
+	m_lastFrameTime(0),
 	m_width(width),
 	m_height(height),
 	m_title(title)
@@ -66,24 +68,25 @@ GLFWApplication::~GLFWApplication()
 void GLFWApplication::MainLoop(double delta)
 {
 	double accumulator = 0.0;
-	m_currentTime = glfwGetTime();
+	m_lastFrameTime = glfwGetTime();
 
 	app = this;
 
 	while (!glfwWindowShouldClose(m_window)) {
-		double newTime = glfwGetTime();
-		double frameTime = newTime - m_currentTime;
+		double currentTime = glfwGetTime();
+		double frameTime = currentTime - m_lastFrameTime;
 
-		if (frameTime > 0.5)
-			frameTime = 0.5;
+		if (frameTime > MAX_FRAME_TIME)
+			frameTime = MAX_FRAME_TIME;
 
 		accumulator += frameTime;
-		m_currentTime = newTime;
+		m_lastFrameTime = currentTime;
 
 		while (accumulator >= delta) {
-			OnUpdate( delta );
+			OnUpdate(delta);
 			accumulator -= delta;
 		}
+
 		OnRender();
 		glfwSwapBuffers(m_window);
 		glfwPollEvents();

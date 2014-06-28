@@ -129,8 +129,6 @@ void Demo::OnRender(void)
 
 void Demo::OnKeyboard(int key, int action)
 {
-	float delta = 0.1f;
-
 	if (action == GLFW_RELEASE) return;
 
 	if (key == GLFW_KEY_P)
