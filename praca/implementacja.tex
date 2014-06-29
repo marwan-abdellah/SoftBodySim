@@ -1,7 +1,257 @@
 \chapter{Implementacja}
-\section{Model}
-\section{Grafika}
-\section{Solwer}
-\subsection{CPU}
-\subsection{GPU}
+W rozdziale tym przedstawiona zostanie implementacja opisanych w poprzednich
+rozdziałach technik symulacji ciała miękkiego. Na implementację składają się dwa
+główne komponenty - biblioteka programistyczna oraz aplikacja demonstracyjna.
+Biblioteka programistyczna jest odpowiedzialna za symulację ciała miękkiego.
+Stworzenie jej miało na celu ułatwienie ponownego
+wykorzystania zaimplementowanych klas i umożliwienie jej samodzielnego
+rozwijania w przyszłości.
+
+Bibliotekę można skompilować w wersji tylko na CPU oraz ze wsparciem dla technologii
+CUDA.  Proces ten jest automatyczny i wspierany przez użyty w projekcie program
+CMake, służący do zarządzania kompilacją programu. W przypadku gdy w systemie
+zostaną wykryte wymagane biblioteki oraz kompilator CUDA, nastąpi kompilacja
+dodatkowych plików źródłowych.
+
+Program CMake jest wieloplatformowy, co oznacza, że dostępne są jego wersje na
+najpopularniejsze obecnie systemy operacyjne takie jak Windows, Linux czy Os X.
+CMake potrafi generować pliki z regułami kompilacji dla konkretnego środowiska
+deweloperskiego. Dla platformy Linux będą to skrypty \texttt{Makefile},
+	natomiast dla Windows pliki projektowe \texttt{Microsoft Visual Studio}.
+	Zastosowanie CMake pozwala w wygodny sposób udostępniać projekt na różne
+	platformy.
+
+% opengl
+Zarówno biblioteka jak i aplikacja demonstracyjna wymagają do uruchomienia
+biblioteki OpenGL w wersji minimalnie 3.3. Jest ona wymagana do uruchomienia
+zaimplementowanych w bibliotece vertex, pixel i geometry shaderów. Do implementacji obliczeń
+na procesorze graficznym użyto CUDA-SDK w wersji 5.5.
+
+W implementacji wykorzystano też dwie pomocnicze biblioteki.
+Pierwszą jest GLM (OpenGL Math), dostarczająca implementację wielu podstawowych
+typów niezbędnych w grafice trójwymiarowej, takich jak wektor czy macierz oraz
+operacji takich jak np. iloczyn skalarny czy wektorowy. Największą zaletą
+biblioteki GLM jest fakt, że składa się ona tylko z plików nagłówkowych. Nie ma
+zatem potrzeby wymagania jej przy procesie kompilacji czy budowania jej razem z
+projektem. Wszystkie potrzebne funkcje są bezpośrednio załączane do kodu
+biblioteki w momencie kompilacji.
+
+Kolejną zaletą biblioteki GLM jest jej kompatybilność z technologią CUDA. W przypadku
+gdy plik nagłówkowy biblioteki jest przetwarzany przez preprocesor kompilatora
+nvcc, zdefiniowane tam makra są rozwijane na charakterystyczne dla nvcc
+atrybuty kompilatora, takie jak \texttt{\_\_device\_\_} czy \texttt{\_\_host\_\_}.
+W przypadku gdy użyty jest inny kompilator biblioteka GLM wykorzystuje inne
+atrybuty. Umożliwia to zadeklarowanie jednej funkcji która może być użyta zarówno
+w kodzie wykonywanym na GPU, jak również na CPU.
+
+Drugą wykorzystaną biblioteką jest OpenGL Framework (GLFW) stanowiąca warstwę
+abstrakcji nad natywny system zarządzania oknami oraz zdarzeniami z klawiatury i
+myszki. Dostarcza też mechanizm pętli głównej niezbędny do stworzenia
+interaktywnych aplikacji.
+
+\section{Aplikacja demonstracyjna}
+\subsection{Przewodnik}
+Aplikacja demonstracyjna jest prostą aplikacją ze sterowaniem klawiaturowym. Po
+uruchomieniu główny plan zajmuje pusta trójwymiarowa scena. Nawigacja w
+aplikacji obydwa się za pośrednictwem prawego klawisza myszy i przemiszczenia
+kursora. Użytkownik jest w stanie obracać się punktu
+centralnego sceny oraz przybliżać się i oddalać od niego używając kółka myszki.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/z1.jpg}
+\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
+\end{figure}
+
+Aby zainicjować symulację należy użyć klawisza "t". Zostanie w ten sposób
+stworzony model żaby, której model na licencji Royality Free
+dostępny jest na stronie http://www.turbosquid.com/FullPreview/Index.cfm/ID/589370.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/z2.jpg}
+\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
+\end{figure}
+
+Program demonstracyjny posiada dwa tryby renderowania. W pierwszym wyświetlany
+jest cały oteksturowany model wraz z oświetleniem, w drugim zaś renderowana jest
+tylko siatka połączeń między wierzchołkami tworzącymi trójkąty. Aby przełączać
+się między dwoma trybami należy użyć klawisza "m".
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/z3.jpg}
+\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
+\end{figure}
+
+W stworzonej aplikacji istnieje możliwość interakcji z symulowanym ciałem
+miękkim. W tym celu należy najechać myszą na obszar zajmowany przez model a
+następnie nacisnąć i trzymać lewy przycisk myszy.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{images/z5.jpg}
+\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
+\end{figure}
+
+Możliwe jest również zmienianie współczynnika sprężystości symulowanego ciała. W
+przypadku gdy jest on większy symulowane ciało zachowywać się będzie bardziej
+jak bryła sztywna, natomiast dla małych wartości ciało wskazywać będzie zanik
+wszelkich sił wewnętrznych. Zmiana sił sprężystości możliwa jest poprzez
+klawisze '-' i '+'.
+
+% GLWF
+\subsection{Rysowanie okna}
+W celu stworzenia okna aplikacji posłużono się open-sourcową biblioteką GLFW. Z
+racji, że biblioteka te udostępnia interfejsy programisty napisane tylko w języku C
+utworzona została klasa \texttt{GLFWApplication} opakowująca API biblioteki
+GLFW (ang. wrapper). Oprócz zwykłego udostępniania metod, klasa ta spełnia
+jeszcze dodatkowe funkcje. Udostępnia ona wirtualne metody \texttt{OnRender}
+oraz \texttt{OnUpdate}, które będą wykorzystywane odpowiednio przy rysowaniu
+ramki obrazu oraz przy symulacji fizyki. Dodatkowo klasa GLFWApplication rejestruje wszystkie błędy zgłaszane przez
+GLFW i drukuje je do standardowego wyjścia błędów.
+
+% statyczny krok symulacji
+\subsection{Krok symulacji}
+Kolejnymi funkcjonalnościami dostarczanymi przez klasę \texttt{GLFWApplication} jest
+uruchomienie pętli głównej aplikacji oraz wywoływanie metod \texttt{OnUpdate} oraz \texttt{OnRender}.
+Jest to niezbędne w celu zsynchronizowania odświeżania obrazu i
+symulacji fizyki. Pętla główna zdefiniowana na listingu (\ref{main_loop})
+pozwala na użycie stałego kroku czasu w symulacji fizyki przy jednoczesnym
+zachowaniu możliwości odświeżania obrazu w różnej częstotliwości. Przyjęcie
+stałego kroku czasu jest niezbędne w symulacji ponieważ
+techniki w niej zaimplementowane są wrażliwe na jego zmianę, czego efektem jest
+np. zmiana sztywności ciała obserwowana przy zmianie kroku czasu.
+
+\begin{lstlisting}[caption=Pętla główna, label=main_loop]
+void GLFWApplication::MainLoop(double delta)
+{
+	double accumulator = 0.0;
+	lastFrameTime = glfwGetTime();
+
+	while (!glfwWindowShouldClose(m_window)) {
+		double currentTime = glfwGetTime();
+		double frameTime = currentTime - lastFrameTime;
+
+		if (frameTime > MAX_FRAME_TIME)
+			frameTime = MAX_FRAME_TIME;
+
+		accumulator += frameTime;
+		lastFrameTime = currentTime;
+
+		while (accumulator >= delta) {
+			OnUpdate(delta);
+			accumulator -= delta;
+		}
+
+		OnRender();
+		glfwSwapBuffers(m_window);
+		glfwPollEvents();
+	}
+
+	glfwDestroyWindow(m_window);
+}
+\end{lstlisting}
+
+% łapanie obiektów
+\subsection{Chwytanie obiektów}
+W aplikacji demonstracyjnej możliwe jest ,,chwytanie'' części symulowanych
+obiektów. Możliwe jest to dzięki funkcji z interfejsu programistycznemu
+biblioteki (API). Jako parametry wejściowe funkcja ta przyjmuje półprostą (ang.
+		Ray) oraz liczbę zmiennoprzecinkową oznaczającą maksymalną odległość
+punktów od półprostej, które mają zostać ,,schwytane''. Operacja tworzenia
+półprostej realizowana jest dwuetapowo. W pierwszym etapie ze współrzędnych
+\texttt{x, y} myszki wyliczany jest odpowiadający im punkt w przestrzeni
+trójwymiarowej, czyli tzw. współrzędnych świata (ang. world
+		coordinates). Realizuje to funkcja \texttt{GetWorldCoordinates},
+	zaimplementowana w klasie \texttt{Demo} dziedziczącej po klasie
+	\texttt{GLFWApplication}. Jej implementacja
+	przedstawiona jest na listingu poniżej:
+
+\begin{lstlisting}[caption=Estymacja wektora w przstrzeni trójwymiarowej na
+	podstawie pozycji myszki na ekranie, label=screen2world]
+Ray Demo::GetRayFromCamera()
+{
+	glm::vec3 ret;
+	glm::uvec2 mouse = GetMouseCoords();
+
+	ret[0] = (2.0f * mouse[0]) / width - 1.0f;
+	ret[1] = 1.0f - (2.0 * mouse[1]) / height;
+	ret[2] = 0.0f;
+
+	glm::vec4 pos = glm::vec4(ret, 1.0);
+	pos = glm::inverse(renderer.GetProjectionMatrix()) * pos;
+
+	pos[3] = 0.0f;
+
+	pos = glm::inverse(mCamera.getCameraMatrix()) * pos;
+
+	return Ray(mCamera.GetEyePosition(), pos.xyz());
+}
+\end{lstlisting}
+
+Ideą funkcji przedstawionej na listingu \ref{screen2world} jest odwrócenie
+procesu zachodzącego przy rysowaniu ramki obrazu przez bibliotekę OpenGL.
+% dołożyć krótki schemat 
+Na początku ze współrzędnych myszki tworzony jest trójwymiarowy wektor
+wyrażony w tzw. znormalizowanych współrzędnych urządzenia (ang. Normalized
+		Device Coordinates). Specyfikacja OpenGL zakłada, że współrzędne te zawierają się w
+przedziale -1.0 do 1.0. Dodatkowo przy wyliczaniu drugiej współrzędnej
+\texttt{ndc[1]} trzeba uwzględnić fakt, że biblioteka GLFW podaje współrzędne
+myszki zaczynając od lewego górnego rogu okna, natomiast OpenGL zakłada, że
+współrzędne (-1.0, -1.0) znajdują się w lewym dolnym rogu okna.
+
+Trzecią koordynatą używaną w NDC jest wartość bufora głębokości. Może ona zostać
+odczytana z bufora głębokości po wygenerowaniu ramki obrazu przy użyciu funkcji
+OpenGL \texttt{glReadPixels}, jednak w przypadku gdy skonstruować chcemy tylko
+półprostą każda wartość mieszcząca się przedziałach (-1, 1) będzie odpowiednia.
+Kolejnym krokiem jest zamiana NDC do tzw. współrzędnych przycięcia (ang. clip
+		coordinates). W tym celu musimy skonstruować czterowymiarowy wektor,
+		 którego czwarta współrzędna jest współczynnikiem skalowania pozostałych
+		 współrzędnych. Aby nie modyfikować wartości już wyliczonych
+		 współrzędnych przyjmujemy że ostatnia współrzędna wektora jest równa 1.
+		 
+Kolejnym etapem jest odwrócenie wpływu macierzy projekcji. Dzieje się
+poprzez przemnożenie wektora w współrzędnych przycięcia przez odwróconą
+macierz projekcji. Ostatnim etapem jest odwrócenie wpływu macierzy
+kamery, (jest ona odpowiednikiem macierzy OpenGL GLMODELVIEW).
+Zanim jednak wektor zostanie przemnożony przez odwróconą macierz kamery,
+	  ostatnia współrzędna $w$ wektora zostanie wyzerowana. Ma to za cel
+	  wyeliminowanie translacji z przekształcenia, gdyż w ten sposób
+	  otrzymalibyśmy finalną pozycję punktu we współrzędnych modelu.
+
+\section{Biblioteka}
+Biblioteka programistyczna jest najważniejszym i największym komponentem
+stworzonym na potrzeby tej pracy. Implementuje ona metodę \texttt{Shape
+	Matchingu} opisaną w rozdziale\ref{sec:shape}, wraz z jej modyfikacją wymienioną w
+	podrozdziale \ref{ssec:region} oraz technikę zachowania
+	objętości opisaną w rozdziale {\ref{sec:vol}.
+
+Biblioteka napisana jest w języku C++ 
+
+\begin{figure}[H]
+\centering
+\input{images/moduly}
+\caption{Stos CUDA. Źródło: Opracowanie własne.}
+\label{cuda-model}
+\end{figure}
+
+\subsection{Model w formacie Wavefront}
+% format obj - zalety w sb
+% opis klas lekser i parser, mesh data
+% opis formatu
+% duplikowanie verteksów
+
+\subsection{Renderowanie}
+% opis klasy renderowania
+% cienie i generacja normalnych
+
+% stabilność numeryczna
+\subsection{Solwer CPU}
+
+\subsection{Solwer GPU}
+ % opis klasy 
+ % preprocessing
+ % updatowanie verteksów
+\subsection{Stabilność numeryczna}
 
