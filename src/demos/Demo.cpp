@@ -47,7 +47,7 @@ private:
 	Material mMat3;
 	bool cudaSolver;
 	SoftBodySolver::SoftBodyWorldParameters mWorldParams;
-	Ray GetWoorldCoordinates(int x, int y);
+	glm::vec3 GetWorldCoordinates(int x, int y);
 	float_t mSpringness;
 	bool mCameraMotion;
 	SoftBody *b;
@@ -196,7 +196,7 @@ void Demo::OnKeyboard(int key, int action)
 	}
 }
 
-Ray Demo::GetWoorldCoordinates(int x, int y)
+glm::vec3 Demo::GetWorldCoordinates(int x, int y)
 {
 	glm::vec3 ret;
 	// gl output coords
@@ -214,7 +214,7 @@ Ray Demo::GetWoorldCoordinates(int x, int y)
 
 	pos = glm::inverse(mCamera.getCameraMatrix()) * pos;
 
-	return Ray(mCamera.GetEyePosition(), pos.xyz());
+	return pos.xyz();
 }
 
 void Demo::OnMouseClick(int type, int state, int x, int y)
@@ -234,7 +234,7 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 
 	if (type == GLFW_MOUSE_BUTTON_LEFT) {
 		if (!mCameraMotion && state == GLFW_PRESS) { 
-			Ray ray = GetWoorldCoordinates(x, y);
+			Ray ray(mCamera.GetEyePosition(), GetWorldCoordinates(x, y));
 			mSolver->GrabStart(ray, 0.5f, 120.0f);
 			mMousePressed = true;
 			mGrabb = true;
@@ -273,7 +273,7 @@ void Demo::OnMouseMove(int x, int y)
 			mCamera.moveDown(-angle * dy);
 	}
 	if (mGrabb) {
-		Ray ray = GetWoorldCoordinates(x, y);
+		Ray ray(mCamera.GetEyePosition(), GetWorldCoordinates(x, y));
 		mSolver->GrabUpdate(ray);
 	}
 
