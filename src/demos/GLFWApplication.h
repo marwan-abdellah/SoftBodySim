@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
+#include <glm/fwd.hpp>
+
 class GLFWApplication
 {
 public:
@@ -20,15 +22,16 @@ public:
 
 	void MainLoop(double timeDelta);
 	void QuitMain(void);
+	glm::uvec2 GetMouseCoords(void);
 protected:
 	double m_lastFrameTime;
 	int m_width, m_height;
 	std::string m_title;
 private:
 	GLFWwindow *m_window;
-friend void keyCb(GLFWwindow *m_window, int key, int scancode, int action, int mds);
-friend void mouseMoveCb(GLFWwindow *m_window, double x, double y);
-friend void mouseCb(GLFWwindow *m_window, int button, int action, int mods);
+	friend void keyCb(GLFWwindow *m_window, int key, int scancode, int action, int mds);
+	friend void mouseMoveCb(GLFWwindow *m_window, double x, double y);
+	friend void mouseCb(GLFWwindow *m_window, int button, int action, int mods);
 };
 
 #endif

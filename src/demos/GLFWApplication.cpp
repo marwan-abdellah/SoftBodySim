@@ -2,6 +2,9 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <cmath>
+#include <glm/glm.hpp>
+
 static GLFWApplication *app;
 
 #define MAX_FRAME_TIME 0.5
@@ -58,6 +61,13 @@ GLFWApplication::GLFWApplication(const char *title, unsigned int width, unsigned
 	glfwSetCursorPosCallback(m_window, mouseMoveCb);
 	glfwSetMouseButtonCallback(m_window, mouseCb);
 	glfwSetScrollCallback(m_window, scrollCb);
+}
+
+glm::uvec2 GLFWApplication::GetMouseCoords(void)
+{
+	double pos[2];
+	glfwGetCursorPos(m_window, &pos[0], &pos[1]);
+	return glm::uvec2(std::floor(pos[0]), std::floor(pos[1]));
 }
 
 GLFWApplication::~GLFWApplication()

@@ -47,7 +47,7 @@ private:
 	Material mMat3;
 	bool cudaSolver;
 	SoftBodySolver::SoftBodyWorldParameters mWorldParams;
-	glm::vec3 GetWorldCoordinates(int x, int y);
+	Ray GetRayFromCamera();
 	float_t mSpringness;
 	bool mCameraMotion;
 	SoftBody *b;
@@ -196,25 +196,28 @@ void Demo::OnKeyboard(int key, int action)
 	}
 }
 
-glm::vec3 Demo::GetWorldCoordinates(int x, int y)
+Ray Demo::GetRayFromCamera()
 {
 	glm::vec3 ret;
 	// gl output coords
 	// (-1,1)  ..... (1,1)
 	//         .....
 	// (-1,-1) ..... (1, -1)
-	ret[0] = (2.0f * x) / width - 1.0f;
-	ret[1] = 1.0f - (2.0 * y) / height;
-	ret[2] = 1.0f; // place ray always in front of eye
+	glm::uvec2 mouse = GetMouseCoords();
+
+	ret[0] = (2.0f * mouse[0]) / width - 1.0f;
+	ret[1] = 1.0f - (2.0 * mouse[1]) / height;
+	ret[2] = 0.0f; // place point on near plane, 
+	               // generally every value from -1 to 1.0 will work
 
 	glm::vec4 pos = glm::vec4(ret, 1.0);
 	pos = glm::inverse(renderer.GetProjectionMatrix()) * pos;
-	pos[2] = -1.0f;
+
 	pos[3] = 0.0f;
 
 	pos = glm::inverse(mCamera.getCameraMatrix()) * pos;
 
-	return pos.xyz();
+	return Ray(mCamera.GetEyePosition(), pos.xyz());
 }
 
 void Demo::OnMouseClick(int type, int state, int x, int y)
@@ -234,7 +237,7 @@ void Demo::OnMouseClick(int type, int state, int x, int y)
 
 	if (type == GLFW_MOUSE_BUTTON_LEFT) {
 		if (!mCameraMotion && state == GLFW_PRESS) { 
-			Ray ray(mCamera.GetEyePosition(), GetWorldCoordinates(x, y));
+			Ray ray = GetRayFromCamera();
 			mSolver->GrabStart(ray, 0.5f, 120.0f);
 			mMousePressed = true;
 			mGrabb = true;
@@ -273,7 +276,7 @@ void Demo::OnMouseMove(int x, int y)
 			mCamera.moveDown(-angle * dy);
 	}
 	if (mGrabb) {
-		Ray ray(mCamera.GetEyePosition(), GetWorldCoordinates(x, y));
+		Ray ray = GetRayFromCamera();
 		mSolver->GrabUpdate(ray);
 	}
 
