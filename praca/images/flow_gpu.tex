@@ -13,8 +13,8 @@
     \node [block, below of=shape] (shape2) {SolveShapeMatchConstraintPhase2()};
     \node [block, below of=shape2] (volume) {SolveVolumeConstraintPhase1()};
     \node [block, below of=volume] (volume2) {SolveVolumeConstraintPhase2()};
-    \node [block, below of=volume2] (collisions) {SolveGroundWallCollisions};
-    \node [block, below of=collisions] (intergrate) {IntegrateSystem()};
+    \node [block, below of=volume2] (collisions) {SolveGroundWallCollisions()};
+    \node [block, below of=collisions] (integrate) {IntegrateSystem()};
     % Draw edges
 	\path [line] (predict) -- (shape);
 	\path [line] (shape) -- (shape2);
