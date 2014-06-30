@@ -1,0 +1,23 @@
+\begin{tikzpicture} 
+\umlclass[type=abstract]{SoftBodySolver}{
+}{
+	\umlvirt{Initialize() : bool} \\
+	\umlvirt{Shutdown() : void} \\
+	\umlvirt{ProjectSystem(dt : glm::float\_t) : void} \\
+	\umlvirt{UpdateVertexBuffers() : void} \\
+	\umlvirt{GrabStart(Ray \&r, glm::float\_t radius, glm::float\_t stiffness) :
+		void} \\
+	\umlvirt{GrabUpdate(Ray \&r) : void} \\
+	\umlvirt{GrabStop() : void } \\
+
+	+ SetWorldParameters(SoftBodyWorldParameters \&params) : void \\
+	+ GetBodies() : const \&std::list$<$SoftBody*$>$ \\
+
+	+ AddSoftBody(body : *SoftBody) : void \\
+	+ RemoveSoftBody(body : *SoftBody) : void \\
+}
+\umlemptyclass[type=class,x=4,y=-6]{CPUSoftBodySolver} 
+\umlemptyclass[type=class,x=-4,y=-6]{CUDASoftBodySolver} 
+\umlinherit[geometry=-|, anchor1=90, anchor2=-130]{CUDASoftBodySolver}{SoftBodySolver}
+\umlinherit[geometry=-|, anchor1=90, anchor2=-50]{CPUSoftBodySolver}{SoftBodySolver}
+\end{tikzpicture}

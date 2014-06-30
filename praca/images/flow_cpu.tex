@@ -1,0 +1,21 @@
+% Define block styles
+\tikzstyle{decision} = [diamond, draw, fill=blue!20, 
+	    text width=4.5em, text badly centered, node distance=3cm, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=blue!20, 
+	text width=12em, text centered, rounded corners, minimum height=4em]
+\tikzstyle{line} = [draw, -latex']
+\tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm, minimum height=2em]
+				    
+\begin{tikzpicture}[node distance = 2cm, auto]
+	% Place nodes
+	\node [block] (predict) {PredictMotion()};
+    \node [block, below of=predict] (shape) {SolveShapeMatchConstraint};
+    \node [block, below of=shape] (volume) {SolveVolumeConstraint()};
+    \node [block, below of=volume] (collisions) {SolveGroundWallCollisions};
+    \node [block, below of=collisions] (integrate) {IntegrateSystem()};
+    % Draw edges
+	\path [line] (predict) -- (shape);
+	\path [line] (shape) -- (volume);
+	\path [line] (volume) -- (collisions);
+	\path [line] (collisions) -- (integrate);
+\end{tikzpicture}

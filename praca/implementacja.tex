@@ -406,18 +406,288 @@ void main() {
 }
 \end{lstlisting}
 
-\subsection{Stabilność numeryczna}
+\subsection{Solwer}
+% dziedziczenie z definicją interfejsu
+Klasa \texttt{SoftBodySolver} jest klasą bazową klas \texttt{CPUSoftBodySolver}
+oraz \texttt{CUDASoftBodySolver}. Definiuje ona wspólny interfejs
+programistyczny klas pochodnych, czyniąc użycie poszczególnych
+implementacji łatwiejsze przez możliwość użycia polimorfizmu. Schemat dziedziczenia
+oraz deklarację metod interfejsu zawiera rysunek \ref{class-hierarchy}.
 
-W implementowanym algorytmie \texttt{Shape Matching} najtrudniejszym fragmentem
-okazała się być dekompozycja macierzy \ref{A-final} na składowe rotacji oraz
-skalowania. Do tego celu zaimplementowano algorytm dekompozycji biegunowej
-opisanej w \ref{polar}
+Schemat użycia klas pochodnych klasy \texttt{SoftBodySolver} jest jednakowy.
+Najpierw tworzymy instancję klasy solwera, a następnie dodajemy do symulacji 
+wcześniej utworzone obiekty klas typu \texttt{SoftBody} za pomocą metody
+\texttt{AddSoftBody}. Metoda \texttt{AddSoftBody} działa w ten sposób, że
+przejmuje ona zarządzanie referencją do obiektu od użytkownika. Od tej chwili
+klasa \texttt{SoftBodySolver} staje się ,,właścicielem'' obiektu i jest
+odpowiedzialna za jego usunięcie po zakończeniu symulacji.
 
-% stabilność numeryczna
-\subsection{Solwer CPU}
+Następnym krokiem jest inicjacja parametrów świata w którym ma być
+przeprowadzona symulacja ciął miękkich. W obecnej wersji biblioteki możliwe jest
+ustalenie siły grawitacji jaka ma wpływać na symulowane ciała oraz definiowanie
+granic świata w którym toczyć się będzie symulacja. Implementacja zakłada
+, że granice świata wyznacza prostopadłościan z krawędziami równoległymi
+do osi układu współrzędnych. Informacje o świecie są przechowywane w strukturze
+\texttt{SoftBodyWorldParameters}.
+
+Po załadowaniu wszystkich modeli ciała miękkiego do solwera oraz określenie
+parametrów świata symulacji, użytkownik powinien
+wywołać metodą \texttt{Initialize}. Dokona ona specyficznych dla implementacji,
+	dodatkowych kroków inicjacji, takich jak alokacje pamięci czy
+	utworzenie kontekstu CUDA.
+
+Metoda \texttt{ProjectSystem} jest odpowiedzialna za przeprowadzenie
+symulacji dla danego kroku czasowego. Jej implementacja może znacznie się różnić
+w klasach pochodnych, jednak ich cechą wspólną jest koniecznośc implementacji
+technik regionalnego \texttt{Shape Matchingu} oraz zachowania objętości. Ma też
+uwzględniać kolizje ze granicami wyznaczonego świata.
+
+Kolejną metodą wartą omówienia jest \texttt{UpdateVertexBuffers}. Metoda ta
+służy do zaktualizowania pozycji wierzchołków ciała w buforze przeznaczonym do
+renderowania. Jej implementacja sprowadza się do przekopiowania aktualnych
+pozycji cząstek wyznaczonych w metodzie \texttt{ProjectSystem} do bufora wierzchołków
+OpenGL (ang. Vertex Buffer Object), uwzględniając wcześniej omówione powielanie wierzchołków.
+
+Ostatnie metody interfejsu zdefiniowanego w klasie \texttt{SoftBodySolver}
+są wykorzystywane do ,,chwytania'' elementów ciał miękkich przez użytkownika. Do
+zainicjowania takiego stanu służy funkcja \texttt{GrabStart}. Ideą działania
+tych funkcji jest znalezienie cząstek oddalonych nie dalej niż o zadaną
+odległość i przyczepienie do nich wirtualnych sprężyn. Na drugim końcu sprężyn
+umieszczony jest punkt będący zarządzany przez użytkownika. W celu
+poinformowania solwera o zmianie jego pozycji należy użyć metody
+\texttt{GrabUpdate}. W celu ,,puszczenia'' obiektu należy wywołać metodę
+\texttt{GrabStop}.
+
+
+\begin{figure}[H]
+\centering
+\input{images/solwer_klasy}
+\caption{Stos CUDA. Źródło: Opracowanie własne.}
+\label{class-hierarchy}
+\end{figure}
+
+\subsubsection{Solwer CPU}
 % schemat symulacji PredictMotion -> SolverMathc -> SolveVolume -> SolveGround 
+Metoda \texttt{ProjectSystem} klasy \texttt{CPUSoftBodySolver}
+implementuje algorytm Dynamiki bazującej na pozycji przedstawiony w rozdziale
+\ref{sec:dyn}. Zaimplementowane zostały 3 rodzaje więzów. Pierwszymi są więzy Shape
+Mtching, drugim więzy zachowania objętość, a trzecim więzy ograniczające
+przenikanie obiektu przez granice zdefiniowanego świata.
 
-\subsection{Solwer GPU}
+Dodatkowo przyjęto założenie, że przy ilość iteracji rozwiązywania równań więzów
+w dynamice bazującej na pozycji jest równa 1, co jest zbieżne z podejściem
+zaprezentowanym w \cite{diziol}.
+
+Ogólny schemat symulacji ciała miękkiego zaimplementowanego w klasie
+\texttt{CPUSoftBodySolver} przedstawiony jest na rysunku \ref{flow-cpu}.
+
+\begin{figure}[H]
+\centering
+\input{images/flow_cpu}
+\caption{Etapy symulacji w klasie CPUSoftBodySolver. Źródło: Opracowanie własne.}
+\label{flow-cpu}
+\end{figure}
+
+Z powyższego rysunku najistotniejszą rzeczą jest umieszczenie rozwiązywania
+kolizji jako ostatnią operację rzutowania. Ma to na celu zapobiegnięcie efektu
+innych operacji rzutowania, która mogłaby spowodować, że punkt znalazłby się w
+obszarze zabronionym.
+
+\subsubsection{Solwer GPU}
+Implementacja solwera na GPU w dużej różni się od implementacji na CPU.
+Pierwszą różnicą jest potrzeba posiadania dodatkowych informacji, które są
+niezbędne do równoległego wykonania kodu. Skutkuje to zwiększeniem złożoności
+pamięciowej rozwiązywanego problemu, co jest często rzeczą nieuniknioną podczas
+obliczeń na GPU.
+
+Ogólny schemat poszczególnych etapów działania funkcji \texttt{ProjectSystem}
+przedstawia rysunek \ref{flow-gpu}.
+
+\centering
+\begin{tabular}{|r|l|}
+\hline
+$x_i$ & pozycja w $R^3$ \\
+\hline
+$v_i$ & prędkość \\
+\hline
+$m_i$ & masa\\
+\hline
+\end{tabular}
+
+\begin{figure}[H]
+\centering
+\input{images/flow_gpu}
+\caption{Etapy symulacji w klasie CUCDASoftBodySolver. Źródło: Opracowanie własne.}
+\label{flow-gpu}
+\end{figure}
+
+Pierwszym etapem symulacji było znalezienie kandydatów na nowe pozycje cząstek.
+Operacja ta może być efektywnie zrealizowana w sposób współbieżny ponieważ nie zawiera żadnych
+zależności pomiędzy kolejnymi cząstkami symulowanego ciała. Ponadto ciasne
+upakowanie w tablicy skutkuje efektywnym dostępem do pamięci GPU.
+
+Kolejnym krokiem w symulacji jest rozwiązanie więzów Shape Matchingu. Operacja
+ta zrealizowana jest dwuetapowo. W pierwszym etapie liczone są macierze obrotu
+$R$ współbieżnie dla każdego regionu. Każdy region dokonuje wczytania wszystkich
+punktów projekcji wchodzących w jego skład oraz estymacji macierzy R. Z uwagi,
+że wczytywane model są na tyle duże, że niemożliwe staje się obliczenie
+wszystkich regionów w jednym bloku CUDA, wyliczone macierze $R$ muszę zostać
+ponownie zapisane w pamięci globalnej.
+
+Powyższy etap pomimo, że pozwala na współbieżne obliczanie przekształceń dla
+regionów posiada jedną wadę. Jest nieefektywny pod względem dostępu do pamięci.
+Wierzchołki każdego regionów nie występują kolejno w globalnej tablicy
+projekcji, co skutkuje zwiększoną ilością transakcji.
+
+Drugim etapem rozwiązywania więzów shape matchingu, jest zsumowanie wszystkich
+macierzy rotacji i dokonanie obliczenia docelowego punktu rzutowania więzów. Etap
+ten wymaga aby wszystkie macierze $R$ zostały policzona, więc realizowany jest w
+oddzielnym wywołaniu kernela CUDA. Tym razem zamiast punktem wyjścia jest
+wczytanie przez każdy wierzchołek wszystkich macierzy rotacji obliczonych w
+poprzednim kroku. Wymaga to przechowywania dodatkowej tablicy z informacjami o 
+przypisaniach wierzchołków do regionów w którym się znajduje. Informacje o
+powiązaniach są budowane na etapie solwera i nie wpływają na szybkość symulacji.
+
+Każdy wątek wczytuje, więc z pamięci globalnej macierze rotacji dla swoich regionów, znajduje
+docelowy punkt transformacji oraz dokonuje projekcji pozycji w kierunku tego
+punku. Podobnie jak miało to miejsce z pierwszym etapem dostęp do pamięci
+przebiega również w nieoptymalny sposób gdyż macierze regionów dla wierzchołka rozmieszczone są również
+nieliniowo w pamięci. Jednak zaletą tej metody jest brak jakiejkolwiek potrzeby
+synchronizacji wątków na poziomie bloku CUDA oraz kolizjami w czasie zapisu do
+wyników do pamięci globalnej.
+ 
+% volume preservation
+
+Przedostatnim etapem symulacji jest rozwiązanie więzów kolizji z ograniczeniami
+zdefiniowanego w symulacji świata. Dla zadanych wartości granicznych projekcja
+przesuwana jest w taki sposób aby nie znajdowała się w obszarach zabronionych w
+aplikacji. Jak miało to miejsce w pierwszym etapie symulacji operacja ta jest
+realizowana w sposób efektywny pod względem dostępu do pamięci, bez potrzeby
+dodatkowej synchronizacji między wątkami.
+
+Ostatnim etapem symulacji jest przypisanie zrzutowanych projekcji do pozycji.
+Etap ten jest analogiczny jak na CPU i realizowany w efektywny sposób.
+
  % opis klasy 
  % preprocessing
  % updatowanie verteksów
+\subsection{Stabilność numeryczna}
+
+W implementowanym algorytmie \texttt{Shape Matching} najtrudniejszym fragmentem
+okazał się być rozkład macierzy \ref{A-final} na składowe rotacji oraz
+skalowania. Do tego celu zaimplementowano algorytm dekompozycji biegunowej
+opisanej w \ref{polar}. Realizuje go funkcja \texttt{polar\_decomposition}
+przedstawiona na listingu \ref{polar-decomp}.
+
+Funkcja \texttt{eigenvalues\_jacobi} oblicza wartości własne oraz wektory własne
+macierzy $A^T A$ przy użyciu pięciu iteracji algorytmu Jacobiego. 
+
+\begin{lstlisting}[caption=Algorytm wyznaczania wartości i wektorów własnych
+	macierzy,label=eigenvalues]
+GLM_FUNC_QUALIFIER glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, glm::mat3 &E)
+{
+	glm::vec3 ret;
+
+	// initial eigenvalues
+	ret[0] = mat[0][0];
+	ret[1] = mat[1][1];
+	ret[2] = mat[2][2];
+
+	E = glm::mat3();
+	mat[0][0] = 1.0;
+	mat[1][1] = 1.0;
+	mat[2][2] = 1.0;
+
+	REP(z, max_iter) {
+		REP(i, 3) {
+			for(int j = i + 1; j < 3; j++) {
+				double mii = ret[i];
+				double mjj = ret[j];
+				double mij = mat[i][j];
+				double phi = 0.5 * atan2(2 * mij, mjj - mii);
+				double c = cos(phi);
+				double s = sin(phi);
+				double mii1 = c * c * mii - 2 * s * c * mij + s * s * mjj;
+				double mjj1 = s * s * mii + 2 * s * c * mij + c * c * mjj;
+				if (abs(mii - mii1) < 0.00001 || (mjj - mjj1) < 0.00001) {
+					ret[i] = mii1;
+					ret[j] = mjj1;
+					mat[i][j] = 0.0;
+					for(unsigned int k = 0; k < i; k++)
+						eigenvalues_rotate(mat, c, s, k, i, k, j);
+					for(int k = i + 1; k < j; k++)
+						eigenvalues_rotate(mat, c, s, i, k, k, j);
+					for(int k = j + 1; k < 3; k++)
+						eigenvalues_rotate(mat, c, s, i, k, j, k);
+					for(int k = 0; k < 3; k++)
+						eigenvalues_rotate(E, c, s, k, i, k, j);
+				}
+			}
+		}
+	}
+	return ret;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Algorytm dekompozycji biegunowej
+	macierzy,label=eigen-rotate]
+GLM_FUNC_QUALIFIER void eigenvalues_rotate(glm::mat3 &mat, double &c, double &s, int i0, int j0, int i1, int j1)
+{
+	double a = c * mat[i0][j0] - s * mat[i1][j1];
+	double b = s * mat[i0][j0] + c * mat[i1][j1];
+	mat[i0][j0] = a;
+	mat[i1][j1] = b;
+}
+\end{lstlisting}
+
+Problemem jaki napotkałem podczas impementacji Shape Matchingu, zarówno no CPU
+jak i na GPU, jest możliwość postawania macierzy $A$ o wyznacznuku równym zero.
+Dzieje się tak w przypadku gdy wszystkie punktu analizowanego regionu Shape
+Machingu są rozmieszczone na jednej płaszczyźnie. Skutkuje to niemożliwością
+numerycznego zastotosania dekompozycji biegunowonej i otrzymanie właściwej
+macierzy rotacji.
+
+Problem ten został zauważony w \cite{diziol} i rozwiązany poprzez dodanie do
+każdego regionu dodatkowego punktu, którego pozycja nie jest zadana arbitralnie,
+	ale zależy od pozycji innych punktów w regionie. Definicja takiego punktu
+	zadanie jest wzorem:
+	$$ p = x_i + l n_i$$
+	gdzie $n_i$ jest uśrednioną normalną powierzchni wszystkich trójkątów
+	zawierajacych wierzchołek $i$. W celu zminimalizowania wpływy dodatkowego
+	punktu na macierz rotacji \cite{diziol} definiują skalar $l$ jako:
+	$$ l = \frac{1}{R_i}\sum_j m_j || x^0_j - t^0||$$
+
+	W pracy tej zastosowano jednak inny sposób poradzenia sobie w wyżej
+	wymienionym problemem poprzez dodanie skrajnie małej wartości do wartości
+	własnych wyznaczonych w algorytmie dekompozycji polarnej.
+
+	Zastosowanie tego triku, pozwoliło uniknąć sytuacji w których wyznaczona
+	macierz rotacji przyjmuje nieprawidłowe wartości przy jednoczesnym braku
+	zauważalnej różnicy w obserwowanej symulacji.
+
+\begin{lstlisting}[caption=Algorytm dekompozycji biegunowej macierzy,label=polar-decomp]
+GLM_FUNC_QUALIFIER void polar_decomposition(const glm::mat3 &A, glm::mat3 &R, glm::mat3 &S)
+{
+	glm::mat3 E;
+	glm::mat3 B = glm::transpose(A) * A;
+
+	// B is symmetrix matrix so it is diagonizable
+	glm::vec3 eig = eigenvalues_jacobi(B, 5, E);
+
+	// add delta value to eigenvalues to overcome det(A) == 0 problem
+	eig += glm::vec3(0.01f, 0.01f, 0.01f);
+
+	S = diagonal3x3(eig);
+
+	// calculate squere root of diagonal matrix
+	S[0][0] = glm::sqrt(S[0][0]);
+	S[1][1] = glm::sqrt(S[1][1]);
+	S[2][2] = glm::sqrt(S[2][2]);
+
+	// calcuate squre root of B matrix
+	B = glm::inverse(E) * S * E;
+
+	// calculate rotation matrix
+	R = A * glm::inverse(B);
+}
+\end{lstlisting}
