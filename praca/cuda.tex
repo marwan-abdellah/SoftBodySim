@@ -342,12 +342,12 @@ kontekście GPU poprzez oznaczenie jej atrybutem \texttt{\_\_device\_\_} (listin
 kernela, pozwalając na enkapsulację często powtarzanych fragmentów kodu. Należy
 jednak pamiętać, że kontekst gospodarza i GPU znacząco się od siebie różnią i w
 przypadku tego drugiego wywołania funkcji z reguły trwają dużo
-dłużej\cite{Nvi11b} Kompilator NVCC na ogół stara się więc ,,inlinować'' wszystkie
+dłużej\cite{Nvi11b} Kompilator NVCC na ogół stara się więc inlajnować wszystkie
 funkcje oznaczone atrybutem \texttt{\_\_device\_\_}, czyli umieszcza ich kod
 bezpośrednio w miejscu wywołania. Wydłuża to docelowy kod kernela, jednak
 znacząco przyspiesza jego wykonywanie. W celu wymuszenia na kompilatorze braku
-inlinowania trzeba poprzedzić atrybut \texttt{\_\_device\_\_} atrybutem
-\texttt{\_\_noinline\_\_}, natomiast w celu zagwarantowania inlinowania funkcji
+inlajnowania trzeba poprzedzić atrybut \texttt{\_\_device\_\_} atrybutem
+\texttt{\_\_noinline\_\_}, natomiast w celu zagwarantowania inlajnowania funkcji
 atrybutem \texttt{\_\_forceinline\_\_}.
 
 \subsection{Hierarchia pamięci}
@@ -393,19 +393,20 @@ pracy, nawet do 4 GB w najbardziej zaawansowanych kartach dostępnych na rynku.
 Wadą jej jest natomiast bardzo długi czas dostępu.
 
 Schemat wątków i bloków z przypisaniem poszczególnych rodzajów pamięci, do których
-mają dostęp podsumowuje rysunek \ref{hier}.
+mają dostęp podsumowują rysunki \ref{hier} oraz \ref{hier2}.
 
 \begin{figure}[H]
 \centering
 \label{hier}
-\includegraphics[scale=0.6]{images/memory-hierarchy.png}
-\caption{Hierarchia pamięci w modelu CUDA. Źródło: \cite{Nvi11b}}
+\includegraphics[scale=0.5]{images/memory-hierarchy.png}
+\caption{Dostęp do pamięci w modelu CUDA. Źródło: \cite{Nvi11b}}
 \end{figure}
 
 \begin{figure}[H]
 \centering
+\label{hier2}
 \includegraphics[scale=0.6]{images/gpu.png}
-\caption{Źródło: CUDA Manual}
+\caption{Dostęp do pamięci w modelu CUDA. Źródło: \cite{Nvi11b}}
 \end{figure}
 
 \section{GPU}
@@ -640,19 +641,22 @@ wydajność całego programu CUDA, ponieważ zamiast jednej jednostki LD/ST uży
 są dwie dla tej samej grupy wątków. 
 
 Dowodem tego jest wykres \ref{hier2}, na którym pokazano
-zależność między wartością przesunięcia a przepustowością obliczoną jako czas
-wywołania kernela CUDA dla 4MB danych. Implementacja kernala zawierała tylko
-wczytanie wartości z pamięci globalnej, jej inkrementację oraz zapis.
-Dane empiryczne potwierdzają tezę, że minimalizacja użytych transakcji ma
-pozytywny wpływ na wydajność programu CUDA. I tak najlepsze rezultaty
-otrzymujemy dla $t = 0$ oraz $t = 32$, gdzie $A[32]$ wskazuje na początek 
-następnego "wyrównanego" bloku pamięci.
+zależność między wartością przesunięcia a przepustowością.
+
+Przepustowość określa ilości danych, która może zostać przetworzona na
+procesorze graficznym w czasie jednej sekundy. W analizowanym przykładzie
+wartość przepustowości została obliczona jako czas wywołania kernela CUDA dla
+4MB danych. Implementacja kernala zawierała wczytanie wartości z pamięci
+globalnej, jej inkrementację oraz ponowny zapis do pamięci globalnej. Dane
+empiryczne potwierdzają tezę, że minimalizacja użytych transakcji ma wpływ na
+zwiększenie przepustowości programu CUDA. I tak najlepsze rezultaty otrzymujemy
+dla $t = 0$ oraz $t = 32$, gdzie $A[32]$ wskazuje na początek następnego
+"wyrównanego" bloku pamięci.
 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.4]{images/gf660_offset.png}
-\caption{Teoretyczna przepustowość Geforce 660M liczona jako czas inkrementacji
-	4MB danych zmiennoprzecinkowych. Źródło: opracowanie własne na
+\caption{Pomiar przepustowości Geforce 660M. Źródło: opracowanie własne na
 	podstawie \cite{memperf}}
 \label{hier2}
 \end{figure}
@@ -679,8 +683,7 @@ problemu może być reprezentacja danych jako struktury tablic (Struct of Array,
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.4]{images/gf660_stride.png}
-\caption{Teoretyczna przepustowość Geforce 660M liczona jako czas inkrementacji
-	4MB danych zmiennoprzecinkowych. Źródło: opracowanie własne na
+\caption{Pomiar przepustowości Geforce 660M. Źródło: opracowanie własne na
 	podstawie \cite{memperf}}
 \label{hier}
 \end{figure}

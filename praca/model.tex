@@ -386,13 +386,15 @@ Ostateczną formułą na przesunięcie związane ze zmianą objętości możemy 
 \label{sec:dyn}
 
 Zastosowanie geometrycznych technik takich jak wymieniony w rozdziale
-\ref{sec:shape} Shape-Matching czy metod zachowujących objętość w \ref{sec:vol}
-jest problematyczne z tego względu, że siły działające na ciało nie wynikają
-z nich bezpośrednio. Niemożliwe zatem jest jawne zdefiniowanie dynamiki układu
+\ref{sec:shape}
+Shape-\\
+Matching czy metod zachowujących objętość w \ref{sec:vol}
+jest problematyczne z tego względu, gdyż techniki te nie określają w bezpośredni
+sposób sił działających na ciało. Niemożliwe zatem jest jawne zdefiniowanie dynamiki układu
 opisanego równaniem różniczkowym postaci $\ddot{\vec{x}} = \vec{F}/m$.
 
 Rozwiązaniem tego problemu może być emulowanie sił poprzez zaczepienie
-'wirtualnych' sprężyn pomiędzy punktami docelowymi $g_i$ wynikającymi z ograniczeń
+,,wirtualnych'' sprężyn pomiędzy punktami docelowymi $g_i$ wynikającymi z ograniczeń
 geometrycznych a aktualną pozycją $x_i$ cząstki. Otrzymane w ten sposób
 siły działające na ciało mogą być użyte do rozwiązania równań ruchu.
 Takie podejście nie jest jednak używane w literaturze przedmiotu. Zamiast tego
@@ -432,8 +434,8 @@ zaliczają:
 	\item bezpośrednią kontrolę nad całkowaniem równań ruchu, pozwalającą
 	rozwiązać problemy z niestabilnością modelu,
 	\item punkty materialne mogą być bezpośrednio przesuwane, bez użycia sił,
-	\item model ograniczeń bazujących na pozycji może być wykorzystany do
-	symulowania szerokiego zakresu zdarzeń fizycznych,
+	\item model więzów bazujących na pozycji może być wykorzystany do
+	symulowania szerokiego zakresu zdarzeń fizycznych, np. reakcji na kolizje, zachowanie objętości
 	\item system rozwiązujący ograniczenia w modelu jest łatwy w implementacji.
 \end{itemize}
 
