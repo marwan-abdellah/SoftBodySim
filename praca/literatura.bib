@@ -1,8 +1,8 @@
 @article{TR97-19,
-author = {Sarah F. F. Gibson, Brian Mirtich},
-title = {A Survey of Deformable Modeling in Computer Graphics},
-journal = {MERL A MITSUBISHI ELECTRIC RESEARCH LABORATORY},
-year = 1997,
+	author = {Sarah F. F. Gibson, Brian Mirtich},
+	title = {A Survey of Deformable Modeling in Computer Graphics},
+	journal = {MERL A MITSUBISHI ELECTRIC RESEARCH LABORATORY},
+	year = 1997,
 }
 
 @article{pbdyn,
@@ -23,13 +23,6 @@ year = 2004,
 author = { Joachim Georgii and Florian Echtler and R''diger Westermann },
 title = { Interactive Simulation of Deformable Bodies on GPUs },
 journal = { Simulation and Visualisation 2005 },
-year = 2005,
-}
-
-@article{pbdo,
-author  = { Andrew Nealen and Matthias Müller and Richard Keiser and Eddy Boxerman4 and Mark Carlson }
-title = { Physically Based Deformable Models in Computer Graphics } 
-journal = { },
 year = 2005,
 }
 
@@ -77,14 +70,15 @@ year = 2000,
 @book {massive,
 	author = {David B. Kirk and Wen-mei W. Hwu},
 	title = { Programming Massively Pararell Processors. A Hands-on approach},
-	publisher = { Morgan Kaufmann Publishers }.
+	publisher = { Morgan Kaufmann Publishers },
 	year = 2010
 }
 
 @book {elast,
 	author = {A.E.H. Love},
-	title = { Mathematical Theory of Elasticity},
-	publisher = { Cambridge University Press}.
+	title = { A treatise on Mathematical Theory of Elasticity},
+	publisher = { Cambridge University Press},
+    pages = {90--107},
 	year = 1906
 }
 
@@ -103,26 +97,19 @@ year = 2000,
 	url = { http://www.gamasutra.com/resource_guide/20030121/jacobson_pfv.htm},
 }
 
-@ONLINE{prez,
-	author = { David Luebke },
-	title = { GPU Computing with CUDA },
-	month = sep,
-	year = 2009,
-	url = { http://dl.getdropbox.com/u/484203/Lectures/Guests/DavidLuebke__MIT%20IAP%2009%20-%20CUDA%20Arch%20%26%20Algorithms__share.pdf },
-}
-
 @MANUAL{isa,
-	title = { Pararell thread execution. ISA version 3.1 },
+	title = { Pararell thread execution. ISA version 4.0 },
+	note = {\url{http://docs.nvidia.com/cuda/parallel-thread-execution/}}
 }
 
 @ONLINE{llvm,
 	title = { CLANG auto-verctorization},
-	url = {http://llvm.org/docs/Vectorizers.html#loop-vectorizer},
+	note = {\url{http://llvm.org/docs/Vectorizers.html#loop-vectorizer}}
 }
 
 @ONLINE{gcc,
 	title = { GCC auto-verctorization},
-	url = {http://gcc.gnu.org/projects/tree-ssa/vectorization.html},
+	note = {\url{http://gcc.gnu.org/projects/tree-ssa/vectorization.html}}
 }
 
 @MANUAL{kepler,
@@ -138,13 +125,6 @@ author = {J. Bender, M. Müller, M. A. Otaduy, M. Teschner, M. Macklin},
 title = {A Survey on Position-Based Simulation Methods in Computer Graphics},
 journal = {Computer Graphics Forum}
 year = 2014,
-}
-
-@article{diziol,
-author = {},
-title = {Robust Real-Time Deformation of Incompressible Surface Meshes},
-journal =  {ACM SIGGRAPH/Eurographics Symposium on Computer Animation},
-year = 2011
 }
 
 @article{shape,
@@ -179,8 +159,7 @@ journal = {ACM Trans. on Graphics 24},
 	title = {How to Access Global Memory Efficiently in CUDA C/C++ Kernels},
 	month = jan,
 	year = {2013},
-	url =
-	{http://devblogs.nvidia.com/parallelforall/how-access-global-memory-efficiently-cuda-c-kernels}
+	url = {http://devblogs.nvidia.com/parallelforall/how-access-global-memory-efficiently-cuda-c-kernels}
 }
 
 @article{cpuvsgpu,
@@ -207,6 +186,48 @@ journal = {ACM Trans. on Graphics 24},
 }
 
 @ONLINE{obj,
-	title = {Object Files},
-	{http://paulbourke.net/dataformats/obj/}
+	title = {Wavefront file format specification},
+	note = {\url{http://paulbourke.net/dataformats/obj/}}
+}
+
+@article{pbdo,
+    author = {Nealen, Andrew and Mueller, Matthias and Keiser, Richard and Boxerman, Eddy and Carlson, Mark},
+    citeulike-article-id = {984666},
+    citeulike-linkout-0 = {http://dx.doi.org/10.1111/j.1467-8659.2006.01000.x},
+    citeulike-linkout-1 = {http://www.ingentaconnect.com/content/bpl/cgf/2006/00000025/00000004/art00014},
+    doi = {10.1111/j.1467-8659.2006.01000.x},
+    issn = {0167-7055},
+    journal = {Computer Graphics Forum},
+    month = dec,
+    number = {4},
+    pages = {809--836},
+    posted-at = {2008-09-13 11:41:03},
+    priority = {2},
+    publisher = {Blackwell Publishing},
+    title = {{Physically Based Deformable Models in Computer Graphics}},
+    url = {http://dx.doi.org/10.1111/j.1467-8659.2006.01000.x},
+    volume = {25},
+    year = {2006}
+}
+@inproceedings{diziol,
+	added-at = {2011-11-21T00:00:00.000+0100},
+	author = {Diziol, Raphael and Bender, Jan and Bayer, Daniel},
+	biburl =
+	{http://www.bibsonomy.org/bibtex/2b0604a0b8fe3512dc3b6b7f75094d9b2/dblp},
+	booktitle = {Symposium on Computer Animation},
+	crossref = {conf/sca/2011},
+	editor = {Bargteil, Adam W. and van de Panne, Michiel},
+	ee = {http://dx.doi.org/10.2312/SCA/SCA11/237-246},
+	interhash = {608e2d84fe4389f8164596e2f40f6173},
+	intrahash = {b0604a0b8fe3512dc3b6b7f75094d9b2},
+	isbn = {978-1-4503-0923-3},
+	keywords = {dblp},
+	pages = {237-246},
+	publisher = {Eurographics Association},
+	timestamp = {2011-11-21T00:00:00.000+0100},
+	title = {Robust Real-Time Deformation of
+	Incompressible Surface Meshes.},
+	url =
+	{http://dblp.uni-trier.de/db/conf/sca/sca2011.html#DiziolBB11},
+	year = 2011
 }

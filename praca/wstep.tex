@@ -7,3 +7,46 @@
 % co z niej można wynieść
 
 % opis rozdziałów
+
+Symulacje ciał miękkich od zawsze stanowiły przedmiot szczególnego
+zainteresowania twórców gier. Realistycznie wyglądające symulacje materiałów,
+włosów czy możliwość deformowania obiektów przez gracza podnoszą atrakcyjność
+tworzonych gier, co nierzadko decyduje o komercyjnym sukcesie produktu.
+Nie dziwi zatem nakład środków ponoszony na rozwój technik symulacji ciał
+miękkich, czego efektem jest powstawianie coraz to bardziej zadziwiających
+efektów wizualnych w najnowszych grach i symulacjach komputerowych.
+
+Praca ta ma za zadanie wprowadzić czytelnika w bogaty świat metod symulacji ciał
+miękkich. W rozdziale drugim zostały podjęte próby usystematyzowania
+dotychczasowych osiągnięć w tej dziedzinie oraz pokazania w jakich obszarach
+stosowane są dane typy symulacji. Rozdział ten nie miał jednak na celu
+dokładnego omówienia sposobów działania wszystkich metod, lecz tylko pobieżny
+przegląd aktualnego stanu wiedzy i skupienie się na najpopularniejszym
+stosowanym modelu - Systemie Sprężyn i Punktów Mas.
+
+W rozdziale drugim przedstawione zostaną też prawa fizyki mające zastosowanie
+w opisie ciał deformowalnych. Ze względu jednak na obszerność tego zagadnienia,
+niemożliwe będzie ich wyczerpujące opisanie. Zamiast tego nacisk zostanie
+położony na omówienie praw fizycznych mających zastosowanie w konkretnych
+modelach opisanych w dalszej części tego rozdziału.
+
+Spośród wielu dostępnych technik symulacji ciała miękkiego zostały wybrane i
+opisane w rozdziale trzecim dwie relatywnie nowe i proste w implementacji
+techniki. Pomimo prostoty przedstawione w pracy metody są podstawą współczesnych
+symulacji ciał miękkich i stanowią bazę do tworzenia bardziej skomplikowanych i
+wyspecjalizowanych modeli używanych w zaawansowanych silnikach graficznych
+takich jak NVIDIA PhysX, Havoc Cloth, Maya nCloth czy Bullet \cite{Liu:2013:FSM}.
+
+Rozdział czwarty stanowi wstęp do technologii CUDA, która dzisiaj jest 
+powszechnie wykorzystywana do wspierania obliczeń fizycznych w symulacjach
+komputerowych. Zostały w nim omówione zmiany jakie zaszły na przestrzeni
+ostatnich lat w dziedzinie programowani kart graficznych, które umożliwiły ich
+zastosowanie nie tylko do procesu generowania obrazu. Rozdział ten stanowi też
+podsumowanie najważniejszych informacji jakie każdy programista CUDA powinien
+wiedzieć.
+
+Integralną częścią stworzonej pracy jest aplikacja demonstracyjna implementujące
+techniki omówione w rozdziale trzecim. Jej opis wraz z problemami jakie
+napotkałem w czasie implementacji zawarty jest w rozdziale piątym. Ostatni
+rozdział zawiera opis technik optymalizacji stworzonej aplikacji ze szczególnym
+uwzględnieniem kodu CUDA przeznaczonego do wykonania na procesorze graficznym.
