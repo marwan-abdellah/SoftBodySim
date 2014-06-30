@@ -57,7 +57,6 @@ GLM_FUNC_QUALIFIER glm::vec3 eigenvalues_jacobi(glm::mat3 &mat, int max_iter, gl
 				double mii1 = c * c * mii - 2 * s * c * mij + s * s * mjj;
 				double mjj1 = s * s * mii + 2 * s * c * mij + c * c * mjj;
 				if (abs(mii - mii1) < 0.00001 || (mjj - mjj1) < 0.00001) {
-//					changed = true;
 					ret[i] = mii1;
 					ret[j] = mjj1;
 					mat[i][j] = 0.0;

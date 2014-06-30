@@ -53,7 +53,7 @@ interaktywnych aplikacji.
 \subsection{Przewodnik}
 Aplikacja demonstracyjna jest prostą aplikacją ze sterowaniem klawiaturowym. Po
 uruchomieniu główny plan zajmuje pusta trójwymiarowa scena. Nawigacja w
-aplikacji obydwa się za pośrednictwem prawego klawisza myszy i przemiszczenia
+aplikacji obydwa się za pośrednictwem prawego klawisza myszy i przemieszczenia
 kursora. Użytkownik jest w stanie obracać się punktu
 centralnego sceny oraz przybliżać się i oddalać od niego używając kółka myszki.
 
@@ -214,7 +214,7 @@ Kolejnym krokiem jest zamiana NDC do tzw. współrzędnych przycięcia (ang. cli
 Kolejnym etapem jest odwrócenie wpływu macierzy projekcji. Dzieje się
 poprzez przemnożenie wektora w współrzędnych przycięcia przez odwróconą
 macierz projekcji. Ostatnim etapem jest odwrócenie wpływu macierzy
-kamery, (jest ona odpowiednikiem macierzy OpenGL GLMODELVIEW).
+kamery, (jest ona odpowiednikiem macierzy OpenGL GL\_MODELVIEW).
 Zanim jednak wektor zostanie przemnożony przez odwróconą macierz kamery,
 	  ostatnia współrzędna $w$ wektora zostanie wyzerowana. Ma to za cel
 	  wyeliminowanie translacji z przekształcenia, gdyż w ten sposób
@@ -222,36 +222,202 @@ Zanim jednak wektor zostanie przemnożony przez odwróconą macierz kamery,
 
 \section{Biblioteka}
 Biblioteka programistyczna jest najważniejszym i największym komponentem
-stworzonym na potrzeby tej pracy. Implementuje ona metodę \texttt{Shape
-	Matchingu} opisaną w rozdziale\ref{sec:shape}, wraz z jej modyfikacją wymienioną w
-	podrozdziale \ref{ssec:region} oraz technikę zachowania
-	objętości opisaną w rozdziale {\ref{sec:vol}.
+stworzonym na potrzeby tej pracy. Została ona napisana w języku C++ i
+wykorzystuje kontenery dostępne w bibliotece standardowej (STL). Biblioteka
+implementuje metody symulacji opisane w poprzednich rozdziałach. Są nimi
+\texttt{Shape Matchingu} z rozdziału \ref{sec:shape}, wraz z jego modyfikacją
+wymienioną w podrozdziale \ref{ssec:region} i technika zachowania objętości
+opisana w rozdziale {\ref{sec:vol}. 
 
-Biblioteka napisana jest w języku C++ 
+Biblioteka o nazwie \texttt{libsoftbody-engine} oprócz implementacji wyżej
+wymienionych metoda posiada też implementację klas pomocniczych potrzebnych
+do wczytania danych o ciałach miękkich z plików i renderowania sceny za
+pomocą OpenGL. Ogólny schemat podziału biblioteki na moduły wraz z
+przynależnymi do nich klasami przedstawia rysunek \ref{libsoftbody}.
+
+Moduł Fizyki zawiera w sobie abstrakcyjną klasę \texttt{SoftBodySolver}, która
+zawiera w sobie deklarację funkcji wirtualnych stanowiący interfejs
+programistyczny. W ramach pracy powstały dwie implementacje klas pochodnych.
+Pierwszą jest klasa \texttt{CPUSoftBodySolver}, która jak nazwa wskazuje do
+symulacji ciała miękkiego wykorzystuje tylko CPU. Drugą jest
+\texttt{CUDASoftBodySolver}, która oprócz CPU, do wymagających obliczeniowo
+fragmentów symulacji wykorzystuje też CUDA.
 
 \begin{figure}[H]
 \centering
 \input{images/moduly}
 \caption{Stos CUDA. Źródło: Opracowanie własne.}
-\label{cuda-model}
+\label{libsoftbody}
 \end{figure}
 
-\subsection{Model w formacie Wavefront}
-% format obj - zalety w sb
-% opis klas lekser i parser, mesh data
-% opis formatu
-% duplikowanie verteksów
+\subsection{Model}
+Zakres funkcjonalności modułu w obejmuje
+wczytanie modelu z pliku tekstowego, wstępne jego przetwarzanie oraz
+dostosowania parametrów wpływających na jego końcową sztywność obiektu. Po
+skończonej inicjalizacji obiekt klasy \texttt{SoftBody} może wykorzystany przez moduł fizyki do
+przeprowadzenia jego symulacji.
+
+W implementacji zdecydowano się wykorzystać format Wavefront \cite{obj} do
+wczytywania danych o symulowanym modelu. Plik tego typu,
+zwanego też potocznie ,,obj'', jest plikiem tekstowym o ustandaryzowanym,
+czytelnym dla człowieka formacie. Dodatkową zaletą jest duża dostępność
+darmowych modeli zdefiniowanych w tym formacie oraz możliwość eksportu do
+tego formatu w większości popularnym programów do modelowania 3D.
+
+Format ,,obj'' pozwala definiować współrzędne wierzchołków,
+współrzędne teksturowania, normalne oraz prymitywy będące wykorzystywane w
+procesie renderowania. Dodatkowo możliwe jest grupowanie zdefiniowanych
+prymitywów oraz przypisanie do nich materiałów. Specyfikacja materiałów nie
+jest częścią pliku ,,obj'', a określona jest w oddzielnym pliku ,,mtl''.
+
+Kluczową własnością formatu Wavefront, która zdecydowała o jego zastosowaniu w
+implementacji biblioteki jest brak tzw. powielenia wierzchołków.
+Powielenie jest efektem posiadania przez dany wierzchołek modelu
+innych współrzędnych teksturowania w zależności od prymitywu którego jest on
+częścią. I tak dla dwóch sąsiadujących trójkątów posiadających jeden wspólny
+wierzchołek, lecz różne tekstury i
+współrzędne teksturowania, dwa trójkąty zostaną ostatecznie opisane przy pomocy 6
+wierzchołków. Prowadzi to do redundancji informacji i zwiększenia złożoności
+pamięciowej aplikacji, jednak skutkiem tego jest wzrost wydajności procesu
+renderowania. Interfejs programistyczny OpenGL wymaga wręcz aby współrzędne w
+takich przypadkach jak opisany powyżej były powielone, gdyż specifikacja API nie umożliwia
+oddzielnego indeksowania wierzchołków i współrzędnych teksturowania.
+
+Powielenie wierzchołków w przypadku symulacji fizyki posiada dwie podstawowe wady. Po
+pierwsze prowadzi do wzrostu wielkości problemu do rozwiązania w symulacji. Z
+obserwacji użytego modelu żaby wynika, że z 250 wierzchołków zdefiniowanych w
+formacie ,,obj'' otrzymałem ostatecznie 534 wierzchołki przeznaczone do
+renderowania. Drugą istotniejszą wadą powielenia wierzchołków jest zmiana
+topoglogii siatki modelu. W przypadku używania metod opartych na siatkach wymaga
+to uwzględnienia, ze dane dwie cząstki są w istocie jedną. Brak uwzględnienia
+tego faktu może prowadzić do rozpadu siatki.
+
+W implementacji części symulacji fizyki zdecydowałem się nie uwzględniać
+powielonych wierzchołków. Dlatego też załadowany model z pliku ,,obj'' musi
+posiadać metainformacje o zduplikowanych wierzchołkach. Klasa \texttt{MeshData}
+przechowuje dwie wersje tablicy z wierzchołkami oraz dodatkową tablicę
+z indeksami wierzchołków z tablicy niepowielonej.
+
+W celu wczytania informacji z pliku Wavefront powstały dwie klasy pomocnicze.
+Pierwszą jest \texttt{OBJLexer}, która jest klasycznym lekserem tokenizującymi
+plik testowy ze względu na charakterystyczne dla formatu ,,obj'' wyrażenia. W
+implementacji wyróżniłem podstawowe typy takiej jak: łańcuch znakowy, liczba,
+znak ,,\'', znak końca linii czy znak końca pliku. Klasą korzystającą z funkcji
+	lexera jest \texttt{OBJParser}, która służy do interpretacji ciągów tokenów
+	oraz wczytania ich do odpowiednich struktur klasy \texttt{MeshData}.
+
+Klasa parser rozwiązuje dodatkowo problem tworzenia tzw. indeksowanej siatki,
+czyli konstrukcji minimalnego zbioru powielonych wierzchołków oraz indeksów, tak aby możliwe
+było narysowanie wszystkich zdefiniowanych w pliku ,,obj'' prymitywów. Aby
+przedstawić rozwiązanie potrzebne będzie przykładowy plik Wavefront
+przedstawiony na listingu poniżej:
+
+\begin{lstlisting}[caption=Fragment pliku OBJ, label=obj_file]
+v -4.100646 1.890668 -0.905718
+v -4.183663 1.890668 -1.334982
+v -4.177260 2.282150 -0.551421
+v -3.316094 2.312096 0.112882
+vt 0.194400 0.621300
+vt 0.438200 0.883900
+vt 0.436600 0.905700
+vt 0.182900 0.821700
+vt 0.099000 0.799700
+f 1/1 2/2 3/3
+f 2/2 3/5 4/6
+\end{lstlisting}
+
+W formacie ,,obj'' linie rozpoczynające się od litery ,,v'' oznaczają definicję
+	pozycji wierzchołka, od liter ,,vt'' współrzędych teksturowania, ,,nv''
+	normalnych a od ,,f''
+	definicję prymitywu (czyli w przykładzie powyżej trójkątów). Defninicja
+	prymitywu zależy od jego typu i składa się z 2, 3 lub 4 wyrażeń oddzielonych
+	spacjami. Każdy człon składa się z 1, 2 lub 3 liczb naturalnycj przedzielonych znakiem
+	,,/''. Pierwsza z nich oznacza numer wierzchołka, druga opcjonalna to numer
+	współrzędnych teksturowania, a trzecia również opcjonalna to numer
+	normalnej.
+	
+Problem konstrukcji indeksowanej siatki rozwiązany został przy użyciu tablicy
+haszującej której kluczem są trzy liczby naturalne:
+$$ (i_v, i_t, i_n) $$
+gdzie $i_v$ oznacza indeks tablicy pozycji wierzchołków, $i_t$ indeks
+tablicy współrzędnych
+teksturowania a $i_n$ indeks w tablicy normalnych. Wartościami trzymanymi w
+tablicy haszującej są indeksy w tablicy powielonych wierzchołków. Podczas parsowania pliku
+,,obj'' wczytywane są najpierw do tymczasowych tablic pozycje, współrzędne
+teksturowania oraz normalne. Nastepnie każdy prymityw jest odzielnie analizowany
+i tworzony dla niego klucz w postaci trzech indeksów. W przypadku gdy klucz nie
+występuje w tablic haszującej konstruowany jest wierzchołek i dodawany do
+wynikowej tablicy wierzchołków, a klucz jest dodawany do tablicy haszującej
+wraz z indeksem wierzchołka w tablicy wynikowej. 
+
+Do implementacji tablicy haszującej wykorzystano kontener biblioteki
+standardowej \texttt{unordered\_map} z własną klasą indekera zdefiniowaną na
+listingu \ref{hashfunc}. Do konstrukcji funkcji hashującej użyto dwóch dużych
+liczb pierwszych.
+
+\begin{lstlisting}[caption=Funkcja haszujące, label=hashfunc]
+
+class Index3Hasher {
+public:
+	size_t operator() (uvec3 const &v) const {
+		return v[0] + 1759 * v[1] + 43517 * v[2];
+	}
+};
+\end{lstlisting}
 
 \subsection{Renderowanie}
-% opis klasy renderowania
-% cienie i generacja normalnych
+Moduł renderowania obejmuje implementację klas \texttt{Scene}, \texttt{Shader},
+\texttt{VertexBuffer} oraz \texttt{Camera}. Każdy z tych komponentów może
+być wykorzystany do konstruowaniu prostych aplikacji demonstracyjnych przy pomocy
+biblioteki \texttt{libsoftbody-engine}. 
+
+Klasa \texttt{Scene} dostarcza podstawowych narzędzi do konstrukcji sceny,
+renderowania obiektów przy pomocy trójkątów lub linii oraz implementuje
+oświetlenie Phonga. Istotnym problemem, który napotkałem w czasie
+implementacji oświetlenia jest konieczność uaktualniania normalnych dla obiektów
+poddanych symulacji fizycznej.
+
+Proces ten może być wykonany na CPU, jednak od specyfikacji OpenGL 3.3 możliwe
+jest wykonanie tego zadania na procesorze graficznym. Posłużyłem się w tym celu
+geometry shaderem, w którym to dla każdego trójkąta obliczana jest normalna do
+płaszczyzny trójkąta, a następnie emitowane są trzy nowe
+wierzchołki tworzące trójkąt posiadające jako atrybut obliczoną wcześniej
+normalną. Kod shadera przedstawiony jest na listingu poniżej:
+
+\subsubsection{Generowanie normalnych}
+\begin{lstlisting}[caption=Generacja normalnych w geometry shaderze,
+	label=normalne]
+#version 330
+layout (triangles) in;
+layout (triangle_strip, max_vertices = 3) out;
+uniform mat4 projMatrix;
+uniform mat4 modelViewMatrix;
+out vec3 normal;
+void main() {
+	vec3 d1 = gl_in[0].gl_Position.xyz - gl_in[1].gl_Position.xyz;
+	vec3 d2 = gl_in[0].gl_Position.xyz - gl_in[2].gl_Position.xyz;
+	normal = normalize(cross(d1, d2));
+	for(int i = 0; i < gl_in.length(); i++)
+	{
+		gl_Position = projMatrix * modelViewMatrix * gl_in[i].gl_Position;
+		EmitVertex();
+	}
+	EndPrimitive();
+}
+\end{lstlisting}
+
+\subsection{Stabilność numeryczna}
+
+W implementowanym algorytmie \texttt{Shape Matching} najtrudniejszym fragmentem
+okazała się być dekompozycja macierzy \ref{A-final} na składowe rotacji oraz
+skalowania. Do tego celu zaimplementowano algorytm dekompozycji biegunowej
+opisanej w \ref{polar}
 
 % stabilność numeryczna
 \subsection{Solwer CPU}
+% schemat symulacji PredictMotion -> SolverMathc -> SolveVolume -> SolveGround 
 
 \subsection{Solwer GPU}
  % opis klasy 
  % preprocessing
  % updatowanie verteksów
-\subsection{Stabilność numeryczna}
-

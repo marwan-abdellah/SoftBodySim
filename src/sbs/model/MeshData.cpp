@@ -12,21 +12,19 @@
 using namespace glm;
 using namespace std;
 
-#define BUCKET_MAX (1 << 20)
-
 #define PI (pi<double>())
 
 class Index3Hasher {
 public:
 	size_t operator() (uvec3 const &v) const {
-		return (v[0] + 1759 * v[1] + 43517 * v[2]) & (BUCKET_MAX - 1);
+		return v[0] + 1759 * v[1] + 43517 * v[2];
 	}
 };
 
 class Index2Hasher {
 public:
 	size_t operator() (uvec2 const &v) const {
-		return (v[0] + 1759 * v[1]) & (BUCKET_MAX - 1);
+		return v[0] + 1759 * v[1];
 	}
 };
 

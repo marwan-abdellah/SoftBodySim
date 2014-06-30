@@ -249,6 +249,7 @@ ponownie jako:
 
 Rozwiązaniem minimalizującym funkcję $\phi$ jest macierz:\cite{shape}
 \begin{equation}
+\label{A-final}
 A = (\sum_i m_i \vec{p}_i \vec{q}^T_i)(\sum_i m_i \vec{q}_i \vec{q}^T_i)^{-1}
 = A_{pq} A_{qq}^{-1}
 \end{equation}
@@ -264,13 +265,14 @@ według wartości osobliwych (Singular Value Decomposition). Warto też nadmieni
 Zakładając że macierz $A_{pq}$ jest macierzą odwracalną, używając Rozkładu
 Biegunowego możemy macierz zapisać jako:
 \begin{equation}
+\label{polar}
 A_{pq} = RS
 \end{equation}
 gdzie $R$ jest macierzą rotacji, a $S$ macierzą skalowania daną wzorami:
-\begin{eqnarray*}
+\begin{eqnarray}
 S = \sqrt[2]{A^T_{pq} A_{pq}}\\
 R = A_{pq} S^{-1}
-\end{eqnarray*}
+\end{eqnarray}
 
 %Formalnie pozycję $g_i$ wyraża się wzorem:
 Ostatecznie pozycje docelowe $g_i$ można obliczyć jako:
