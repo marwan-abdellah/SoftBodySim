@@ -8,11 +8,12 @@
 				    
 \begin{tikzpicture}[node distance = 2cm, auto]
 	% Place nodes
-	\node [block] (predict) {PredictMotion()};
-    \node [block, below of=predict] (shape) {SolveShapeMatchConstraint};
-    \node [block, below of=shape] (volume) {SolveVolumeConstraint()};
-    \node [block, below of=volume] (collisions) {SolveGroundWallCollisions};
-    \node [block, below of=collisions] (integrate) {IntegrateSystem()};
+	\node [block] (predict) {Estymuj Projekcje Metoda Eulera()};
+    \node [block, below of=predict] (shape) {Wykonaj Projekcje ShapeMatching};
+    \node [block, below of=shape] (volume) {Wykonaj Projekcje Zachowania
+		Objęctości};
+    \node [block, below of=volume] (collisions) {Rozwiaz kolizje};
+    \node [block, below of=collisions] (integrate) {Przypisz Projekcje Do Pozycji};
     % Draw edges
 	\path [line] (predict) -- (shape);
 	\path [line] (shape) -- (volume);

@@ -3,9 +3,35 @@ W rozdziale tym przedstawiona zostanie implementacja opisanych w poprzednich
 rozdziałach technik symulacji ciała miękkiego. Na implementację składają się dwa
 główne komponenty - biblioteka programistyczna oraz aplikacja demonstracyjna.
 Biblioteka programistyczna jest odpowiedzialna za symulację ciała miękkiego.
-Stworzenie jej miało na celu ułatwienie ponownego
-wykorzystania zaimplementowanych klas i umożliwienie jej samodzielnego
-rozwijania w przyszłości.
+
+Zarówno biblioteka jak i aplikacja demonstracyjna napisane są w języku C++ z
+wykorzystaniem biblioteki standardowej C++, OpenGL, GLFW \cite{glfw} oraz
+biblioteki matematycznej OpenGL Mathematics \cite{glm}. Biblioteka i aplikacja
+demonstracyjna z uwagi na użyte przez nie programy shaderów wymagają do
+uruchomienia OpenGL w wersji minimalnie 3.3. Do implementacji obliczeń
+na procesorze graficznym użyto CUDA-SDK w wersji 5.5.
+
+Pierwszą jest dependencji projektu jest biblioteka GLM (OpenGL Math). Dostarcza
+ona implementację wielu podstawowych typów niezbędnych w grafice trójwymiarowej,
+	takich jak wektor czy macierz oraz operacji jak np. iloczyn skalarny czy
+	wektorowy. Największą zaletą biblioteki GLM jest fakt, że składa się ona
+	tylko z plików nagłówkowych. Nie ma zatem potrzeby wymagania jej przy
+	procesie kompilacji czy budowania jej razem z projektem. Wszystkie potrzebne
+	funkcje są bezpośrednio załączane do kodu biblioteki w momencie kompilacji.
+
+Kolejną zaletą biblioteki GLM jest jej kompatybilność z technologią CUDA. W przypadku
+gdy plik nagłówkowy biblioteki jest przetwarzany przez preprocesor kompilatora
+nvcc, zdefiniowane tam makra są rozwijane na charakterystyczne dla nvcc
+atrybuty kompilatora, takie jak \texttt{\_\_device\_\_} czy \texttt{\_\_host\_\_}.
+Makra te wykorzystane są do oznaczania funkcji zdefiniowanych w bibliotece,
+	  czyniąc je w ten sposób gotowymi do użycia z poziomu kodu CUDA. W projekcie zdecydowano się więc na
+wykorzystanie makr zdefiniowanych w GLM przy kreacji własnych funkcji, co
+pozwoliło na ich wygodne używania zarówno w kodzie CUDA jak i poza nim.
+
+Drugą wykorzystaną biblioteką jest OpenGL Framework (GLFW) stanowiąca warstwę
+abstrakcji nad specyficzny dla systemu operacyjnego system zarządzania oknami
+oraz zdarzeniami z klawiatury i myszki. GLFW dostarcza też mechanizm pętli głównej
+niezbędny do stworzenia interaktywnych aplikacji.
 
 Bibliotekę można skompilować w wersji tylko na CPU oraz ze wsparciem dla technologii
 CUDA.  Proces ten jest automatyczny i wspierany przez użyty w projekcie program
@@ -21,106 +47,94 @@ deweloperskiego. Dla platformy Linux będą to skrypty \texttt{Makefile},
 	Zastosowanie CMake pozwala w wygodny sposób udostępniać projekt na różne
 	platformy.
 
-% opengl
-Zarówno biblioteka jak i aplikacja demonstracyjna wymagają do uruchomienia
-biblioteki OpenGL w wersji minimalnie 3.3. Jest ona wymagana do uruchomienia
-zaimplementowanych w bibliotece vertex, pixel i geometry shaderów. Do implementacji obliczeń
-na procesorze graficznym użyto CUDA-SDK w wersji 5.5.
-
-W implementacji wykorzystano też dwie pomocnicze biblioteki.
-Pierwszą jest GLM (OpenGL Math), dostarczająca implementację wielu podstawowych
-typów niezbędnych w grafice trójwymiarowej, takich jak wektor czy macierz oraz
-operacji takich jak np. iloczyn skalarny czy wektorowy. Największą zaletą
-biblioteki GLM jest fakt, że składa się ona tylko z plików nagłówkowych. Nie ma
-zatem potrzeby wymagania jej przy procesie kompilacji czy budowania jej razem z
-projektem. Wszystkie potrzebne funkcje są bezpośrednio załączane do kodu
-biblioteki w momencie kompilacji.
-
-Kolejną zaletą biblioteki GLM jest jej kompatybilność z technologią CUDA. W przypadku
-gdy plik nagłówkowy biblioteki jest przetwarzany przez preprocesor kompilatora
-nvcc, zdefiniowane tam makra są rozwijane na charakterystyczne dla nvcc
-atrybuty kompilatora, takie jak \texttt{\_\_device\_\_} czy \texttt{\_\_host\_\_}.
-W przypadku gdy użyty jest inny kompilator biblioteka GLM wykorzystuje inne
-atrybuty. Umożliwia to zadeklarowanie jednej funkcji która może być użyta zarówno
-w kodzie wykonywanym na GPU, jak również na CPU.
-
-Drugą wykorzystaną biblioteką jest OpenGL Framework (GLFW) stanowiąca warstwę
-abstrakcji nad natywny system zarządzania oknami oraz zdarzeniami z klawiatury i
-myszki. Dostarcza też mechanizm pętli głównej niezbędny do stworzenia
-interaktywnych aplikacji.
 
 \section{Aplikacja demonstracyjna}
 \subsection{Przewodnik}
-Aplikacja demonstracyjna jest prostą aplikacją ze sterowaniem klawiaturowym. Po
-uruchomieniu główny plan zajmuje pusta trójwymiarowa scena. Nawigacja w
-aplikacji obydwa się za pośrednictwem prawego klawisza myszy i przemieszczenia
-kursora. Użytkownik jest w stanie obracać się punktu
-centralnego sceny oraz przybliżać się i oddalać od niego używając kółka myszki.
+Aplikacja demonstracyjna jest prostą aplikacją ze sterowaniem myszką i
+klawiaturą. Po jej uruchomieniu główny plan zajmuje pusta trójwymiarowa scena.
+Nawigacja w aplikacji obydwa wokół sceny się za pomocą wciśnięcia i
+przytrzymania prawego klawisza myszy i przemieszczenia kursora. Użytkownik jest
+w stanie obracać się punktu centralnego sceny oraz przybliżać się i oddalać od
+niego używając kółka myszki.
 
 \begin{figure}[H]
+\label{demo1}
 \centering
 \includegraphics[scale=0.5]{images/z1.jpg}
-\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
+\caption{Scena programu demonstracyjnego wraz z modelem żaby.}
 \end{figure}
 
+\subsubsection{Wczytanie modelu}
 Aby zainicjować symulację należy użyć klawisza "t". Zostanie w ten sposób
 stworzony model żaby, której model na licencji Royality Free
 dostępny jest na stronie http://www.turbosquid.com/FullPreview/Index.cfm/ID/589370.
+Scene z modelem żaby przedstawiono na rysunku \ref{demo1}.
 
 \begin{figure}[H]
 \centering
 \includegraphics[scale=0.5]{images/z2.jpg}
-\caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
+\caption{Tryb renderowania linii w aplikacji demonstracyjnej}
 \end{figure}
 
+\subsubsection{Zmiana metody renderingu}
 Program demonstracyjny posiada dwa tryby renderowania. W pierwszym wyświetlany
 jest cały oteksturowany model wraz z oświetleniem, w drugim zaś renderowana jest
 tylko siatka połączeń między wierzchołkami tworzącymi trójkąty. Aby przełączać
 się między dwoma trybami należy użyć klawisza "m".
 
+\subsubsection{Zmiana silnika fizycznego}
+W aplikacji możliwa jest zmiana pomiędzy dwiema niezależnymi implementacjami
+metod symulacji ciała miękkiego. W celu dokonania zmiany należy nacisnąć klawisz
+"v".
+
 \begin{figure}[H]
 \centering
+\label{demo4}
 \includegraphics[scale=0.5]{images/z3.jpg}
 \caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
 \end{figure}
 
+\subsubsection{Chwytanie obiektów}
 W stworzonej aplikacji istnieje możliwość interakcji z symulowanym ciałem
 miękkim. W tym celu należy najechać myszą na obszar zajmowany przez model a
-następnie nacisnąć i trzymać lewy przycisk myszy.
+następnie nacisnąć i trzymać lewy przycisk myszy. Model żaby złapany za lewą
+nogę przedstawiony jest na rysunku \ref{demo4}.
 
 \begin{figure}[H]
+\label{demo5}
 \centering
 \includegraphics[scale=0.5]{images/z5.jpg}
 \caption{Charakterystyki procesorów firmy Intel na przestrzeni 40 lat. Źródło: http://www.gotw.ca/}
 \end{figure}
 
+\subsubsection{Zmiana stałej sprężystości ciał}
 Możliwe jest również zmienianie współczynnika sprężystości symulowanego ciała. W
 przypadku gdy jest on większy symulowane ciało zachowywać się będzie bardziej
 jak bryła sztywna, natomiast dla małych wartości ciało wskazywać będzie zanik
 wszelkich sił wewnętrznych. Zmiana sił sprężystości możliwa jest poprzez
-klawisze '-' i '+'.
+klawisze '-' i '+'. Na rysunku \ref{demo5} przedstawiono zdegradowaną siatkę
+modelu spowodowaną ustaleniem współczynnika sprężystości bliską zera.
 
 % GLWF
 \subsection{Rysowanie okna}
-W celu stworzenia okna aplikacji posłużono się open-sourcową biblioteką GLFW. Z
-racji, że biblioteka te udostępnia interfejsy programisty napisane tylko w języku C
-utworzona została klasa \texttt{GLFWApplication} opakowująca API biblioteki
-GLFW (ang. wrapper). Oprócz zwykłego udostępniania metod, klasa ta spełnia
-jeszcze dodatkowe funkcje. Udostępnia ona wirtualne metody \texttt{OnRender}
-oraz \texttt{OnUpdate}, które będą wykorzystywane odpowiednio przy rysowaniu
-ramki obrazu oraz przy symulacji fizyki. Dodatkowo klasa GLFWApplication rejestruje wszystkie błędy zgłaszane przez
-GLFW i drukuje je do standardowego wyjścia błędów.
+Z racji, że biblioteka GLFW udostępnia interfejsy programisty napisane tylko w
+języku C utworzona została klasa \texttt{GLFWApplication} opakowująca API
+biblioteki GLFW (ang. wrapper). Oprócz zwykłego udostępniania metod, klasa ta
+spełnia jeszcze dodatkowe funkcje. Udostępnia ona wirtualne metody
+\texttt{OnRender} oraz \texttt{OnUpdate}, które będą implementowane do
+generowania w klasach pochodnych ramki obrazu oraz przy symulacji fizyki. Dodatkowo klasa
+GLFWApplication rejestruje wszystkie błędy zgłaszane przez GLFW i drukuje je do
+standardowego wyjścia błędów.
 
 % statyczny krok symulacji
-\subsection{Krok symulacji}
+\subsection{Stały krok symulacji}
 Kolejnymi funkcjonalnościami dostarczanymi przez klasę \texttt{GLFWApplication} jest
 uruchomienie pętli głównej aplikacji oraz wywoływanie metod \texttt{OnUpdate} oraz \texttt{OnRender}.
-Jest to niezbędne w celu zsynchronizowania odświeżania obrazu i
-symulacji fizyki. Pętla główna zdefiniowana na listingu (\ref{main_loop})
+Pętla główna zdefiniowana na listingu (\ref{main_loop})
 pozwala na użycie stałego kroku czasu w symulacji fizyki przy jednoczesnym
 zachowaniu możliwości odświeżania obrazu w różnej częstotliwości. Przyjęcie
-stałego kroku czasu jest niezbędne w symulacji ponieważ
-techniki w niej zaimplementowane są wrażliwe na jego zmianę, czego efektem jest
+stałego kroku czasu jest niezbędne w ponieważ
+techniki zaimplementowane w tej pracy są wrażliwe na jego zmianę, czego efektem jest
 np. zmiana sztywności ciała obserwowana przy zmianie kroku czasu.
 
 \begin{lstlisting}[caption=Pętla główna, label=main_loop]
@@ -159,13 +173,14 @@ W aplikacji demonstracyjnej możliwe jest ,,chwytanie'' części symulowanych
 obiektów. Możliwe jest to dzięki funkcji z interfejsu programistycznemu
 biblioteki (API). Jako parametry wejściowe funkcja ta przyjmuje półprostą (ang.
 		Ray) oraz liczbę zmiennoprzecinkową oznaczającą maksymalną odległość
-punktów od półprostej, które mają zostać ,,schwytane''. Operacja tworzenia
-półprostej realizowana jest dwuetapowo. W pierwszym etapie ze współrzędnych
-\texttt{x, y} myszki wyliczany jest odpowiadający im punkt w przestrzeni
-trójwymiarowej, czyli tzw. współrzędnych świata (ang. world
-		coordinates). Realizuje to funkcja \texttt{GetWorldCoordinates},
-	zaimplementowana w klasie \texttt{Demo} dziedziczącej po klasie
-	\texttt{GLFWApplication}. Jej implementacja
+punktów od półprostej, które mają zostać ,,schwytane''. Półprosta musi być
+podana w tzw. współrzędnych świata.
+
+Operacja tworzenia półprostej we współrzędnych świata posiadającej kierunek
+zgodny z pozycją myszki na ekranie realizuje funkcja \texttt{GetRayFromCamera}.
+Wartością zwracaną przez funkcje jest structura \texttt{Ray} zawierająca w sobie
+punkt początkowy półprostej oraz wektor jej kierunku.
+	Implementacja funkcji \texttt{GetRayFromCamera}
 	przedstawiona jest na listingu poniżej:
 
 \begin{lstlisting}[caption=Estymacja wektora w przstrzeni trójwymiarowej na
@@ -191,7 +206,8 @@ Ray Demo::GetRayFromCamera()
 \end{lstlisting}
 
 Ideą funkcji przedstawionej na listingu \ref{screen2world} jest odwrócenie
-procesu zachodzącego przy rysowaniu ramki obrazu przez bibliotekę OpenGL.
+procesu zachodzącego przy rysowaniu ramki w którym to trójwymiarowe współrzędne
+przekształcane są do znormalizowanych dwuwymiarowych współrzędnych ekranu.
 % dołożyć krótki schemat 
 Na początku ze współrzędnych myszki tworzony jest trójwymiarowy wektor
 wyrażony w tzw. znormalizowanych współrzędnych urządzenia (ang. Normalized
@@ -222,8 +238,7 @@ Zanim jednak wektor zostanie przemnożony przez odwróconą macierz kamery,
 
 \section{Biblioteka}
 Biblioteka programistyczna jest najważniejszym i największym komponentem
-stworzonym na potrzeby tej pracy. Została ona napisana w języku C++ i
-wykorzystuje kontenery dostępne w bibliotece standardowej (STL). Biblioteka
+stworzonym na potrzeby tej pracy. Biblioteka
 implementuje metody symulacji opisane w poprzednich rozdziałach. Są nimi
 \texttt{Shape Matchingu} z rozdziału \ref{sec:shape}, wraz z jego modyfikacją
 wymienioną w podrozdziale \ref{ssec:region} i technika zachowania objętości
@@ -235,9 +250,9 @@ do wczytania danych o ciałach miękkich z plików i renderowania sceny za
 pomocą OpenGL. Ogólny schemat podziału biblioteki na moduły wraz z
 przynależnymi do nich klasami przedstawia rysunek \ref{libsoftbody}.
 
-Moduł Fizyki zawiera w sobie abstrakcyjną klasę \texttt{SoftBodySolver}, która
+Moduł Fizyki definiuje abstrakcyjną klasę \texttt{SoftBodySolver}, która
 zawiera w sobie deklarację funkcji wirtualnych stanowiący interfejs
-programistyczny. W ramach pracy powstały dwie implementacje klas pochodnych.
+programistyczny. W ramach pracy powstały dwie implementacje tego interfejsu.
 Pierwszą jest klasa \texttt{CPUSoftBodySolver}, która jak nazwa wskazuje do
 symulacji ciała miękkiego wykorzystuje tylko CPU. Drugą jest
 \texttt{CUDASoftBodySolver}, która oprócz CPU, do wymagających obliczeniowo
@@ -246,16 +261,16 @@ fragmentów symulacji wykorzystuje też CUDA.
 \begin{figure}[H]
 \centering
 \input{images/moduly}
-\caption{Stos CUDA. Źródło: Opracowanie własne.}
+\caption{Moduły biblioteki libsoftbody-engine. Źródło: Opracowanie własne.}
 \label{libsoftbody}
 \end{figure}
 
 \subsection{Model}
-Zakres funkcjonalności modułu w obejmuje
+Zakres funkcjonalności tego modułu obejmuje
 wczytanie modelu z pliku tekstowego, wstępne jego przetwarzanie oraz
-dostosowania parametrów wpływających na jego końcową sztywność obiektu. Po
-skończonej inicjalizacji obiekt klasy \texttt{SoftBody} może wykorzystany przez moduł fizyki do
-przeprowadzenia jego symulacji.
+zarządzanie parametrami wpływającymi na końcową sztywność symulowanego obiektu.
+Wszystkie obiekty klasy \texttt{SoftBody} mogą zostać wykorzystane przez moduł fizyki do
+przeprowadzenia symulacji.
 
 W implementacji zdecydowano się wykorzystać format Wavefront \cite{obj} do
 wczytywania danych o symulowanym modelu. Plik tego typu,
@@ -284,7 +299,7 @@ takich przypadkach jak opisany powyżej były powielone, gdyż specifikacja API 
 oddzielnego indeksowania wierzchołków i współrzędnych teksturowania.
 
 Powielenie wierzchołków w przypadku symulacji fizyki posiada dwie podstawowe wady. Po
-pierwsze prowadzi do wzrostu wielkości problemu do rozwiązania w symulacji. Z
+pierwsze prowadzi do wzrostu wielkości problemu do rozwiązania. Z
 obserwacji użytego modelu żaby wynika, że z 250 wierzchołków zdefiniowanych w
 formacie ,,obj'' otrzymałem ostatecznie 534 wierzchołki przeznaczone do
 renderowania. Drugą istotniejszą wadą powielenia wierzchołków jest zmiana
@@ -327,12 +342,12 @@ f 2/2 3/5 4/6
 \end{lstlisting}
 
 W formacie ,,obj'' linie rozpoczynające się od litery ,,v'' oznaczają definicję
-	pozycji wierzchołka, od liter ,,vt'' współrzędych teksturowania, ,,nv''
+	pozycji wierzchołka, od liter ,,vt'' współrzędnych teksturowania, ,,nv''
 	normalnych a od ,,f''
-	definicję prymitywu (czyli w przykładzie powyżej trójkątów). Defninicja
+	definicję prymitywu (czyli w przykładzie powyżej trójkątów). Definicja
 	prymitywu zależy od jego typu i składa się z 2, 3 lub 4 wyrażeń oddzielonych
-	spacjami. Każdy człon składa się z 1, 2 lub 3 liczb naturalnycj przedzielonych znakiem
-	,,/''. Pierwsza z nich oznacza numer wierzchołka, druga opcjonalna to numer
+	spacjami. Każdy człon składa się z 1, 2 lub 3 liczb naturalnych przedzielonych znakiem
+	,,\/''. Pierwsza z nich oznacza numer wierzchołka, druga opcjonalna to numer
 	współrzędnych teksturowania, a trzecia również opcjonalna to numer
 	normalnej.
 	
@@ -344,7 +359,7 @@ tablicy współrzędnych
 teksturowania a $i_n$ indeks w tablicy normalnych. Wartościami trzymanymi w
 tablicy haszującej są indeksy w tablicy powielonych wierzchołków. Podczas parsowania pliku
 ,,obj'' wczytywane są najpierw do tymczasowych tablic pozycje, współrzędne
-teksturowania oraz normalne. Nastepnie każdy prymityw jest odzielnie analizowany
+teksturowania oraz normalne. Następnie każdy prymityw jest oddzielnie analizowany
 i tworzony dla niego klucz w postaci trzech indeksów. W przypadku gdy klucz nie
 występuje w tablic haszującej konstruowany jest wierzchołek i dodawany do
 wynikowej tablicy wierzchołków, a klucz jest dodawany do tablicy haszującej
@@ -422,7 +437,7 @@ przejmuje ona zarządzanie referencją do obiektu od użytkownika. Od tej chwili
 klasa \texttt{SoftBodySolver} staje się ,,właścicielem'' obiektu i jest
 odpowiedzialna za jego usunięcie po zakończeniu symulacji.
 
-Następnym krokiem jest inicjacja parametrów świata w którym ma być
+Następnym krokiem jest określenie parametrów świata w którym ma być
 przeprowadzona symulacja ciął miękkich. W obecnej wersji biblioteki możliwe jest
 ustalenie siły grawitacji jaka ma wpływać na symulowane ciała oraz definiowanie
 granic świata w którym toczyć się będzie symulacja. Implementacja zakłada
@@ -462,7 +477,7 @@ poinformowania solwera o zmianie jego pozycji należy użyć metody
 \begin{figure}[H]
 \centering
 \input{images/solwer_klasy}
-\caption{Stos CUDA. Źródło: Opracowanie własne.}
+\caption{Hierarchia klas. Źródło: Opracowanie własne.}
 \label{class-hierarchy}
 \end{figure}
 
@@ -470,7 +485,7 @@ poinformowania solwera o zmianie jego pozycji należy użyć metody
 % schemat symulacji PredictMotion -> SolverMathc -> SolveVolume -> SolveGround 
 Metoda \texttt{ProjectSystem} klasy \texttt{CPUSoftBodySolver}
 implementuje algorytm Dynamiki bazującej na pozycji przedstawiony w rozdziale
-\ref{sec:dyn}. Zaimplementowane zostały 3 rodzaje więzów. Pierwszymi są więzy Shape
+\ref{sec:dyn}. Zaimplementowane zostały w niej 3 rodzaje więzów. Pierwszymi są więzy Shape
 Mtching, drugim więzy zachowania objętość, a trzecim więzy ograniczające
 przenikanie obiektu przez granice zdefiniowanego świata.
 
@@ -494,26 +509,22 @@ innych operacji rzutowania, która mogłaby spowodować, że punkt znalazłby si
 obszarze zabronionym.
 
 \subsubsection{Solwer GPU}
-Implementacja solwera na GPU w dużej różni się od implementacji na CPU.
-Pierwszą różnicą jest potrzeba posiadania dodatkowych informacji, które są
+Implementacja solwera na GPU w dużej mierze różni się od implementacji na CPU.
+Pierwszą różnicą jest konieczność posiadania dodatkowych informacji, które są
 niezbędne do równoległego wykonania kodu. Skutkuje to zwiększeniem złożoności
 pamięciowej rozwiązywanego problemu, co jest często rzeczą nieuniknioną podczas
 obliczeń na GPU.
 
-Ogólny schemat poszczególnych etapów działania funkcji \texttt{ProjectSystem}
-przedstawia rysunek \ref{flow-gpu}.
+Drugą różnicą jest fakt przechowywania danych zgodnie z techniką SOA (Struct of
+		Arrays), która oznacza że dane symulacji trzymane są w tablicach typów prostych
+zamiast opakowania ich w struktury. Jednym odstępem przyjętym od tego założenia
+był moment w którym to wszystkie pola struktury były zawsze ładowane razem i
+wszystkie wykorzystywane. W takim przypadku różnica między SOA a AOS nie
+zachodziła.
 
-\centering
-\begin{tabular}{|r|l|}
-\hline
-$x_i$ & pozycja w $R^3$ \\
-\hline
-$v_i$ & prędkość \\
-\hline
-$m_i$ & masa\\
-\hline
-\end{tabular}
-\raggedright
+Ogólny schemat poszczególnych etapów działania funkcji \texttt{ProjectSystem}
+przedstawia rysunek \ref{flow-gpu}. Każdy przedstawiony tam blok oznacza
+wywołanie kernela jednego kernela CUDA dla wszystkich danych symulacji.
 
 \begin{figure}[H]
 \centering
@@ -558,6 +569,15 @@ synchronizacji wątków na poziomie bloku CUDA oraz kolizjami w czasie zapisu do
 wyników do pamięci globalnej.
  
 % volume preservation
+Obliczanie projekcji więzów zachowania objętości realizowane jest w aż trzech
+uruchomieniach kernela CUDA. Dwa pierwsze służą estymacji objętości ciała na
+podstawie wartości aktualnych projekcji. W tym celu zaimplementowany został
+algorytm tzw. sumowania redukcyjnego, który najpierw dokonuje sumowania w ramach
+bloku i zapisuje wynik cząstkowy w pamięci globalnej. Aby dokonać ostatecznego
+sumowania potrzeba uruchomić następny kernel CUDA, który zsumuje wyniki
+cząstkowe i obliczy końcową objętość ciała. W celu dokonania projekcji niezbędne
+jest uruchomienie kolejnego kernela, który na podstawie obliczonej objętości
+oraz normalnych z przylegających trójkątów dokona projekcji punktu.
 
 Przedostatnim etapem symulacji jest rozwiązanie więzów kolizji z ograniczeniami
 zdefiniowanego w symulacji świata. Dla zadanych wartości granicznych projekcja
