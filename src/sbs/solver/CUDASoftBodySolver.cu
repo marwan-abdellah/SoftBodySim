@@ -16,16 +16,6 @@ using namespace std;
 
 #define DEFAULT_SOLVER_STEPS 10
 
-struct ShapeDescriptor {
-	glm::vec3 mc0; // body global mass
-	int initPosBaseIdx; // index of first shape particles in global initPos array
-	float_t radius; // maximum distance between mass center and particle;
-	float_t massTotal; // object total mass
-	float_t volume; // initial shape volume
-	int regionBaseIndex; // index of first region belonging to mesh
-	int nRegions; //number of regions
-};
-
 class CUDAContext {
 public:
 	typedef std::vector<SoftBodyDescriptor> descriptorArray_t;
@@ -65,6 +55,7 @@ private:
 	CUDAVector<glm::uint_t>            mRegionsMembersOffsets;
 	CUDAVector<glm::uint_t>            mMembersRegionsOffsets;
 	CUDAVector<glm::vec3>              mShapeInitialPositions; // initial particle locations (x0i);
+	CUDAVector<glm::float_t>           mPartials;
 
 	CUDAVector<ParticleInfo>           mParticlesInfo;
 	CUDAVector<glm::vec3>              mPositions;
@@ -76,6 +67,9 @@ private:
 	CUDAVector<LinkConstraint>         mLinks;
 	CUDAVector<glm::uint_t>            mMapping;
 	CUDAVector<glm::uvec3>             mTriangles;
+	CUDAVector<glm::vec3>              mTrianglesNormals;
+	CUDAVector<ParticleTrianglesInfo>  mParticleTriangleInfo;
+	CUDAVector<glm::uint_t>            mParticleTriangleIndexes;
 
 	vector<cudaGraphicsResource*>      mResArray; /* helper array to map all resources 
 												  in one call */
@@ -159,6 +153,7 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 	long len = 0;
 	unsigned int smin = 999999;
 	unsigned int smax = 0;
+	int region_size = 2;
 
 	d.mc0 = calculateMassCenter(
 			&(obj->mParticles[0]), &(obj->mMassInv[0]), obj->mParticles.size());
@@ -176,11 +171,27 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 
 	REP(i, obj->mParticles.size()) {
 		indexArray_t indexes;
-		GetRegion(i, na, 2, indexes);
+		GetRegion(i, na, region_size, indexes);
 		REP(p, indexes.size()) {
 			particlesInRegions[indexes[p]].push_back(i);
 		}
 	}
+	// triangles info
+	std::vector< std::set<glm::uint_t> > particlesInTriangles;
+	std::vector< std::vector<glm::uint_t> > particlesInTriangles2;
+	particlesInTriangles.resize(obj->mParticles.size());
+	particlesInTriangles2.resize(obj->mParticles.size());
+	REP(i, obj->mTriangles.size()) {
+		glm::uvec3 idxs = obj->mTriangles[i];
+		particlesInTriangles[idxs[0]].insert(i);
+		particlesInTriangles[idxs[1]].insert(i);
+		particlesInTriangles[idxs[2]].insert(i);
+	}
+	REP(i, particlesInTriangles.size()) {
+		FOREACH_R(it, particlesInTriangles[i])
+			particlesInTriangles2[i].push_back(*it);
+	}
+
 #if 0
 	eEP(i, particlesInRegions.size()) {
 		printf("%d:", particlesInRegions[i].size());
@@ -201,7 +212,7 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 		float_t mass = 0.0f;
 		glm::vec3 mc(0,0,0);
 
-		GetRegion(i, na, 2, indexes);
+		GetRegion(i, na, region_size, indexes);
 
 		len += indexes.size();
 		if (smin > indexes.size())
@@ -221,17 +232,24 @@ void CUDAContext::CreateShapeDescriptor(SoftBody *obj)
 		reg.regions_offsets_offset = mMembersRegionsOffsets.size();
 		reg.n_regions = particlesInRegions[i].size();
 
+		ParticleTrianglesInfo pti;
+		pti.triangle_id_offset = mParticleTriangleIndexes.size();
+		pti.n_triangles = particlesInTriangles2[i].size();
+
 		mRegions.push_back(reg);
 		mRegionsMembersOffsets.push_back(&indexes[0], indexes.size());
 		mParticlesInfo.push_back(info);
 		mMembersRegionsOffsets.push_back(&(particlesInRegions[i][0]),
 				particlesInRegions[i].size());
+		mParticleTriangleInfo.push_back(pti); 
+		mParticleTriangleIndexes.push_back(&(particlesInTriangles2[i][0]),
+				particlesInTriangles2[i].size());
 	}
 
-	d.volume = calculateVolume(&(obj->mParticles[0]), &(obj->mTriangles[0]), NULL, NULL, obj->mTriangles.size()); 
 	DBG("==MODEL INFORMATION==");
 	DBG("Particles total: %ld", obj->mParticles.size());
 	DBG("Vertexes total: %ld", obj->mMesh->GetVertexes().size());
+	DBG("Triangles total: %ld", obj->mMesh->GetFaces().size());
 	DBG("Rest Volume :%f", d.volume);
 	DBG("Regions total: %ld", mRegions.size());
 	DBG("Average region size: %f", (float)len / mRegions.size());
@@ -258,6 +276,9 @@ void CUDAContext::CreateDescriptor(SoftBody *body)
 	descr.trianglesIdx = mTriangles.size();
 	descr.nTriangles = body->mTriangles.size();
 
+	descr.volume0 = calculateVolume(&(body->mParticles[0]),
+			&(body->mTriangles[0]), NULL, NULL, body->mTriangles.size()); 
+
 	bool res = RegisterVertexBuffers(descr);
 	if (!res) {
 		ERR("Error occured registering SoftBody vertex buffers.");
@@ -266,6 +287,7 @@ void CUDAContext::CreateDescriptor(SoftBody *body)
 
 	mDescriptors.push_back(descr);
 	mDescriptorsDev.push_back(descr);
+	mPartials.resize(body->mTriangles.size() / 128 + 1);
 	mResArray.push_back(descr.graphics);
 }
 
@@ -319,6 +341,8 @@ bool CUDAContext::InitSoftBody(SoftBody *body)
 	mMapping.push_back(&(body->mMeshVertexParticleMapping[0]),
 			body->mMeshVertexParticleMapping.size());
 	mRegionsDynamicInfo.resize(mPositions.size());
+	mTriangles.push_back(&(body->mTriangles[0]), body->mTriangles.size());
+	mTrianglesNormals.resize(body->mTriangles.size());
 
 	return true;
 }
@@ -501,6 +525,7 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 			mRegionsDynamicInfo.data(),
 			mPositions.size()
 			);
+
 	solveShapeMatchingConstraints2<<<blockCount, threadsPerBlock>>>(
 			mParticlesInfo.data(),
 			mRegions.data(),
@@ -511,10 +536,57 @@ void CUDAContext::ProjectSystem(glm::float_t dt, CUDASoftBodySolver::SoftBodyWor
 			mProjections.data(),
 			mPositions.size()
 			);
+
+	blockCount = mTriangles.size() / threadsPerBlock + 1;
+	solveVolumePreservationConstraint1<<<blockCount, threadsPerBlock>>>(
+			mParticlesInfo.data(),
+			mPartials.data(),
+			mProjections.data(),
+			mTriangles.data(),
+			mTrianglesNormals.data(),
+			mTriangles.size()
+			);
+
+	blockCount = mPartials.size() / threadsPerBlock + 1;
+	solveVolumePreservationConstraint2<<<blockCount, threadsPerBlock>>>(
+			mDescriptorsDev.data(),
+			mPartials.data(),
+			mPartials.size()
+			);
+
+	blockCount = mPositions.size() / threadsPerBlock + 1;
+    solveVolumePreservationConstraint3<<<blockCount, threadsPerBlock>>>(
+		mParticleTriangleInfo.data(),
+		mDescriptorsDev.data(),
+		mTrianglesNormals.data(),
+		mProjections.data(),
+		mParticleTriangleIndexes.data(),
+		mPositions.size());
+
 	solveGroundWallCollisionConstraints<<<blockCount, threadsPerBlock>>>(
 			mProjections.data(), mInvMasses.data(),
 			world.groundLevel, world.leftWall, world.rightWall,
 			world.frontWall, world.backWall, mPositions.size());
+
+#if 0
+	vector<SoftBodyDescriptor> info;
+	info.resize(1);
+	cudaMemcpy(&info[0], mDescriptorsDev.data(), 
+			sizeof(SoftBodyDescriptor),
+			cudaMemcpyDeviceToHost);
+	ERR("%f", info[0].volume);
+#endif
+
+#if 0
+	vector<glm::float_t> info;
+	info.resize(mPartials.size());
+	cudaMemcpy(&info[0], mPartials.data(), 
+			sizeof(glm::float_t) * mPartials.size(),
+			cudaMemcpyDeviceToHost);
+	float sum = 0;
+	FOREACH_R(it, info) sum += *it;
+	ERR("%f", sum);
+#endif
 
 #if 0
 	vector<glm::mat3> info;

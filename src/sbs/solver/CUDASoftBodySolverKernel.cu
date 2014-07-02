@@ -89,24 +89,6 @@ __global__ void solveShapeMatchingConstraints1(
 	}
 }
 
-#if 0
-__global__ void solveShapeMatchingConstraints2(
-		ParticleInfo *info,
-		glm::vec3 *projections,
-		glm::uvec3 *triangles,
-		glm::uint_t max_idx)
-{
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < max_idx) {
-		ParticleInfo info = info[idx];
-		glm::vec3 v0 = projections[info.body_offset + triangles[i][0]];
-		glm::vec3 v1 = projections[info.body_offset + triangles[i][1]];
-		glm::vec3 v2 = projections[info.body_offset + triangles[i][2]];
-	}
-}
-#endif
-
 __global__ void solveShapeMatchingConstraints2(
 		ParticleInfo *info_array,
 		ShapeRegionStaticInfo *regions,
@@ -141,6 +123,103 @@ __global__ void solveShapeMatchingConstraints2(
 		final = final / (glm::float_t)reg.n_regions;
 
 		proj += 0.9f * (final - proj);
+		projections[idx] = proj;
+	}
+}
+
+__global__ void solveVolumePreservationConstraint1(
+		ParticleInfo *info,
+		glm::float_t *partials,
+		glm::vec3 *projections,
+		glm::uvec3 *triangles,
+		glm::vec3 *normals,
+		glm::uint_t max_idx)
+{
+	__shared__ glm::float_t partial_volumes[128];
+
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	partial_volumes[threadIdx.x] = 0;
+
+	if (idx < max_idx) {
+		glm::uvec3 indexes = triangles[idx];
+
+		glm::vec3 v0 = projections[indexes[0]];
+		glm::vec3 v1 = projections[indexes[1]];
+		glm::vec3 v2 = projections[indexes[2]];
+
+		glm::vec3 norm = glm::cross(v1 - v0, v2 - v0);
+		if (norm != glm::vec3(0,0,0)) {
+			norm = glm::normalize(norm);
+		}
+
+		glm::float_t area = triangle_area(v0, v1, v2);
+		partial_volumes[threadIdx.x] = area * glm::dot(v0 + v1 + v2, norm);
+		normals[idx] = norm;
+
+		__syncthreads();
+
+		for (unsigned int s = 1; s < blockDim.x; s = 2 * s) {
+			if ((threadIdx.x % (2 * s)) == 0)
+				partial_volumes[threadIdx.x] += partial_volumes[threadIdx.x + s];
+			__syncthreads();
+		}
+
+		if (threadIdx.x == 0) partials[blockIdx.x] = partial_volumes[0] / 3.0f;
+	}
+}
+
+__global__ void solveVolumePreservationConstraint2(
+		SoftBodyDescriptor *descrs,
+		glm::float_t *partials,
+		glm::uint_t max_idx)
+{
+	__shared__ glm::float_t volumes[128];
+
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	volumes[threadIdx.x] = 0;
+
+	if (idx < max_idx) {
+		volumes[threadIdx.x] = partials[idx];
+
+		__syncthreads();
+
+		for (unsigned int s = 1; s < blockDim.x; s = 2 * s) {
+			if ((threadIdx.x % (2 * s)) == 0)
+				volumes[threadIdx.x] += volumes[threadIdx.x + s];
+			__syncthreads();
+		}
+
+		if (threadIdx.x == 0) descrs[0].volume = volumes[0];
+	}
+}
+
+__global__ void solveVolumePreservationConstraint3(
+		ParticleTrianglesInfo *infos,
+		SoftBodyDescriptor *descrs,
+		glm::vec3 *normals,
+		glm::vec3 *projections,
+		glm::uint_t *indexes,
+		glm::uint_t max_idx)
+{
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < max_idx) {
+		ParticleTrianglesInfo info = infos[idx];
+		SoftBodyDescriptor descr = descrs[0];
+		glm::vec3 normal(0,0,0);
+		for (int i = 0; i < info.n_triangles; ++i) {
+			glm::uint_t index = indexes[info.triangle_id_offset + i];
+			normal += normals[index];
+		}
+		normal = normal / (glm::float_t)info.n_triangles;
+
+		glm::vec3 proj = projections[idx];
+		glm::float_t diff = (descr.volume - descr.volume0) / descr.volume0;
+		if (diff > -0.05f) return;
+		proj -= diff * 0.1f * normal;
+
 		projections[idx] = proj;
 	}
 }
@@ -204,97 +283,3 @@ __global__ void cudaUpdateVertexBufferKernel(glm::vec3 *vboPtr, glm::vec3
 		vboPtr[idx] = vertex;
 	}
 }
-
-#if 0
-__global__ void calculateLinkStiffness(
-		unsigned int solver_steps,
-		LinkConstraint *links,
-		glm::uint_t linkBaseIdx,
-		glm::uint_t max_idx)
-{
-	int link_idx = blockIdx.x * blockDim.x + threadIdx.x + linkBaseIdx;
-
-	if (link_idx < max_idx) {
-		LinkConstraint lnk = links[link_idx];
-
-		links[link_idx].stiffness = 1.0f - powf(1.0 - lnk.stiffness, 1.0f /
-				solver_steps);
-	}
-}
-
-__device__ glm::uint_t hash(glm::uint_t id)
-{
-	return 1193 * id;
-}
-
-
-/**
-  step 4. solving links constraints.
-  */
-__global__ void solveLinksConstraints(
-		unsigned int max_steps,
-		LinkConstraint *links,
-		glm::vec3 *projections,
-		glm::float_t *masses_inv,
-		glm::uint_t baseIdx,
-		glm::uint_t linkIdx,
-		glm::uint_t max_idx)
-{
-	__shared__ glm::vec3   ACCUM[2 * MAX_LINKS];
-	__shared__ glm::uint_t COUNTER[2 * MAX_LINKS];
-
-	int link_idx = blockIdx.x * blockDim.x + threadIdx.x + linkIdx;
-
-	if (link_idx < max_idx) {
-
-		LinkConstraint lnk = links[link_idx];
-		glm::vec3 pos0 = projections[lnk.index[0] + baseIdx];
-		glm::vec3 pos1 = projections[lnk.index[1] + baseIdx];
-		glm::float_t mass_inv0 = masses_inv[lnk.index[0] + baseIdx];
-		glm::float_t mass_inv1 = masses_inv[lnk.index[1] + baseIdx];
-
-		// assume that will be no colliosions; MAX_LINS = 2^x, X in N
-		glm::uint_t id0 = hash(lnk.index[0]) & (2 * MAX_LINKS - 1);
-		glm::uint_t id1 = hash(lnk.index[1]) & (2 * MAX_LINKS - 1);
-
-		ACCUM[id0] = pos0;
-		ACCUM[id1] = pos1;
-		COUNTER[id0] = 1;
-		COUNTER[id1] = 1;
-
-		__syncthreads();
-
-		glm::float_t restLen = lnk.restLength;
-		glm::float_t k = lnk.stiffness;
-
-		glm::vec3 diff = pos0 - pos1;
-		glm::float_t len = glm::length(diff);
-
-		glm::float_t m0 = mass_inv0 / (mass_inv0 + mass_inv1) * (len - restLen) /
-			len;
-		glm::float_t m1 = mass_inv1 / (mass_inv0 + mass_inv1) * (len - restLen) /
-			len;
-
-		pos0 -= k * m0 * diff;
-		pos1 += k * m1 * diff;
-
-		atomicAdd(&ACCUM[id0][0], pos0[0]);
-		atomicAdd(&ACCUM[id0][1], pos0[1]);
-		atomicAdd(&ACCUM[id0][2], pos0[2]);
-		atomicAdd(&ACCUM[id1][0], pos1[0]);
-		atomicAdd(&ACCUM[id1][1], pos1[1]);
-		atomicAdd(&ACCUM[id1][2], pos1[2]);
-
-		atomicInc(&COUNTER[id0], MAX_LINKS);
-		atomicInc(&COUNTER[id1], MAX_LINKS);
-
-		__syncthreads();
-
-		pos0 = ACCUM[id0] * (1.0f / (glm::float_t)COUNTER[id0]);
-		pos1 = ACCUM[id1] * (1.0f / (glm::float_t)COUNTER[id1]);
-
-		projections[lnk.index[0] + baseIdx] = pos0;
-		projections[lnk.index[1] + baseIdx] = pos1;
-	}
-}
-#endif

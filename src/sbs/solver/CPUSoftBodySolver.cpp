@@ -263,7 +263,7 @@ void CPUSoftBodySolver::SolveVolumeConstraint()
 		// calculate current volume and normals sum
 		current_volume = calculateVolume(&mPositions[it->baseIdx], &(it->body->mTriangles[0]), &(it->posAccumulator[0]), &(it->accumulatorCounter[0]), it->body->mTriangles.size());
 		float_t diff = (current_volume - rest_volume) / rest_volume;
-		if (diff > -0.01f) return;
+		if (diff > -0.05f) return;
 		// update positions
 		REP(k, it->count)
 			mProjections[it->baseIdx + k] -= it->body->mSpringiness * diff * it->posAccumulator[k] / (float_t)it->accumulatorCounter[k];

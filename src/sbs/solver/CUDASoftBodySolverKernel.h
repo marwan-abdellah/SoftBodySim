@@ -3,6 +3,7 @@
 
 #include <glm/fwd.hpp>
 #include "sbs/model/SoftBody.h"
+#include "sbs/solver/CUDAVector.h"
 
 #define MAX_LINKS 128
 
@@ -18,6 +19,20 @@ struct SoftBodyDescriptor {
 	unsigned int              trianglesIdx;
 	int                       nTriangles;
 	int                       shapeDescr;
+	glm::float_t              volume;
+	glm::float_t              volume0;
+	glm::float_t              springness;
+	int                       n_partials;
+};
+
+struct ShapeDescriptor {
+	glm::vec3 mc0; // body global mass
+	int initPosBaseIdx; // index of first shape particles in global initPos array
+	float_t radius; // maximum distance between mass center and particle;
+	float_t massTotal; // object total mass
+	float_t volume; // initial shape volume
+	int regionBaseIndex; // index of first region belonging to mesh
+	int nRegions; //number of regions
 };
 
 
@@ -25,6 +40,11 @@ struct ParticleInfo {
 	glm::uint region_id; // id of regions in global array
 	glm::uint body_info_id; // id of body in global array
 	glm::uint body_offset; // id of first particle in body instance
+};
+
+struct ParticleTrianglesInfo {
+	glm::uint_t triangle_id_offset;
+	glm::uint_t n_triangles;
 };
 
 struct ShapeRegionStaticInfo {
@@ -113,6 +133,27 @@ __global__ void solveGroundWallCollisionConstraints(
 		glm::float_t right_wall,
 		glm::float_t front_wall,
 		glm::float_t back_wall,
+		glm::uint_t max_idx);
+
+__global__ void solveVolumePreservationConstraint1(
+		ParticleInfo *info,
+		glm::float_t *descrs,
+		glm::vec3 *projections,
+		glm::uvec3 *triangles,
+		glm::vec3 *normals,
+		glm::uint_t max_idx);
+
+__global__ void solveVolumePreservationConstraint2(
+		SoftBodyDescriptor *info,
+		glm::float_t *descrs,
+		glm::uint_t max_idx);
+
+__global__ void solveVolumePreservationConstraint3(
+		ParticleTrianglesInfo *infos,
+		SoftBodyDescriptor *descrs,
+		glm::vec3 *normals,
+		glm::vec3 *projections,
+		glm::uint_t *indexes,
 		glm::uint_t max_idx);
 
 #endif
